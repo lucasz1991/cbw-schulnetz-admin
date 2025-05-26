@@ -17,4 +17,4 @@
 <span class="px-2 py-1 w-max text-xs flex items-center gap-1 rounded-full border {{ $statusData['color'] }}">
     {{ $statusData['text'] }}
     {!! $statusData['icon'] !!}
-</span>
+</span> 
