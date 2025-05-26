@@ -1,0 +1,1 @@
+<img src="{{ URL::asset('site-images/minifinds_logo.png') }}" alt=""  class="aspect-square w-full  select-none">
