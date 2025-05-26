@@ -1,24 +1,4 @@
-MiniFinds Admin Panel
 
-Dieses Repository enthält das Admin-Panel für MiniFinds, eine Laravel-Livewire-Anwendung zur Verwaltung eines Dauerflohmarkts. Das Panel ermöglicht Administratoren die Verwaltung von Verkäufern, Regalmieten, Produkten, Rabatten, Auszahlungen und weiteren administrativen Aufgaben.
-
-Features
-
-Regalbuchungen verwalten: Anzeigen, Bearbeiten und Reduzieren von Regalmieten
-
-Produktverwaltung: Übersicht und Kontrolle über eingestellte Produkte
-
-Rabatt-System: Möglichkeit zur Reduzierung von Regalmieten um 25% oder 50%
-
-Auszahlungen: Anfordern und Bearbeiten von Verkäuferauszahlungen
-
-Live-Statistiken: Animierte Diagramme mit ApexCharts für Umsatz- und Nutzerstatistiken
-
-Benachrichtigungen: Follower-Updates, Nachrichten an Verkäufer
-
-Massenmails: Versand von individuellen und automatisierten Mails
-
-Sicherheitsfunktionen: Aktivitätsüberwachung und Nutzerverwaltung
 
 Installation
 
