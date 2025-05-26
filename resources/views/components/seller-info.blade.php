@@ -1,5 +1,5 @@
 @props(['shelfRental', 'isFollowing'])
-
+ 
 <div class="flex items-start justify-start">
     <div class="flex items-center space-x-3">
         <!-- Profilbild -->
