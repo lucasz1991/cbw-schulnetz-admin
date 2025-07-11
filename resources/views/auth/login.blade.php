@@ -8,9 +8,9 @@
 @section('content')
     <div class="my-auto">
         <div class="text-center">
-            <h5 class="text-gray-600 dark:text-gray-100">Willkommen im Adminbereich von Regulierungscheck</h5>
+            <h5 class="text-gray-600 dark:text-gray-100">Willkommen im Adminbereich von CBW Schulnetz</h5>
             <p class="text-gray-500 dark:text-gray-100/60 mt-1">
-                Melde dich an, um Bewertungen zu prüfen, Nutzeranfragen zu verwalten und die Plattform zu moderieren.
+            Melde dich an, um Schulnetzwerke zu verwalten, Nutzeranfragen zu bearbeiten und die Plattform zu administrieren.
             </p>
         </div>
 
