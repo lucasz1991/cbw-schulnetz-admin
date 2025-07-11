@@ -3,7 +3,7 @@
 
 <head>
     @include('layouts.metahead')
-    <title>@yield('title') | Administrator Regulierungs-check </title>
+    <title>@yield('title') | Admin-Area CBW Schulnetz </title>
     <!-- css -->
     @include('layouts.head-css')
     @livewireStyles

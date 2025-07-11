@@ -1,1 +1,4 @@
-<img src="{{ URL::asset('site-images/minifinds_logo.png') }}" alt=""  class="aspect-square w-full  select-none">
+<img 
+    class="max-h-18 {{ $class ?? '' }}" 
+    src="{{ asset('/site-images/logo-xs.png') }}" 
+    alt="Logo">

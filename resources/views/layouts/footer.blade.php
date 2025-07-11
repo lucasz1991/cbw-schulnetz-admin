@@ -3,9 +3,8 @@
     <div class="grid grid-cols-2 text-gray-500 dark:text-zinc-100">
         <div class="grow">
             &copy;
-            {{ date('Y') }} Minia
+            {{ date('Y') }} Admin-Area CBW Schulnetz 
         </div>
-        <div class="hidden md:inline-block text-end">Design & Develop by <a href="" class="underline text-violet-500">Themesbrand</a></div>
 
     </div>
 </footer>
