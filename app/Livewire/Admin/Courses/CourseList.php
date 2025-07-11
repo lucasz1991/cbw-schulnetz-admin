@@ -10,8 +10,9 @@ class CourseList extends Component
     public $search = '';
     public $courses = [];
 
-    protected $listeners = ['openCourseSettings' => 'loadCourses'];
-    
+    protected $listeners = ['openCourseSettings' => 'loadCourses',
+                            'refreshCourses' => 'loadCourses'];
+
     public function mount()
     {
         $this->loadCourses();
