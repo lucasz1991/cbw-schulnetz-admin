@@ -22,25 +22,17 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Start</label>
-                        <input type="datetime-local" wire:model="start_time" class="mt-1 block w-full border rounded px-4 py-2" />
+                        <input type="date" wire:model="start_time" class="mt-1 block w-full border rounded px-4 py-2" />
                         @error('start_time') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Ende</label>
-                        <input type="datetime-local" wire:model="end_time" class="mt-1 block w-full border rounded px-4 py-2" />
+                        <input type="date" wire:model="end_time" class="mt-1 block w-full border rounded px-4 py-2" />
                         @error('end_time') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Status</label>
-                    <select wire:model="status" class="mt-1 block w-full border rounded px-4 py-2">
-                        <option value="draft">Entwurf</option>
-                        <option value="active">Aktiv</option>
-                        <option value="archived">Archiviert</option>
-                    </select>
-                    @error('status') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                </div>
+
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Tutor</label>

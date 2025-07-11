@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Courses;
 use App\Models\Course;
 use App\Models\User;
 use Livewire\Component;
+use Illuminate\Support\Carbon;
 
 class CourseCreateEdit extends Component
 {
@@ -15,7 +16,6 @@ class CourseCreateEdit extends Component
     public $description;
     public $start_time;
     public $end_time;
-    public $status;
     public $tutor_id;
     public $participants = [];
 
@@ -29,7 +29,6 @@ class CourseCreateEdit extends Component
         'description' => 'nullable|string',
         'start_time' => 'nullable|date',
         'end_time' => 'nullable|date|after_or_equal:start_time',
-        'status' => 'required|in:draft,active,archived',
         'tutor_id' => 'required|exists:users,id',
         'participants' => 'nullable|array',
         'participants.*' => 'exists:users,id',
@@ -40,16 +39,15 @@ class CourseCreateEdit extends Component
 
     public function loadCourse($courseId = null)
     {
-        $this->reset(['title', 'description', 'start_time', 'end_time', 'status', 'tutor_id', 'courseId']);
+        $this->reset(['title', 'description', 'start_time', 'end_time', 'tutor_id', 'courseId']);
 
         if ($courseId) {
             $course = Course::findOrFail($courseId);
             $this->courseId = $course->id;
             $this->title = $course->title;
             $this->description = $course->description;
-            $this->start_time = $course->start_time?->format('Y-m-d\TH:i');
-            $this->end_time = $course->end_time?->format('Y-m-d\TH:i');
-            $this->status = $course->status;
+            $this->start_time = $course->start_time?->format('Y-m-d');
+            $this->end_time = $course->end_time?->format('Y-m-d');
             $this->tutor_id = $course->tutor_id;
 $this->participants = $course->participants()->pluck('users.id')->toArray();
 
@@ -70,9 +68,8 @@ $this->participants = $course->participants()->pluck('users.id')->toArray();
             [
                 'title' => $this->title,
                 'description' => $this->description,
-                'start_time' => $this->start_time,
-                'end_time' => $this->end_time,
-                'status' => $this->status,
+                'start_time' => $this->start_time ? Carbon::parse($this->start_time) : null,
+                'end_time' => $this->end_time ? Carbon::parse($this->end_time) : null,
                 'tutor_id' => $this->tutor_id,
             ]
         );
