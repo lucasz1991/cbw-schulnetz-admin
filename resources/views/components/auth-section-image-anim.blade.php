@@ -1,4 +1,4 @@
-<div class="h-screen select-none bg-cover relative p-5 bg-[url('../images/background.jpg')]">
+<div class="h-screen select-none bg-cover relative p-5 bg-[url('../images/home-Slider_-_Studenten.jpg')]">
     <div class="absolute inset-0 bg-sky-50/60"></div>
     <ul class="bg-bubbles absolute top-0 left-0 w-full h-full overflow-hidden animate-square">
         <li class="h-10 w-10 rounded-3xl bg-blue-100/60 absolute left-[10%] "></li>
