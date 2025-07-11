@@ -32,5 +32,11 @@ class Course extends Model
     {
         return $this->hasMany(CourseDay::class);
     }
+    // In App\Models\Course
+    public function participants()
+    {
+        return $this->belongsToMany(User::class);
+    }
+
 
 }
