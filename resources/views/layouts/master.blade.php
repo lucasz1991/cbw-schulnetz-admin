@@ -41,3 +41,4 @@
         @yield('js')
     </body>
 </html>
+ 

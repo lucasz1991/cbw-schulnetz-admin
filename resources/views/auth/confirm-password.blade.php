@@ -32,8 +32,6 @@
         </div>
     </form>
     <div class="mt-12 text-center">
-        <p class="text-gray-500 dark:text-gray-100">Don't have an account ? <a
-                href="{{ route('register') }}" class="text-violet-500 font-semibold"> Signup now </a> </p>
     </div>
 </div>
 @endsection

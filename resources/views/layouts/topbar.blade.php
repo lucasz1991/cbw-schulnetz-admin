@@ -5,13 +5,13 @@
                 class="hidden lg:flex navbar-brand items-center justify-between shrink px-3 h-[70px]  ltr:border-r rtl:border-l bg-[#fbfaff] border-gray-50   shadow-none">
                 <a href="/"
                     class="flex items-center text-lg flex-shrink-0 font-bold dark:text-white leading-[69px]">
-                        <x-application-icon />
+                        <x-navigation.application-icon class="inline-block w-12 aspect-square align-middle  " />
                     <span
-                        class="hidden font-bold pl-3 text-gray-700 align-middle xl:block dark:text-gray-100 leading-[69px] h-8 w-full">   
-                        <div class="">
-
-                            <x-application-logo />
-                        </div>             
+                        class="hidden font-semibold  text-gray-700 align-middle xl:block  leading-[69px]">   
+                        <img 
+                            class="w-full" 
+                            src="{{ asset('/site-images/cbw_logo_text.png') }}" 
+                            alt="Logo Schriftzug">  
                     </span>
                 </a>
             </div>

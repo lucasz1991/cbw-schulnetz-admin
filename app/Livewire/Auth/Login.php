@@ -21,6 +21,7 @@ class Login extends Component
     protected $rules = [
         'email' => 'required|email|max:255|exists:users,email',
         'password' => 'required|min:6|max:255',
+
     ];
     
     protected $messages = [
@@ -46,8 +47,8 @@ class Login extends Component
         $user = Auth::user();
 
         // Admin-Rolle prüfen
-        if ($user->role !== 'admin') {
-            Auth::logout(); // Falls kein Admin, sofort ausloggen
+        if ($user->role !== 'admin' && $user->role !== 'superadmin') {
+            auth('web')->logout(); // Falls kein Admin, sofort ausloggen
             throw ValidationException::withMessages([
                 'email' => 'Du hast keinen Zugriff auf das Admin-Panel.',
             ]);
