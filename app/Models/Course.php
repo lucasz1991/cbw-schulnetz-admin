@@ -28,7 +28,7 @@ class Course extends Model
     {
         return $this->belongsTo(User::class, 'tutor_id');
     }
-    public function days()
+    public function dates()
     {
         return $this->hasMany(CourseDay::class);
     }

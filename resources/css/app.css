@@ -943,3 +943,11 @@ div.gs-banner.gs-theme-cl-bg {
     transform: translateY(10%);
   }
 }
+
+.show-dates-calendar .fc-daygrid-body {
+  background-color: #f9fafb;
+}
+.show-dates-calendar .fc .fc-button-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+}
