@@ -72,10 +72,8 @@ class AdminConfig extends Component
     ];
 
     public $apiSettings = [
-        'paypal_api_client_id' => '',
-        'paypal_api' => '',
-        'cash_register_api_url' => '',
-        'cash_register_api_key' => '',
+        'base_api_url' => '',
+        'base_api_key' => '',
     ];
 
     public $apiKeys = [];
@@ -105,37 +103,24 @@ class AdminConfig extends Component
                 $this->userEmailNotifications[$setting->key] = json_decode($setting->value);
             }
         }
-        // Lade die PayPal API-Schlüssel aus der Datenbank
-        $this->apiSettings['paypal_api_client_id'] = Setting::where('key', 'paypal_api_client_id')->value('value');
-        $this->apiSettings['paypal_api'] = Setting::where('key', 'paypal_api')->value('value');
-        $this->apiSettings['cash_register_api_url'] = Setting::where('key', 'cash_register_api_url')->value('value');
-        $this->apiSettings['cash_register_api_key'] = Setting::where('key', 'cash_register_api_key')->value('value');
-
+        $this->apiSettings['base_api_url'] = Setting::where('key', 'base_api_url')->value('value');
+        $this->apiSettings['base_api_key'] = Setting::where('key', 'base_api_key')->value('value');
 
     }
 
     public function saveApiSettings()
     {
-        // Speichern der PayPal API-Schlüssel
-        Setting::updateOrCreate(
-            ['key' => 'paypal_api_client_id', 'type' => 'api'],
-            ['value' => $this->apiSettings['paypal_api_client_id']]
-        );
-    
-        Setting::updateOrCreate(
-            ['key' => 'paypal_api', 'type' => 'api'],
-            ['value' => $this->apiSettings['paypal_api']]
-        );
+
 
         // Speichern der Fluore-Kassen API-Einstellungen
         Setting::updateOrCreate(
-            ['key' => 'cash_register_api_url', 'type' => 'api'],
-            ['value' => $this->apiSettings['cash_register_api_url']]
+            ['key' => 'base_api_url', 'type' => 'api'],
+            ['value' => $this->apiSettings['base_api_url']]
         );
         
         Setting::updateOrCreate(
-            ['key' => 'cash_register_api_key', 'type' => 'api'],
-            ['value' => $this->apiSettings['cash_register_api_key']]
+            ['key' => 'base_api_key', 'type' => 'api'],
+            ['value' => $this->apiSettings['base_api_key']]
         );
     
         // Erfolgsmeldung

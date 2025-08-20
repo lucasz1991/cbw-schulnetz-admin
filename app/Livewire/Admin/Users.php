@@ -8,10 +8,12 @@ use Livewire\WithoutUrlPagination;
 use App\Models\User;
 use App\Models\Mail;
 use Illuminate\Support\Facades\DB;
+use Livewire\WithFileUploads;
 
 class Users extends Component
 {
     use WithPagination, WithoutUrlPagination; 
+    use WithFileUploads;
 
     public $search = '';
     public $sortBy = 'name'; 
@@ -23,12 +25,6 @@ class Users extends Component
     public $action = null; 
     public $hasUsers;
 
-    public $showMailModal = false; 
-    public $mailUserId = null;
-    public $mailSubject = ''; 
-    public $mailHeader = '';
-    public $mailBody = '';
-    public $mailLink = '';
 
     protected $queryString = ['search', 'sortBy', 'sortDirection'];
 
@@ -140,102 +136,17 @@ class Users extends Component
     public function openMailModal($userId = null)
     {
         if ($userId) {
-            // Öffne das Modal für einen einzelnen Benutzer
-            $this->mailUserId = $userId;
+            $this->dispatch('openMailModal', $userId );
         } else {
             // Prüfe, ob Benutzer für die Massenverarbeitung ausgewählt wurden
             if (count($this->selectedUsers) === 0) {
                 $this->dispatch('showAlert', 'Bitte wähle mindestens einen Benutzer aus, um eine Mail zu senden.', 'info');
                 return;
             }
+            $this->dispatch('openMailModal', $this->selectedUsers );
         }
-    
-        $this->showMailModal = true;
     }
 
-    public function resetMailModal()
-    {
-        $this->showMailModal = false;
-        $this->mailUserId = null;
-        $this->mailSubject = '';
-        $this->mailHeader = '';
-        $this->mailBody = '';
-        $this->mailLink = '';
-    }
-
-    public function sendMail()
-    {
-        // Validierung mit individuellen Fehlermeldungen
-        $this->validate([
-            'mailSubject' => 'required|string|max:255',
-            'mailHeader' => 'required|string|max:255',
-            'mailBody' => 'required|string',
-        ], [
-            'mailSubject.required' => 'Bitte geben Sie einen Betreff ein.',
-            'mailSubject.max' => 'Der Betreff darf maximal 255 Zeichen lang sein.',
-            'mailHeader.required' => 'Bitte geben Sie eine Überschrift ein.',
-            'mailHeader.max' => 'Die Überschrift darf maximal 255 Zeichen lang sein.',
-            'mailBody.required' => 'Bitte geben Sie eine Nachricht ein.',
-        ]);
-    
-        // Inhalte für die Datenbank vorbereiten
-        $content = [
-            'subject' => $this->mailSubject,
-            'header' => $this->mailHeader,
-            'body' => $this->mailBody,
-            'link' => $this->mailLink, // Link kann optional leer sein
-        ];
-    
-        if ($this->mailUserId) {
-            // Einzelner Benutzer
-            $user = User::find($this->mailUserId);
-    
-            if ($user) {
-                // Mail speichern
-                Mail::create([
-                    'status' => false,
-                    'content' => $content,
-                    'recipients' => [
-                        [
-                            'user_id' => $user->id,
-                            'email' => $user->email,
-                            'status' => false, // Status für den Empfänger
-                        ],
-                    ],
-                ]);
-    
-                $this->dispatch('showAlert', 'E-Mail wurde zur Verarbeitung an ' . $user->email . ' vorbereitet.', 'success');
-            } else {
-                $this->dispatch('showAlert', 'Benutzer nicht gefunden.', 'error');
-            }
-        } else {
-            // Massenverarbeitung
-            $recipients = [];
-    
-            foreach ($this->selectedUsers as $userId) {
-                $user = User::find($userId);
-                if ($user) {
-                    $recipients[] = [
-                        'user_id' => $user->id,
-                        'email' => $user->email,
-                        'status' => false, // Status für jeden Empfänger
-                    ];
-                }
-            }
-    
-            // Mail speichern
-            Mail::create([
-                'status' => false,
-                'content' => $content,
-                'recipients' => $recipients,
-            ]);
-    
-            $this->dispatch('showAlert', 'E-Mail wurde zur Verarbeitung für ' . count($recipients) . ' Benutzer vorbereitet.', 'success');
-        }
-    
-        // Modal zurücksetzen
-        $this->resetMailModal();
-    }
     
     public function toggleSelectAll()
     {
