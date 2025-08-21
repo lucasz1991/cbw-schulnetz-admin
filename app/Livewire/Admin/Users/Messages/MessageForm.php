@@ -98,7 +98,7 @@ class MessageForm extends Component
             if ($user) {
                 // Mail speichern
                 $mail = Mail::create([
-                    'type' => $this->mailWithMail ? true : false,
+                    'type' => $this->mailWithMail ? 'both' : 'message',
                     'status' => false,
                     'content' => $content,
                     'recipients' => [

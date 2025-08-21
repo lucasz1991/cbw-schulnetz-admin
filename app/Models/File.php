@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use App\Http\Controllers\MediaController;
+use Illuminate\Support\Facades\Log;
 
 class File extends Model
 {
+    // feste Disk für alle Datei-Operationen
+    private const DISK = 'public';
+
     protected $fillable = [
         'filepool_id',
         'user_id',
@@ -32,15 +35,21 @@ class File extends Model
     {
         parent::boot();
 
-        static::created(function ($file) {
-            $absPath = Storage::path($file->path);
-            if (is_file($absPath)) {
+        static::created(function (File $file) {
+            $disk = Storage::disk(self::DISK);
+
+            if ($disk->exists($file->path)) {
+                $absPath = $disk->path($file->path);
                 $file->uploadImageViaMediaController($absPath);
+                unlink($absPath); // Datei nach Upload löschen
+            } else {
+                Log::warning("File::created - Datei nicht gefunden auf Disk '".self::DISK."': {$file->path}");
             }
         });
 
-        static::deleted(function ($file) {
-            $file->deleteImageViaMediaController(Storage::url($file->path));
+        static::deleted(function (File $file) {
+            // relativen Pfad an den Controller geben; Disk = public
+            $file->deleteImageViaMediaController($file->path);
         });
     }
 
@@ -48,8 +57,10 @@ class File extends Model
     {
         $mime = $this->mime_type ?? '';
         $path = $this->path ?? '';
+
         return match (true) {
-            str_starts_with($mime, 'image/') => Storage::url($path),
+            // URL aus dem public-Disk
+            str_starts_with($mime, 'image/') => Storage::disk(self::DISK)->url($path),
             str_starts_with($mime, 'video/') => asset('site-images/fileicons/file-video.png'),
             str_starts_with($mime, 'audio/') => asset('site-images/fileicons/file-audio.png'),
             str_contains($mime, 'pdf')       => asset('site-images/fileicons/file-pdf.png'),
@@ -59,52 +70,79 @@ class File extends Model
             str_contains($mime, 'text')      => asset('site-images/fileicons/file-text.png'),
             default                          => asset('site-images/fileicons/file-default.png'),
         };
-    }   
-
-    protected function uploadImageViaMediaController($file)
-    {
-                // Temporäres Request-Objekt mit dem File als 'file'
-        $request = Request::create('/admin/media/upload', 'POST', [], [], ['file' => $file]);
-
-        // MediaController manuell instanziieren und aufrufen
-        $controller = new MediaController();
-        $response = $controller->store($request);
-
-        if (method_exists($response, 'getData')) {
-            return $response->getData(true)['path'] ?? '';
-        }
-
-        throw new \Exception('Upload fehlgeschlagen.');
     }
 
-    protected function deleteImageViaMediaController($path)
+    /**
+     * Übergibt eine lokale Datei als UploadedFile an den MediaController::store
+     * @param string $absolutePath absoluter Serverpfad (KEINE URL)
+     */
+    protected function uploadImageViaMediaController(string $absolutePath): ?string
     {
-        if (!$path) {
-            return;
+        if (!is_file($absolutePath)) {
+            Log::warning("uploadImageViaMediaController: Datei nicht gefunden: {$absolutePath}");
+            return null;
         }
 
         try {
-            // Temporären Request mit POST-Daten (obwohl eigentlich DELETE, das ist okay für internen Aufruf)
-            $request = Request::create('/admin/media/delete', 'POST', ['path' => $path]);
+            $uploaded = new UploadedFile(
+                $absolutePath,
+                basename($absolutePath),
+                @mime_content_type($absolutePath) ?: null,
+                UPLOAD_ERR_OK,
+                true // Testmodus
+            );
 
-            // MediaController aufrufen
-            $controller = new MediaController();
+            $request = Request::create('/admin/media/upload', 'POST');
+            $request->files->set('file', $uploaded);
+
+            $controller = app(MediaController::class);
+            $response = $controller->store($request);
+
+            if (method_exists($response, 'getData')) {
+                $data = $response->getData(true);
+                Log::info('Upload via MediaController erfolgreich', ['path' => $data['path'] ?? null]);
+                
+                // speichern des neuen Pfads in der Datenbank
+                $this->update(['path' => $data['path'] ?? null]);
+                // Rückgabe des neuen Pfads
+                return $data['path'] ?? null;
+            }
+
+            Log::warning('Upload via MediaController ohne getData()-Antwort.');
+            return null;
+
+        } catch (\Throwable $e) {
+            Log::warning('Bild konnte nicht über MediaController hochgeladen werden: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Löscht über den MediaController per relativem Pfad (Disk = public)
+     */
+    protected function deleteImageViaMediaController(?string $relativePath): void
+    {
+        if (!$relativePath) return;
+
+        try {
+            $request = Request::create('/admin/media/delete', 'POST', ['path' => $relativePath]);
+
+            /** @var MediaController $controller */
+            $controller = app(MediaController::class);
             $response = $controller->destroy($request);
 
             if (method_exists($response, 'getData')) {
                 $result = $response->getData(true);
                 if (!($result['success'] ?? false)) {
-                    \Log::warning('Löschen nicht erfolgreich: ' . ($result['message'] ?? 'unbekannt'));
+                    Log::warning('Löschen nicht erfolgreich: ' . ($result['message'] ?? 'unbekannt'));
                 }
             }
         } catch (\Throwable $e) {
-            \Log::warning('Bild konnte nicht über MediaController gelöscht werden: ' . $e->getMessage());
+            Log::warning('Bild konnte nicht über MediaController gelöscht werden: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Morphable Beziehung – z. B. zu User, Course, Task, etc.
-     */
+    /** Morphable Beziehung – z. B. zu User, Course, Task, etc. */
     public function fileable(): MorphTo
     {
         return $this->morphTo();

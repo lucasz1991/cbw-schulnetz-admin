@@ -21,7 +21,7 @@ class MediaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|image|max:4096',
+            'file' => 'required|max:4096',
         ]);
 
         $file = $request->file('file');
