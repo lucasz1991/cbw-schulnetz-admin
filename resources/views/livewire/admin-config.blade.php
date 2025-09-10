@@ -190,17 +190,13 @@
                 </div>
                 <!-- Api Tab -->
                 <div x-show="activeTab === 'api'" x-cloak class="space-y-10" x-collapse.duration.400ms>
-                    <h2 class="text-2xl font-semibold">API Einstellungen</h2>
-                    <!-- Kassen-API -->
                     <x-settings-collapse>
                         <x-slot name="trigger">
-                            Base Api
+                            CBW Schulnetz Base API
                         </x-slot>
                         <x-slot name="content">
-                            
-                            <!-- API URL Eingabe für Kassen-API -->
                             <div class="mb-4">
-                                <label for="base_api_url" class="block text-sm font-medium text-gray-700">Base-API URL</label>
+                                <label for="base_api_url" class="block text-sm font-medium text-gray-700">API URL</label>
                                 <input 
                                     type="url" 
                                     id="base_api_url" 
@@ -212,9 +208,8 @@
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <!-- API Key Eingabe für Kassen-API -->
                             <div class="mb-4">
-                                <label for="base_api_key" class="block text-sm font-medium text-gray-700">Base-API Schlüssel</label>
+                                <label for="base_api_key" class="block text-sm font-medium text-gray-700">API Schlüssel</label>
                                 <input 
                                     type="text" 
                                     id="base_api_key" 
@@ -240,29 +235,49 @@
                             </div>
                         </x-slot>
                     </x-settings-collapse>
-                    <!-- API-Keys Verwaltung -->
                     <x-settings-collapse>
-                        <x-slot name="trigger">API-Schlüssel verwalten</x-slot>
+                        <x-slot name="trigger">
+                            CBW UVS API
+                        </x-slot>
                         <x-slot name="content">
                             <div class="mb-4">
-                                <x-button 
-                                    wire:click="generateApiKey" 
-                                    class="bg-blue-500 text-white py-1 px-2 rounded hover:bg-blue-600">
-                                    Neuen API-Schlüssel generieren
-                                </x-button>
+                                <label for="uvs_api_url" class="block text-sm font-medium text-gray-700">API URL</label>
+                                <input 
+                                    type="url" 
+                                    id="uvs_api_url" 
+                                    wire:model="apiSettings.uvs_api_url" 
+                                    class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                                    required
+                                >
+                                @error('apiSettings.uvs_api_url')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
-                            <ul>
-                                @foreach ($apiKeys as $key => $value)
-                                    <li class="flex items-center justify-between mb-2 bg-white  px-2 py-1 rounded">
-                                        <span class="text-sm font-mono">{{ $value }}</span>
-                                        <button 
-                                            wire:click="deleteApiKey('{{ $key }}')" 
-                                            class="text-red-500 hover:underline">
-                                            Löschen
-                                        </button>
-                                    </li>
-                                @endforeach
-                            </ul>
+                            <div class="mb-4">
+                                <label for="uvs_api_key" class="block text-sm font-medium text-gray-700">API Schlüssel</label>
+                                <input 
+                                    type="text" 
+                                    id="uvs_api_key" 
+                                    wire:model="apiSettings.uvs_api_key" 
+                                    class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                                    required
+                                >
+                                @error('apiSettings.uvs_api_key')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <x-action-message class="me-3" on="saveApiSettings">
+                                    {{ __('Gespeichert.') }}
+                                </x-action-message>
+                                <!-- Speichern Button -->
+                                <button 
+                                    wire:click="saveApiSettings" 
+                                    class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+                                >
+                                    speichern
+                                </button>
+                            </div>
                         </x-slot>
                     </x-settings-collapse>
                 </div>

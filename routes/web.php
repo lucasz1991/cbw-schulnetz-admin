@@ -42,13 +42,13 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/rating-structure', Index::class)->name('admin.ratingstructure.index');
         Route::get('/adminmessages', AdminMessageBox::class)->name('admin.messages');
          
-        Route::get('/exports', Exports::class)->name('admin.exports'); 
+        //Route::get('/exports', Exports::class)->name('admin.exports'); 
         Route::get('/users', Users::class)->name('admin.users'); 
         Route::get('/admin/safety', Safety::class)->name('admin.safety');
         Route::get('/admin/employees', Employees::class)->name('admin.employees');
         Route::get('/admin/mails', MailManagement::class)->name('admin.mails');
         Route::get('/admin/user/{userId}', UserProfile::class)->name('admin.user-profile');
-        Route::get('/admin/contacts', ManageContacts::class)->name('admin.contacts');
+        //Route::get('/admin/contacts', ManageContacts::class)->name('admin.contacts');
         Route::get('/admin/cms/edit-project/{projectId?}', EditProject::class)->name('admin.cms.edit-project');
 
         Route::get('/courses', CourseList::class)->name('courses.index');
