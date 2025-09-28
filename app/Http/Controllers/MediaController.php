@@ -22,15 +22,26 @@ class MediaController extends Controller
     {
         $request->validate([
             'file' => 'required|max:40960',
+            'folder' => 'nullable|string',
+            'visibility' => 'nullable|in:public,private',
         ]);
 
         $file = $request->file('file');
 
         $response = Http::attach(
-            'file', file_get_contents($file->getRealPath()), $file->getClientOriginalName()
+            'file', 
+            file_get_contents($file->getRealPath()), 
+            $file->getClientOriginalName()
         )->withHeaders([
             'X-API-KEY' => $this->apiSettings['base_api_key'],
-        ])->withoutVerifying()->post($this->apiSettings['base_api_url'] . '/api/admin/upload');
+        ])->withoutVerifying()->post(
+            $this->apiSettings['base_api_url'] . '/api/admin/upload',
+            [
+                'folder'     => $request->input('folder'),
+                'visibility' => $request->input('visibility'),
+            ]
+        );
+
 
         if ($response->successful()) {
             return response()->json($response->json());

@@ -27,7 +27,7 @@
     <div class="space-y-8">
         <x-settings-collapse>
             <x-slot name="trigger">
-                Shop Details
+                Applikation Details
             </x-slot>
             <x-slot name="content">
                 <!-- Allgemeine Einstellungen -->
@@ -38,25 +38,15 @@
                         @error('companyName') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Shop-Name</label>
-                        <input type="text" wire:model.live="shopName" @change="changed = true" class="border rounded px-4 py-2 w-full">
-                        @error('shopName') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        <label class="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" wire:model.live="appName" @change="changed = true" class="border rounded px-4 py-2 w-full">
+                        @error('appName') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Kontakt E-Mail</label>
                         <input type="email" wire:model.live="contactEmail" @change="changed = true" class="border rounded px-4 py-2 w-full">
                         @error('contactEmail') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Währung</label>
-                        <select wire:model.live="currency" @change="changed = true" class="border bg-white rounded px-4 py-2 w-full">
-                            <option value="EUR">Euro (€)</option>
-                            <option value="USD">US-Dollar ($)</option>
-                            <option value="GBP">Britisches Pfund (£)</option>
-                        </select>
-                        @error('currency') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
@@ -69,11 +59,6 @@
                         @error('timezone') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Mehrwertsteuer (%)</label>
-                        <input type="number" wire:model.live="vatRate" @change="changed = true" class="border rounded px-4 py-2 w-full" min="0" max="100">
-                        @error('vatRate') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                    </div>
                 </div>
             </x-slot>
         </x-settings-collapse>

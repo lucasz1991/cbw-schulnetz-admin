@@ -107,7 +107,7 @@
     </div>
     <div class="grid grid-cols-12 bg-gray-100 p-2 font-semibold text-gray-700 border-b border-gray-300">
       
-            <div class="col-span-5 flex items-center">
+        <div class="col-span-5 flex items-center">
             <x-button 
                 wire:click="toggleSelectAll" 
                 class="btn-xs mr-3"
@@ -158,8 +158,8 @@
     <div>
         @foreach ($users as $user)
             <div class="grid grid-cols-12 items-center p-2 border text-left hover:bg-blue-100 text-sm">
-                
-                <div class="col-span-5 font-bold pl-1 cursor-pointer"  wire:click="toggleUserSelection({{ $user->id }})">
+
+                <div class="col-span-5 font-bold pl-1 cursor-pointer flex items-center justify-between"  wire:click="toggleUserSelection({{ $user->id }})">
                     <div class="flex items-center space-x-4">
                         <img     class="h-10 w-10 rounded-full object-cover transition-all duration-300 {{ in_array($user->id, $selectedUsers) ? 'ring-4 ring-green-300' : '' }}" 
                         src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" />
@@ -168,9 +168,12 @@
                                 {{ $user->name }}
                             </div>
                             <div class="text-xs text-gray-400">
-                                {{ $user->customer->first_name ?? 'Vorname' }} {{ $user->customer->last_name ?? 'Nachname' }}
+                                {{ $user->person->vorname ?? 'Vorname' }} {{ $user->person->nachname ?? 'Nachname' }}
                             </div>
                         </div>                    
+                    </div>
+                    <div class="mx-5  text-gray-600 text-xs px-2 py-0.5 rounded-full {{ ucfirst($user->role) == 'Tutor' ? 'bg-blue-100' : 'bg-green-100' }}">
+                        <span class="text-xs font-normal {{ ucfirst($user->role) == 'Tutor' ? 'text-blue-600' : 'text-green-600' }}">{{ ucfirst($user->role) == 'Tutor' ? 'Mitarbeiter' : 'Teilnehmer' }}</span>
                     </div>
                 </div>
                 <div class="col-span-4 cursor-pointer flex items-center space-x-2" wire:click="toggleUserSelection({{ $user->id }})">

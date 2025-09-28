@@ -127,7 +127,7 @@
     @endif
 
 <!-- X-Dialog-Modal für Erstellen/Bearbeiten -->
-<x-dialog-modal wire:model="modalOpen">
+<x-dialog-modal wire:model="modalOpen" wire:loading.class="opacity-50 cursor-wait pointer-events-none">
     <x-slot name="title">
         <div class="flex justify-between items-center">
             <span>{{ $editingId ? 'Seite bearbeiten' : 'Neue Seite erstellen' }}</span>
@@ -151,7 +151,7 @@
     </x-slot>
 
     <x-slot name="content">
-        <div class="space-y-4">
+        <div class="space-y-4" >
             <!-- Titel & Slug nebeneinander -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -222,24 +222,95 @@
                             </div>
                             <div x-data="{ showFileInput: false }">
                                 <label class="block text-sm font-medium">Header-Hintergrundbild</label>
-                                
-                                <!-- Button / Bild für das Öffnen der Datei-Auswahl -->
-                                <button @click="showFileInput = !showFileInput"
-                                        class="border rounded p-2 bg-white flex items-center justify-center  w-full aspect-video mt-2">
-                                    @if($header_image)
-                                        <img src="{{ asset('storage/' . $header_image) }}" class="w-full h-full object-cover object-center rounded border">
-                                    @else
-                                        <span class="text-gray-400 text-xs">Kein Bild vorhanden</span>
+                                <div class="relative ">
+                                    @if($header_image_url)
+                                        <button wire:click="removeHeaderImage" 
+                                            type="button"
+                                            class="absolute top-2 right-2 z-50 p-2 rounded-full bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            aria-label="Löschen">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
                                     @endif
-                                </button>
+                                    <button @click="showFileInput = !showFileInput"
+                                            class="border rounded p-2 bg-white flex items-center justify-center  w-full aspect-video mt-2 ">
+                                        @if($header_image_url) 
+                                            <img src="{{ $header_image_url }}" class="w-full h-full object-cover object-center rounded border">
+                                        @else
+                                            <span class="text-gray-400 text-xs">Kein Bild vorhanden</span>
+                                        @endif
+                                    </button>
+                                </div>
 
                                 <!-- Datei-Upload-Feld (versteckt, bis Button geklickt wird) -->
                                 <div x-show="showFileInput" class="mt-2">
                                     <input type="file" wire:model="new_header_image" class="w-full border rounded px-4 py-2">
                                     @if($new_header_image)
-                                        <span class="text-sm text-green-600">Neues Bild ausgewählt</span>
+                                        <div class="mt-2">
+                                            <span class="text-sm text-gray-600">Vorschau:</span>
+                                            <button wire:click="removeNewHeaderImage" class="text-red-500 text-xs ml-2"> x </button>
+                                            <img src="{{ $new_header_image->temporaryUrl() }}" class="w-full h-32 object-cover object-center rounded border mt-1">
+                                        </div>
                                     @endif
                                 </div>
+                                @error('new_header_image') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+
+                                <div class="mt-2"
+                                    x-data="{
+                                        value: @entangle('header_image_positioning'),
+                                        showCustom: false,
+                                    }"
+                                    x-init="showCustom = !/^[A-Za-z]/.test(value || '')"
+                                >
+                                    <label class="block text-sm font-medium">Header-Bild Positionierung</label>
+
+                                    <div>
+                                        <label for="customPositioning" class="flex items-center cursor-pointer mt-2">
+                                            <input
+                                                id="customPositioning"
+                                                type="checkbox"
+                                                class="sr-only peer"
+                                                x-model="showCustom"
+                                                @change="
+                                                    if (showCustom) {
+                                                        if (/^[A-Za-z]/.test(value || '')) value = '';
+                                                    } else {
+                                                        if (!/^[A-Za-z]/.test(value || '')) value = 'center';
+                                                    }
+                                                "
+                                            />
+                                            <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                            <span class="ms-3 text-sm font-medium">Custom</span>
+                                        </label>
+                                    </div>
+
+                                    {{-- Vordefinierte Positionen (nur wenn showCustom = false) --}}
+                                    <select
+                                        x-show="!showCustom"
+                                        x-model="value"
+                                        class="w-full border rounded px-4 py-2 mt-2"
+                                    >
+                                        <option value="center">Zentriert</option>
+                                        <option value="left">Links</option>
+                                        <option value="right">Rechts</option>
+                                        <option value="top left">Links - Oben</option>
+                                        <option value="top right">Rechts - Oben</option>
+                                        <option value="bottom left">Links - Unten</option>
+                                        <option value="bottom right">Rechts - Unten</option>
+                                    </select>
+
+                                    {{-- Freitext (nur wenn showCustom = true) --}}
+                                    <div x-show="showCustom" class="mt-2">
+                                        <input type="text" x-model="value" class="w-full border rounded px-4 py-2"
+                                            placeholder="z. B. 50% 20%">
+                                    </div>
+
+                                    @error('header_image_positioning')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
                             </div>
                         </div>
     
@@ -261,6 +332,11 @@
                 <!-- SEO Settings -->
                 <div x-show="openTab === 'seo'" class="">
                     <div class="space-y-4 bg-gray-100 p-4 rounded-b-lg rounded-se-lg border border-gray-300  z-10">
+                        <div>
+                            <label class="block text-sm font-medium">Meta-Titel</label>
+                            <input type="text" wire:model="meta_title" class="w-full border rounded px-4 py-2 mt-2">
+                            @error('meta_title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
                         <div>
                             <label class="block text-sm font-medium">Meta-Beschreibung</label>
                             <textarea wire:model="meta_description" class="w-full border rounded px-4 py-2 mt-2"></textarea>
@@ -286,6 +362,24 @@
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium">Open Graph Titel</label>
+                            <input type="text" wire:model="og_title" class="w-full border rounded px-4 py-2 mt-2">
+                            @error('og_title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium">Open Graph Beschreibung</label>
+                            <textarea wire:model="og_description" class="w-full border rounded px-4 py-2 mt-2"></textarea>
+                            @error('og_description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium">Benutzerdefinierte Meta-Tags (JSON-Format)</label>
+                            <textarea wire:model="custom_meta" class="w-full border rounded px-4 py-2 font-mono text-sm mt-2" rows="4" placeholder='[{"name": "author", "content": "John Doe"}]'></textarea>
+                            @error('custom_meta') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium">Benutzerdefiniertes CSS</label>
                             <textarea wire:model="custom_css" class="w-full border rounded px-4 py-2 font-mono text-sm mt-2"></textarea>
                             @error('custom_css') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -300,11 +394,23 @@
                 </div>
             </div>
         </div>
+        {{-- Gesamte Fehlerliste unten anzeigen --}}
+        @if ($errors->any())
+            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <div class="font-semibold mb-2">Bitte prüfe die folgenden Punkte:</div>
+                <ul class="list-disc pl-5 space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
     </x-slot>
 
     <x-slot name="footer">
-        <button wire:click="save" class="bg-green-500 text-white px-4 py-2 rounded">Speichern</button>
-        <button wire:click="$set('modalOpen', false)" class="text-gray-500 hover:text-gray-700 px-4 py-2">Abbrechen</button>
+        <button wire:click="save" class="bg-green-500 text-white px-4 py-2 rounded" wire:loading.attr="disabled">Speichern</button>
+        <button wire:click="$set('modalOpen', false)" class="text-gray-500 hover:text-gray-700 px-4 py-2" wire:loading.attr="disabled">Abbrechen</button>
     </x-slot>
 </x-dialog-modal>
 

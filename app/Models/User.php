@@ -158,7 +158,10 @@ class User extends Authenticatable
         $this->notify(new CustomResetPasswordNotification($this, $token));
     }
 
-
+    public function person()
+    {
+        return $this->hasOne(Person::class, 'user_id');
+    }
 
     
     public function hasAccessToInvoice($filename)

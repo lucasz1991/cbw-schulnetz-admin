@@ -181,14 +181,14 @@ class Users extends Component
     public function render()
     {
         $usersList = User::query()
-        ->where('role', 'guest')
+        ->whereIn('role', ['guest', 'tutor'])
         ->where(function($query) {
             $query->where('name', 'like', '%' . $this->search . '%')
                   ->orWhere('email', 'like', '%' . $this->search . '%')
                   ->orWhere('created_at', 'like', '%' . $this->search . '%');
         })
         ->orderBy($this->sortBy, $this->sortDirection)
-        ->paginate(10)
+        ->paginate(10)  
         ->withQueryString()
         ->setPath(url('/admin/users'));
 

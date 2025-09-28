@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 use App\Models\PagebuilderProject;
 use App\Models\User;
+use App\Models\Setting;
 
 class WebPage extends Model
 {
@@ -79,6 +80,18 @@ class WebPage extends Model
     public function editor()
     {
         return $this->belongsTo(User::class, 'last_editor');
+    }
+
+        //  URL zum Bild (oder Fallback)
+    public function getHeaderImageUrlAttribute()
+    {
+        if($this->header_image){
+            $apiUrl = Setting::where('key', 'base_api_url')->value('value');
+        }else{
+            $apiUrl = '';
+        }
+
+        return $this->header_image ? $apiUrl . '/storage/' . $this->header_image : null;
     }
 
     // Beziehung zum Pagebuilder-Projekt

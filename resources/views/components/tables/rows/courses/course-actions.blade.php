@@ -6,16 +6,7 @@
     </x-slot>
 
     <x-slot name="content">
-        {{-- Bearbeiten: Event dispatchen + Dropdown schließen --}}
-        <x-dropdown-link
-            href="#"
-            @click.prevent="
-                $dispatch('open-course-create-edit', { courseId: {{ $item->id }} });
-                $dispatch('close');
-            "
-        >
-            Bearbeiten
-        </x-dropdown-link>
+        
 
         {{-- Details: normale Navigation --}}
         <x-dropdown-link href="">

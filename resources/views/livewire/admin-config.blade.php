@@ -1,7 +1,7 @@
 <div class="" wire:loading.class="cursor-wait">
     <h1 class="text-2xl font-semibold mb-6">Konfiguration</h1>
     <!-- Tabs Navigation -->
-    <div x-data="{ activeTab: 'none' }">
+    <div x-data="{ activeTab: $persist('none') }">
         <div class="border-b mb-6">
             <nav class="-mb-px flex space-x-8">
                 <button 
@@ -18,7 +18,13 @@
                 >
                     Basis
                 </button>
-                
+                <button 
+                    class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
+                    :class="{ 'border-blue-500 text-blue-600': activeTab === 'usersettings', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'usersettings' }"
+                    @click="activeTab = 'usersettings'"
+                >
+                    Benutzer
+                </button>
                 <button 
                     class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                     :class="{ 'border-blue-500 text-blue-600': activeTab === 'mails', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'mails' }"
@@ -85,7 +91,10 @@
             <div x-show="activeTab === 'basis'" x-cloak class="space-y-10" x-collapse.duration.400ms>
                 @livewire('admin.config.basic-settings')
             </div>
-
+            <!-- Benutzer Tab -->
+            <div x-show="activeTab === 'usersettings'" x-cloak class="space-y-10" x-collapse.duration.400ms>
+                @livewire('admin.config.user-settings')
+            </div>
                 <!-- Mails Tab -->
                 <div x-show="activeTab === 'mails'" x-cloak class="space-y-10" x-collapse.duration.400ms>
                 <h2 class="text-2xl font-semibold">Mails</h2>

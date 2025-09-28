@@ -120,6 +120,17 @@ class UserProfile extends Component
         // Modal zurücksetzen
         $this->resetMailModal();
     }
+
+    public function uvsApiUpdate()
+    {
+        if ($this->user && $this->user->person) {
+            $this->user->person->apiupdate();
+            $this->dispatch('showAlert', 'UVS-Daten wurden aktualisiert.', 'success');
+            $this->loadUser(); // Benutzer neu laden, um aktualisierte Personendaten zu erhalten
+        } else {
+            $this->dispatch('showAlert', 'Benutzer oder Person nicht gefunden.', 'error');
+        }
+    }
     
 
     public function render()
