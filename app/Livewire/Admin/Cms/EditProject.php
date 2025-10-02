@@ -11,7 +11,7 @@ class EditProject extends Component
 {
     public $projectId;
     public $project;
-    public $grapejsSetting;
+    public $grapejsLicenseKey;
 
     public $editModalOpen = false;
     public $projectName;
@@ -24,7 +24,9 @@ class EditProject extends Component
     // Lädt das Projekt, wenn die Komponente initialisiert wird
     public function mount($projectId = null)
     {
-        $this->grapejsSetting = Setting::where('type', 'api-grapejs')->first()->value ?? false;
+        $this->grapejsLicenseKey = Setting::getValue('grapesjs', 'api_key') ?? false;
+        $this->baseApiUrl = Setting::where('key', 'base_api_url')->value('value') ?? null;
+
         if ($projectId){
             $this->projectId = $projectId;
             $this->project = PagebuilderProject::findOrFail($this->projectId);
@@ -52,7 +54,8 @@ class EditProject extends Component
     {
         return view('livewire.admin.cms.edit-project', [
             'project' => $this->project,
-            'grapejsSetting' => $this->grapejsSetting,
+            'grapejsLicenseKey' => $this->grapejsLicenseKey,
+            'baseApiUrl' => $this->baseApiUrl,
         ])->layout('layouts.master');
     }
 }

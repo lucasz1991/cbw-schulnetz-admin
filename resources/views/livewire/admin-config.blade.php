@@ -289,6 +289,7 @@
                             </div>
                         </x-slot>
                     </x-settings-collapse>
+                    @livewire('admin.config.grapes-js-settings')
                 </div>
             </div>
         </div>

@@ -29,11 +29,14 @@
             {{ session('message') }}
         </div>
     @endif
-    @if($grapejsSetting)
+    @if($grapejsLicenseKey)
         <div 
             x-effect="setTimeout(() => {initGrapesJs();}, 300)"
             id="studio-editor"
             data-project="{{ $project->id }}"
+            data-license="{{ $grapejsLicenseKey }}"
+            data-api-url="{{ $baseApiUrl }}"
+
             style="height: 80vh"
             wire:ignore
         >
