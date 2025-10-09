@@ -60,6 +60,16 @@
                         <span data-key="t-users">Kurse</span>
                     </a>
                 </li>
+
+                
+                <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Dev Tests</li>
+
+                <li>
+                    <a href="{{ route('admin.tests.api') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                        <i data-feather="tool" fill="#545a6d33"></i>
+                        <span data-key="t-tools">Api Tests</span>
+                    </a>
+                </li>
             </ul>
         </div>
         <!-- Sidebar -->

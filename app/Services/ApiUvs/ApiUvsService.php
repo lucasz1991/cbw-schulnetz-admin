@@ -56,7 +56,7 @@ class ApiUvsService
         ]);
     }
 
-    /** Kurse/Klassen suchen (entspricht GET /api/course-classes) */
+        /** Kurse/Klassen suchen (entspricht GET /api/course-classes) */
     public function getCourseClasses(
         ?string $search = null,
         ?int $limit = null,
@@ -96,10 +96,17 @@ class ApiUvsService
 
 
     /** Teilnehmer einer Klasse laden (entspricht GET /api/course-classes/participants) */
-    public function getCourseClassParticipants(int $courseClassId): array
+    public function getCourseClassParticipants(string $courseClassId): array
     {
         return $this->request('GET', '/api/course-classes/participants', [], [
             'course_class_id' => $courseClassId,
+        ]);
+    }
+
+    public function getCourseByKlassenId(string $klassenId): array
+    {
+        return $this->request('GET', '/api/course/coursebyklassenid', [], [
+            'klassen_id' => $klassenId,
         ]);
     }
 

@@ -79,7 +79,7 @@
 
     {{-- Rows --}}
     @forelse($items as $item)
-    <div class="relative border-b py-2 text-sm md:px-2">
+    <div class="relative border-b py-2 text-sm md:px-2 hover:bg-blue-50">
         <div class="grid items-center" style="grid-template-columns: {{ $gridTemplate }} min-content;">
         {{-- Zellen --}}
         @if($rowView)

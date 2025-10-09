@@ -103,6 +103,8 @@ class CourseDay extends Model
             'excused'            => false,
             'note'               => null,
             'timestamps'         => ['in' => null, 'out' => null],
+            'created_at'         => null,
+            'updated_at'         => null,
         ];
 
         $byParticipant = function () use ($day, $emptyRow) {
@@ -121,32 +123,89 @@ class CourseDay extends Model
         };
 
         return [
-            'start'   => ['participants' => $byParticipant()],
-            'end' => ['participants' => $byParticipant()],
+            'participants' => $byParticipant(),
+            'status' => [
+                'start' => 0,
+                'end' => 0,
+                'created_at' => null,
+                'updated_at' => null,
+            ],
         ];
     }
 
     /**
-     * Helper: Attendance für einen Teilnehmer/Session updaten.
+     * Attendance für einen Teilnehmer gemäß Default-Struktur updaten.
+     *
+     * Erwartete Keys in $data (alle optional):
+     * - present (bool)
+     * - late_minutes (int)
+     * - left_early_minutes (int)
+     * - excused (bool)
+     * - note (string|null)
+     * - timestamps => ['in' => datetime|null, 'out' => datetime|null]
      */
-    public function setAttendance(int $participantId, string $sessionKey, array $data): void
+    public function setAttendance(int $participantId, array $data): void
     {
-        $sessions = $this->attendance_data ?? [];
-        $sessions[$sessionKey]['participants'] = $sessions[$sessionKey]['participants'] ?? [];
+        $att = $this->attendance_data ?? [];
 
-        $current = $sessions[$sessionKey]['participants'][$participantId] ?? [
+        // Container sicherstellen
+        if (!isset($att['participants']) || !is_array($att['participants'])) {
+            $att['participants'] = [];
+        }
+        if (!isset($att['status']) || !is_array($att['status'])) {
+            $att['status'] = [
+                'start' => 0,
+                'end' => 0,
+                'created_at' => null,
+                'updated_at' => null,
+            ];
+        }
+
+        // Default-Zeile
+        $defaultRow = [
             'present'            => false,
             'late_minutes'       => 0,
             'left_early_minutes' => 0,
             'excused'            => false,
             'note'               => null,
             'timestamps'         => ['in' => null, 'out' => null],
+            'created_at'         => null,
+            'updated_at'         => null,
         ];
 
-        $sessions[$sessionKey]['participants'][$participantId] = array_merge($current, $data);
+        // Aktuelle Zeile oder Default
+        $row = $att['participants'][$participantId] ?? $defaultRow;
 
-        $this->attendance_data = $sessions;
+        // Timestamps nested mergen (nicht platt überbügeln)
+        if (isset($data['timestamps']) && is_array($data['timestamps'])) {
+            $row['timestamps'] = array_merge($row['timestamps'] ?? ['in' => null, 'out' => null], $data['timestamps']);
+            unset($data['timestamps']);
+        }
+
+        // Restliche Felder mergen
+        $row = array_merge($row, $data);
+
+        // Touch created/updated
+        $now = now()->toDateTimeString();
+        if (empty($row['created_at'])) {
+            $row['created_at'] = $now;
+        }
+        $row['updated_at'] = $now;
+
+        // Speichern in Struktur
+        $att['participants'][$participantId] = $row;
+
+        // Status-Updated timestamp pflegen (Zähler start/end lässt du nach Bedarf unverändert)
+        $att['status']['updated_at'] = $now;
+
+        if ($att['status']['start'] == 0) {
+            $att['status']['start'] = 1; // status auf 1 setzen für 'in bearbeitung'
+        }
+
+        $this->attendance_data = $att;
+        $this->save();
     }
+
 
     public function getSessions()
     {
@@ -155,6 +214,45 @@ class CourseDay extends Model
                 return new Fluent(array_merge(['id' => $key], $session));
             });
 
+    }
+
+    /** Notes lesen für eine Session-ID */
+    public function getSessionNotes(string|int $sessionId): ?string
+    {
+        return data_get($this->day_sessions, [(string)$sessionId, 'notes']);
+    }
+
+    /** Notes setzen + in day_sessions JSON zurückschreiben */
+    public function setSessionNotes(string|int $sessionId, ?string $notes): void
+    {
+        $data = $this->day_sessions ?? [];
+        $sid = (string)$sessionId;
+        $data[$sid] = array_merge([
+            'label' => null, 'start' => null, 'end' => null, 'break' => null,
+            'room' => null, 'topic' => null, 'notes' => null,
+        ], $data[$sid] ?? []);
+        $data[$sid]['notes'] = $notes;
+        $this->day_sessions = $data; // <- wichtig: Feld am Model setzen
+        $this->save(); // Speichern, damit Änderungen persistiert werden
+    }
+
+    /** Topic lesen für eine Session-ID */
+    public function getSessionTopic(string|int $sessionId): ?string
+    {
+        return data_get($this->day_sessions, [(string)$sessionId, 'topic']);
+    }
+
+    public function setSessionTopic(string|int $sessionId, ?string $topic): void
+    {
+        $data = $this->day_sessions ?? [];
+        $sid = (string)$sessionId;
+        $data[$sid] = array_merge([
+            'label' => null, 'start' => null, 'end' => null, 'break' => null,
+            'room' => null, 'topic' => null, 'notes' => null,
+        ], $data[$sid] ?? []);
+        $data[$sid]['topic'] = $topic;
+        $this->day_sessions = $data; // <- wichtig: Feld am Model setzen
+        $this->save(); // Speichern, damit Änderungen persistiert werden
     }
 
     public function getAttendanceData()

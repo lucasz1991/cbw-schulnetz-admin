@@ -6,19 +6,8 @@
     </x-slot>
 
     <x-slot name="content">
-        {{-- Bearbeiten: Event dispatchen + Dropdown schließen --}}
-        <x-dropdown-link
-            href="#"
-            @click.prevent="
-                $dispatch('open-course-create-edit', { courseId: {{ $item->id }} });
-                $dispatch('close');
-            "
-        >
-            Bearbeiten
-        </x-dropdown-link>
-
         {{-- Details: normale Navigation --}}
-        <x-dropdown-link href="">
+        <x-dropdown-link href="{{ route('admin.courses.show', $item) }}" >
             Details
         </x-dropdown-link>
     </x-slot>

@@ -16,9 +16,12 @@ use App\Livewire\Admin\UserProfile;
 use App\Livewire\Admin\ManageContacts;
 use App\Livewire\Admin\Cms\EditProject;
 use App\Livewire\Admin\Courses\CourseList;
+use App\Livewire\Admin\Courses\CourseShow;
 
 
 use App\Http\Controllers\PagebuilderProjectController;
+
+use App\Livewire\Admin\Tests\ApiTests;
 
 
 
@@ -53,10 +56,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
 
         Route::get('/courses', CourseList::class)->name('courses.index');
 
+        Route::get('/admin/courses/{course}', CourseShow::class)->name('admin.courses.show');
+
 
         Route::post('/admin/pagebuilder/save', [PagebuilderProjectController::class, 'save']);
         Route::get('/admin/pagebuilder/load/{name}', [PagebuilderProjectController::class, 'load']);
         Route::post('/admin/pagebuilder/upload', [PagebuilderProjectController::class, 'uploadImage']);
         Route::get('/admin/pagebuilder/assets', [PagebuilderProjectController::class, 'getAssets']);
+
+        Route::get('/admin/tests/api', ApiTests::class)->name('admin.tests.api');
     });
 });

@@ -1,43 +1,11 @@
 <div  x-data="{ selectedTab: $persist('userDetails') }">
-  <!-- Header-Bild -->
-  <div class="rounded-t-lg h-32 overflow-hidden bg-gray-200 relative">
-        <!-- Status Badge (links oben) -->
-        <div class="absolute top-2 left-2 px-3 py-1 rounded-full text-xs font-semibold text-white" 
-             :class="{ 'bg-green-500': {{ $user->isActive() ? 'true' : 'false' }}, 'bg-red-500': {{ !$user->isActive() ? 'true' : 'false' }} }">
-            {{ $user->isActive() ? 'Aktiv' : 'Inaktiv' }}
-        </div>
-
-        <!-- Erstellungsdatum Badge (rechts oben) -->
-        <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-700 text-white">
-            Registriert: {{ $user->created_at->format('d.m.Y') }}
-        </div>
-    </div>
-
-    <!-- Profilbild -->
-    <div class="mx-auto w-32 h-32 relative -mt-16 border-4 border-white rounded-full overflow-hidden">
-        <img 
-            class="object-cover object-center h-32  aspect-square" 
-            src="{{ $user->profile_photo_url ?? 'https://via.placeholder.com/150' }}" 
-            alt="{{ $user->name }}"
-        >
-    </div>
-
-    <!-- Benutzerdetails -->
-    <div class="text-center mt-2">
-        <h2 class="font-semibold text-lg">{{ $user->name }}</h2>
-    </div>
-
-
-
-    <!-- Weitere Aktionen -->
-    <div class="p-4 border-t mt-2 flex flex-wrap justify-end gap-4">
-        
-
-        <!-- Weitere Optionen mit Dropdown -->
+    <div class="mb-4 flex justify-between items-center" >
+        <x-back-button />
+                <!-- Weitere Optionen mit Dropdown -->
         <div x-data="{ open: false }" class="relative">
             <x-button 
                 @click="open = !open" 
-                class=""
+                class="btn-xs"
             >
                 Optionen
             </x-button>
@@ -47,7 +15,7 @@
                 x-show="open" 
                 @click.away="open = false" 
                 x-cloak 
-                class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg"
+                class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-40"
             >
                 <ul>
                     <li>
@@ -73,6 +41,42 @@
             </div>
         </div>
     </div>
+  <!-- Header-Bild -->
+  <div class="rounded-t-lg h-32 overflow-hidden bg-gray-200 relative">
+        <!-- Status Badge (links oben) -->
+        <div class="absolute top-2 left-2 px-3 py-1 rounded-full text-xs font-semibold text-white" 
+             :class="{ 'bg-green-500': {{ $user->isActive() ? 'true' : 'false' }}, 'bg-red-500': {{ !$user->isActive() ? 'true' : 'false' }} }">
+            {{ $user->isActive() ? 'Aktiv' : 'Inaktiv' }}
+        </div>
+
+        <!-- Erstellungsdatum Badge (rechts oben) -->
+        <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-700 text-white">
+            Registriert: {{ $user->created_at->format('d.m.Y') }}
+        </div>
+    </div>
+
+    <!-- Profilbild -->
+    <div class="mx-auto w-32 h-32 relative -mt-16 border-4 border-white rounded-full overflow-hidden">
+        <img 
+            class="object-cover object-center h-32  aspect-square" 
+            src="{{ $user->profile_photo_url ?? 'https://via.placeholder.com/150' }}" 
+            alt="{{ $user->name }}"
+        >
+    </div>
+
+    <!-- Benutzerdetails -->
+    <div class="text-center mt-2 mb-6">
+        <h2 class="font-semibold text-lg">{{ $user->name }}</h2>
+        <!-- Role Badge  -->
+        <div class="mt-4 w-max mx-auto px-3 py-1 rounded-full text-xs font-semibold "  x-cloak
+             :class="{ 'text-green-600 bg-green-100': {{ $user->role == 'guest'  ? 'true' : 'false' }}, 'text-blue-600 bg-blue-100': {{ $user->role == 'tutor' ? 'true' : 'false' }} }">
+            {{ $user->role == 'tutor' ? 'Mitarbeiter' : 'Teilnehmer' }}
+        </div>
+    </div>
+
+
+
+
 <!-- Tab-Menü -->
 <ul class="flex w-full text-sm font-medium text-center text-gray-500 bg-gray-100 rounded-lg shadow divide-gray-200">
         <!-- Details Tab -->
