@@ -21,7 +21,7 @@ use App\Livewire\Admin\Courses\CourseShow;
 
 use App\Http\Controllers\PagebuilderProjectController;
 
-use App\Livewire\Admin\Tests\ApiTests;
+//use App\Livewire\Admin\Tests\ApiTests;
 
 
 
@@ -64,6 +64,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::post('/admin/pagebuilder/upload', [PagebuilderProjectController::class, 'uploadImage']);
         Route::get('/admin/pagebuilder/assets', [PagebuilderProjectController::class, 'getAssets']);
 
-        Route::get('/admin/tests/api', ApiTests::class)->name('admin.tests.api');
+        //Route::get('/admin/tests/api', ApiTests::class)->name('admin.tests.api');
     });
 });
