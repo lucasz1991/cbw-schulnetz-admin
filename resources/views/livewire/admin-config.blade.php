@@ -138,21 +138,33 @@
                                 <strong>Hinweis:</strong> Wähle aus, welche automatischen Benachrichtigungen an den Admin gesendet werden sollen.
                             </div>
                             <!-- Checkboxen für Admin Mails -->
-                            <div class="space-y-3">
-                                @foreach ($adminEmailNotifications as $key => $value)
-                                    <div class="flex items-center">
-                                        <input 
-                                            type="checkbox" 
-                                            id="admin_mail_{{ $key }}" 
-                                            wire:model="adminEmailNotifications.{{ $key }}" 
-                                            class="mr-2"
-                                        >
-                                        <label for="admin_mail_{{ $key }}" class="text-sm font-medium text-gray-700">
-                                            {{ __("mails.admin.$key") }}
-                                        </label>
+                            <div class="space-y-4">
+                            @foreach($adminEmailNotificationMeta as $key => $meta)
+                                <div class="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                                <div class="flex flex-col">
+                                    <span class="font-medium text-gray-800">{{ $meta['label'] }}</span>
+                                    <span class="text-sm text-gray-500">{{ $meta['description'] }}</span>
+                                </div>
+
+                                <label for="admin_notif_{{ $key }}" class="relative inline-flex items-center cursor-pointer ml-4">
+                                    <input
+                                    id="admin_notif_{{ $key }}"
+                                    type="checkbox"
+                                    wire:model="adminEmailNotifications.{{ $key }}"
+                                    class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300
+                                                dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700
+                                                peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full
+                                                peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px]
+                                                after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                                                after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
                                     </div>
-                                @endforeach
+                                </label>
+                                </div>
+                            @endforeach
                             </div>
+
+
                             <!-- Speichern Button -->
                             <button 
                                 wire:click="saveAdminMailSettings" 
@@ -172,21 +184,37 @@
                                 <strong>Hinweis:</strong> Wähle aus, welche automatischen E-Mails an Benutzer gesendet werden sollen.
                             </div>
                             <!-- Checkboxen für Benutzer Mails -->
-                            <div class="space-y-3">
-                                @foreach ($userEmailNotifications as $key => $value)
-                                    <div class="flex items-center">
+                                <div class="space-y-4">
+                                @foreach($userEmailNotificationMeta as $key => $meta)
+                                    <div class="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                                    <div class="flex flex-col">
+                                        <span class="font-medium text-gray-800">{{ $meta['label'] }}</span>
+                                        <span class="text-sm text-gray-500">{{ $meta['description'] }}</span>
+                                    </div>
+
+                                    <label for="notif_{{ $key }}" class="relative inline-flex items-center cursor-pointer ml-4">
                                         <input 
-                                            type="checkbox" 
-                                            id="user_mail_{{ $key }}" 
-                                            wire:model="userEmailNotifications.{{ $key }}" 
-                                            class="mr-2"
+                                        id="notif_{{ $key }}" 
+                                        type="checkbox" 
+                                        wire:model="userEmailNotifications.{{ $key }}"
+                                        class="sr-only peer"
                                         >
-                                        <label for="user_mail_{{ $key }}" class="text-sm font-medium text-gray-700">
-                                            {{ __("mails.user.$key") }}
-                                        </label>
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 
+                                                    dark:peer-focus:ring-blue-800 rounded-full peer 
+                                                    dark:bg-gray-700 
+                                                    peer-checked:after:translate-x-full 
+                                                    rtl:peer-checked:after:-translate-x-full 
+                                                    peer-checked:after:border-white 
+                                                    after:content-[''] after:absolute after:top-[2px] after:start-[2px] 
+                                                    after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 
+                                                    after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                                        </div>
+                                    </label>
                                     </div>
                                 @endforeach
-                            </div>
+                                </div>
+
+
                             <!-- Speichern Button -->
                             <button 
                                 wire:click="saveUserMailSettings" 

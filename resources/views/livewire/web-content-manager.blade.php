@@ -1,7 +1,5 @@
 <div x-data="{ selectedTab: $persist('webpages').using(sessionStorage) }" class="w-full">
-    <!-- Tab-Menü -->
     <ul class="flex w-max text-sm font-medium text-center text-gray-500 bg-gray-100 border border-gray-200 rounded-lg shadow divide-gray-200 overflow-hidden">
-        <!-- webpages Tab -->
         <li class="border-l border-gray-200">
             <button 
                 @click="selectedTab = 'webpages'" 
@@ -11,7 +9,6 @@
                 Seiten 
             </button>
         </li>
-        <!-- Module Tab -->
         <li class="border-l border-gray-200">
             <button 
                 @click="selectedTab = 'module'" 
@@ -21,7 +18,6 @@
                 Module
             </button>
         </li>
-        <!-- FAQ Tab -->
         <li class="border-l border-gray-200">
             <button 
                 @click="selectedTab = 'faq'" 
@@ -31,7 +27,6 @@
                 FAQ's
             </button>
         </li>
-        <!-- Ai Assist -->
         <li class="border-l border-gray-200">
             <button 
                 @click="selectedTab = 'tools'" 
@@ -42,26 +37,23 @@
             </button>
         </li>
     </ul>
-    <!-- Erfolgsmeldung -->
+
     @if (session()->has('message'))
         <div class="bg-green-100 text-green-700 p-4 rounded my-6">
             {{ session('message') }}
         </div>
     @endif
-    <!-- Inhalt der Tabs -->
+
     <div class="mt-6">
         <div x-show="selectedTab === 'webpages'" x-cloak>
             <livewire:admin.cms.webpages.webpages-list lazy />
         </div>
-        <!-- Module Inhalt -->
         <div x-show="selectedTab === 'module'" x-cloak>
             <livewire:admin.cms.projekt-list  />
         </div>
-        <!-- FAQ Inhalt -->
         <div x-show="selectedTab === 'faq'" x-cloak>
             <livewire:admin.cms.web-content.faq-list lazy />
         </div>
-        <!-- tools Inhalt -->
         <div x-show="selectedTab === 'tools'" x-cloak>
             <h1 class=" text-lg px-2 py-1 w-max mb-10">
                 <span class="w-max">Tool's</span>

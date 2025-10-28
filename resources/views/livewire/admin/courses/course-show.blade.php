@@ -1,5 +1,4 @@
 <div class="px-4 py-4 space-y-6">
-    {{-- Header --}}
     <div class="flex items-start justify-between gap-4">
         <div>
             <h1 class="text-xl font-semibold">{{ $course->title ?? 'Kurs' }}</h1>
@@ -20,8 +19,6 @@
                     –
                     {{ optional($course->planned_end_date)->locale('de')->isoFormat('ll') ?? '—' }}
                 </span>
-
-                {{-- Status --}}
                 @php
                     $status = $this->status;
                     $badge = match($status) {
@@ -32,8 +29,6 @@
                     };
                 @endphp
                 <span class="px-2 py-0.5 rounded border border-gray-200 {{ $badge['bg'] }} {{ $badge['text'] }}">{{ $badge['label'] }}</span>
-
-                {{-- Aktiv-Flag --}}
                 @if($course->is_active)
                     <span class="px-2 py-0.5 rounded border border-lime-200 bg-lime-50 text-lime-700">aktiv</span>
                 @else
@@ -41,13 +36,11 @@
                 @endif
             </div>
         </div>
-
         <div class="flex items-center gap-2">
             <x-link-button href="{{ url()->previous() }}" class="btn-xs">← Zurück</x-link-button>
         </div>
     </div>
 
-    {{-- Meta-Infos --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
             <div class="text-xs text-neutral-500 mb-1">Tutor</div>
@@ -71,7 +64,6 @@
         </div>
     </div>
 
-    {{-- Beschreibung --}}
     @if($course->description)
         <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
             <div class="text-xs text-neutral-500 mb-2">Beschreibung</div>
@@ -79,7 +71,6 @@
         </div>
     @endif
 
-    {{-- Termine / Days --}}
     <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
         <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-semibold">Unterrichtstage</div>
@@ -105,7 +96,6 @@
         @endif
     </div>
 
-    {{-- Teilnehmerliste (Kurz) --}}
     <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
         <div class="flex items-center justify-between mb-3">
             <div class="text-sm font-semibold">Teilnehmer</div>
