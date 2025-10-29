@@ -53,72 +53,18 @@ class UserProfile extends Component
         $this->loadUser();
     }
 
-    public function openMailModal()
+    public function openMailModal($userId = null)
     {
-        // Prüfen, ob der Benutzer vorhanden ist
-        if (!$this->user) {
-            $this->dispatch('showAlert', 'Benutzer nicht gefunden.', 'error');
-            return;
-        }
-    
-        $this->mailUserId = $this->user->id;
-        $this->showMailModal = true;
-    }
-    
-    public function resetMailModal()
-    {
-        $this->showMailModal = false;
-        $this->mailUserId = null;
-        $this->mailSubject = '';
-        $this->mailHeader = '';
-        $this->mailBody = '';
-        $this->mailLink = '';
-    }
-    
-    public function sendMail()
-    {
-        // Validierung mit individuellen Fehlermeldungen
-        $this->validate([
-            'mailSubject' => 'required|string|max:255',
-            'mailHeader' => 'required|string|max:255',
-            'mailBody' => 'required|string',
-        ], [
-            'mailSubject.required' => 'Bitte geben Sie einen Betreff ein.',
-            'mailSubject.max' => 'Der Betreff darf maximal 255 Zeichen lang sein.',
-            'mailHeader.required' => 'Bitte geben Sie eine Überschrift ein.',
-            'mailHeader.max' => 'Die Überschrift darf maximal 255 Zeichen lang sein.',
-            'mailBody.required' => 'Bitte geben Sie eine Nachricht ein.',
-        ]);
-    
-        // Inhalte für die Datenbank vorbereiten
-        $content = [
-            'subject' => $this->mailSubject,
-            'header' => $this->mailHeader,
-            'body' => $this->mailBody,
-            'link' => $this->mailLink, // Link kann optional leer sein
-        ];
-    
-        // Mail an den gespeicherten Benutzer senden
-        if ($this->user) {
-            Mail::create([
-                'status' => false,
-                'content' => $content,
-                'recipients' => [
-                    [
-                        'user_id' => $this->user->id,
-                        'email' => $this->user->email,
-                        'status' => false, // Status für den Empfänger
-                    ],
-                ],
-            ]);
-    
-            $this->dispatch('showAlert', 'E-Mail wurde zur Verarbeitung an ' . $this->user->email . ' vorbereitet.', 'success');
+        if ($userId) {
+            $this->dispatch('openMailModal', $userId );
         } else {
-            $this->dispatch('showAlert', 'Benutzer nicht gefunden.', 'error');
+            // Prüfe, ob Benutzer für die Massenverarbeitung ausgewählt wurden
+            if (count($this->selectedUsers) === 0) {
+                $this->dispatch('showAlert', 'Bitte wähle mindestens einen Benutzer aus, um eine Mail zu senden.', 'info');
+                return;
+            }
+            $this->dispatch('openMailModal', $this->selectedUsers );
         }
-    
-        // Modal zurücksetzen
-        $this->resetMailModal();
     }
 
     public function uvsApiUpdate()

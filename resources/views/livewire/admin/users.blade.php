@@ -32,25 +32,23 @@
         </div>
     </div>
     <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <div x-data="{ focused: false }" @click.away="focused = false" x-cloak class="relative">
-            <div class="flex items-center border border-gray-300 rounded-full ring  ring-offset-4 transition-all duration-300"
-                :class="{
-                    'w-[300px]': (focused || search.length > 0),
-                    'w-[40px]': !(focused || search.length > 0),
-                    'ring ring-green-200': (search.length > 0 && hasUsers),
-                    'ring ring-red-200': (search.length > 0 && !hasUsers)
-                }">
-                <input type="text" wire:model.live.debounce.500ms="search" placeholder="Suchen..."
-                    class="w-full px-2 py-1 text-sm focus:ring-none bg-transparent border-none ring-none"
-                    x-ref="searchInput" 
-                    @click="focused = true" 
-                    :class="(focused || search.length > 0) ? 'block' : 'hidden'" />
-                <div @click="focused = true; $refs.searchInput.focus()"
-                    class="flex items-center justify-center w-[40px] h-[40px] text-gray-400 hover:text-gray-500 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.904 192.904" class="h-4 w-4">
-                        <path d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z"></path>
-                    </svg>
-                </div>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            {{-- Suchfeld --}}
+            <x-tables.search-field 
+                resultsCount="{{ $users->count() }}"
+                wire:model.live="search"
+            />
+
+            {{-- 🟢 Status-Filter --}}
+            <div class="relative">
+                <select 
+                    wire:model.live="userTypeFilter"
+                    class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                >
+                    <option value="">alle</option>
+                    <option value="tutor">Mitarbeiter</option>
+                    <option value="guest">Teilnehmer</option>
+                </select>
             </div>
         </div>
         <div class="mt-4 relative" x-data="{ open: false }">
@@ -170,7 +168,12 @@
                             <div class="text-xs text-gray-400">
                                 {{ $user->person->vorname ?? 'Vorname' }} {{ $user->person->nachname ?? 'Nachname' }}
                             </div>
-                        </div>                    
+                        </div>
+                        @if($user->isOnline())
+                            <span class="h-2 w-2 rounded-full bg-green-300" title="Online"></span>
+                        @else
+                            <span class="h-2 w-2 rounded-full bg-red-300" title="Offline"></span>
+                        @endif
                     </div>
                     <div class="mx-5  text-gray-600 text-xs px-2 py-0.5 rounded-full {{ ucfirst($user->role) == 'Tutor' ? 'bg-blue-100' : 'bg-green-100' }}">
                         <span class="text-xs font-normal {{ ucfirst($user->role) == 'Tutor' ? 'text-blue-600' : 'text-green-600' }}">{{ ucfirst($user->role) == 'Tutor' ? 'Mitarbeiter' : 'Teilnehmer' }}</span>

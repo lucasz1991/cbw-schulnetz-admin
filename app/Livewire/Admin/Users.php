@@ -25,10 +25,16 @@ class Users extends Component
     public $action = null; 
     public $hasUsers;
 
+    public $userTypeFilter = '';
 
-    protected $queryString = ['search', 'sortBy', 'sortDirection'];
+    protected $queryString = ['search', 'sortBy', 'sortDirection', 'userTypeFilter'];
 
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingUserTypeFilter()
     {
         $this->resetPage();
     }
@@ -181,6 +187,9 @@ class Users extends Component
     public function render()
     {
         $usersList = User::query()
+        ->when($this->userTypeFilter, fn($query) =>
+            $query->where('role', $this->userTypeFilter)
+        )
         ->whereIn('role', ['guest', 'tutor'])
         ->where(function($query) {
             $query->where('name', 'like', '%' . $this->search . '%')

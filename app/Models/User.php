@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Activitylog\Models\Activity;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
@@ -175,5 +176,23 @@ class User extends Authenticatable
         }
 
         return false; // Zugriff verweigern, wenn der Dateiname nicht das richtige Format hat
+    }
+
+    /**
+     * Activities, die dieser User ausgelöst hat (Spatie Activitylog).
+     */
+    public function activities()
+    {
+        return $this->morphMany(Activity::class, 'causer');
+    }
+    
+    /**
+     * Ist der User "online"? (= hatte in den letzten $minutes eine Activity)
+     */
+    public function isOnline(int $minutes = 5): bool
+    {
+        return $this->activities()
+            ->where('created_at', '>=', now()->subMinutes($minutes))
+            ->exists();
     }
 }

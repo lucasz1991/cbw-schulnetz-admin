@@ -31,7 +31,7 @@
                     </li>
                     <li>
                         <button 
-                            wire:click="openMailModal" 
+                            wire:click="openMailModal({{ $user->id }})" 
                             class="block w-full px-4 py-2 text-gray-700 hover:bg-blue-100 text-left"
                         >
                             Mail senden
@@ -244,52 +244,6 @@
 
 
 
-    <div x-data="{ showModal: @entangle('showMailModal') }" x-init="$watch('showModal', value => { if (!value) $wire.set('mailUserId', {{ $user->id }}); })">
-        <!-- Modal für Mail-Verfassen -->
-        <x-dialog-modal wire:model="showMailModal">
-            <x-slot name="title">
-                Mail verfassen
-                <!-- Anzeige der E-Mail des aktuellen Benutzers -->
-                <span class="text-sm text-gray-500 block mt-1">
-                    An: {{ $user->email }}
-                </span>
-            </x-slot>
-            <x-slot name="content">
-                <!-- Alert Hinweis -->
-                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-                    <p class="font-bold">Wichtiger Hinweis</p>
-                    <p>Bitte stelle sicher, dass die E-Mail sorgfältig und überlegt verfasst ist. Überprüfe insbesondere den Betreff, die Überschrift und die Nachricht auf Rechtschreibung und Relevanz, da sie direkt an den Benutzer gesendet wird.</p>
-                </div>
-                <div>
-                    <label for="mailSubject" class="block text-sm font-medium text-gray-700">Betreff</label>
-                    <input type="text" id="mailSubject" wire:model="mailSubject" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                    <x-input-error for="mailSubject" class="mt-2" />
-                </div>
-                <div class="mt-4">
-                    <label for="mailHeader" class="block text-sm font-medium text-gray-700">Überschrift</label>
-                    <input type="text" id="mailHeader" wire:model="mailHeader" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                    <x-input-error for="mailHeader" class="mt-2" />
-                </div>
-                <div class="mt-4">
-                    <label for="mailBody" class="block text-sm font-medium text-gray-700">Nachricht</label>
-                    <textarea id="mailBody" rows="6" wire:model="mailBody" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
-                    <x-input-error for="mailBody" class="mt-2" />
-                </div>
-                <div class="mt-4">
-                    <label for="mailLink" class="block text-sm font-medium text-gray-700">Link (optional)</label>
-                    <input type="url" id="mailLink" wire:model="mailLink" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                    <x-input-error for="mailLink" class="mt-2" />
-                </div>
-            </x-slot>
-            <x-slot name="footer">
-                <x-secondary-button wire:click="resetMailModal" wire:loading.attr="disabled">
-                    Abbrechen
-                </x-secondary-button>
-                <x-button wire:click="sendMail" wire:loading.attr="disabled" class="ml-2">
-                    Senden
-                </x-button>
-            </x-slot>
-        </x-dialog-modal>
-    </div>
+    <livewire:admin.users.messages.message-form />
 
 </div>
