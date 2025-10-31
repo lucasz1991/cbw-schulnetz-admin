@@ -1,5 +1,4 @@
 <div>
-    <!-- Modal für die Projektbearbeitung -->
     <x-dialog-modal wire:model="showModal">
         <x-slot name="title">
             Modul Einstellungen
@@ -94,24 +93,23 @@
                         @error('position') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
                 </div>
-
-            </x-slot>
-            <x-slot name="footer">
-                <div class="flex items-center space-x-3">
-                    <x-button wire:click="saveProject" class="btn-xs text-sm">
-                        Speichern
-                    </x-button>
-                    <x-button wire:click="closeModal" class="btn-xs text-sm">
-                        Schließen
-                    </x-button>
-                </div>
-                @section('css')
-                    <link rel="stylesheet" href="{{ URL::asset('build/libs/flatpickr/flatpickr.min.css') }}">
-                    <link href="{{ URL::asset('build/libs/choices.js/public/assets/styles/choices.min.css') }}" rel="stylesheet" type="text/css" />
-                @endsection
-                @section('scripts')
-                    <script src="{{ URL::asset('build/libs/choices.js/public/assets/scripts/choices.min.js') }}"></script>
-                @endsection
-            </x-slot>
-        </x-dialog-modal>
+        </x-slot>
+        <x-slot name="footer">
+            <div class="flex items-center space-x-3">
+                <x-button wire:click="saveProject" class="btn-xs text-sm">
+                    Speichern
+                </x-button>
+                <x-button wire:click="closeModal" class="btn-xs text-sm">
+                    Schließen
+                </x-button>
+            </div>
+            @section('css')
+                <link rel="stylesheet" href="{{ URL::asset('build/libs/flatpickr/flatpickr.min.css') }}">
+                <link href="{{ URL::asset('build/libs/choices.js/public/assets/styles/choices.min.css') }}" rel="stylesheet" type="text/css" />
+            @endsection
+            @section('scripts')
+                <script src="{{ URL::asset('build/libs/choices.js/public/assets/scripts/choices.min.js') }}"></script>
+            @endsection
+        </x-slot>
+    </x-dialog-modal>
 </div>
