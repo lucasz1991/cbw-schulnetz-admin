@@ -58,7 +58,13 @@ class Course extends Model
      * participants_count = Anzahl Personen vom Typ 'participant'
      * dates_count        = Anzahl CourseDays
      */
-    protected $appends = ['participants_count', 'dates_count'];
+    protected $appends = [
+        'participants_count',
+        'dates_count',
+        'status',
+        'status_label',
+        'status_badge_classes',
+    ];
 
     /*
     |--------------------------------------------------------------------------
@@ -137,6 +143,91 @@ class Course extends Model
     {
         return $this->morphOne(FilePool::class, 'filepoolable');
     }
+
+
+
+    // ---- STATUS: Accessors --------------------------------------------------
+
+    public function getStatusAttribute(): string
+    {
+        $now   = now();
+        $start = $this->planned_start_date;
+        $end   = $this->planned_end_date;
+
+        if ($start && $end) {
+            if ($now->lt($start)) {
+                return 'scheduled';
+            }
+            if ($now->between($start, $end)) {
+                return 'active';
+            }
+            return 'completed';
+        }
+
+        if ($start && !$end) {
+            return $now->lt($start) ? 'scheduled' : 'active';
+        }
+
+        return 'unknown';
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'scheduled' => 'Geplant',
+            'active'    => 'Aktiv (läuft)',
+            'completed' => 'Abgeschlossen',
+            default     => '—',
+        };
+    }
+
+    public function getStatusBadgeClassesAttribute(): string
+    {
+        return match ($this->status) {
+            'scheduled' => 'px-2 py-1 text-xs font-semibold rounded bg-sky-50 text-sky-700',
+            'active'    => 'px-2 py-1 text-xs font-semibold rounded bg-green-50 text-green-700',
+            'completed' => 'px-2 py-1 text-xs font-semibold rounded bg-emerald-50 text-emerald-700',
+            default     => 'text-xs text-gray-400',
+        };
+    }
+
+    // ---- STATUS: kleine Helfer ---------------------------------------------
+
+    public function isScheduled(): bool { return $this->status === 'scheduled'; }
+    public function isRunning(): bool   { return $this->status === 'active'; }
+    public function isCompleted(): bool { return $this->status === 'completed'; }
+
+        // ---- STATUS: Scopes (optional, nice to have) ----------------------------
+
+    public function scopePlanned($q)
+    {
+        return $q->whereNotNull('planned_start_date')
+                 ->whereDate('planned_start_date', '>', now()->toDateString());
+    }
+
+    public function scopeRunning($q)
+    {
+        return $q->whereNotNull('planned_start_date')
+                 ->whereNotNull('planned_end_date')
+                 ->whereDate('planned_start_date', '<=', now()->toDateString())
+                 ->whereDate('planned_end_date', '>=', now()->toDateString())
+               ->orWhere(function($qq){
+                   // Falls Enddatum offen ist, aber bereits gestartet
+                   $qq->whereNotNull('planned_start_date')
+                      ->whereNull('planned_end_date')
+                      ->whereDate('planned_start_date', '<=', now()->toDateString());
+               });
+    }
+
+    public function scopeCompleted($q)
+    {
+        return $q->whereNotNull('planned_end_date')
+                 ->whereDate('planned_end_date', '<', now()->toDateString());
+    }
+
+    // ---- (deine bestehenden Accessors/Relations/Scopes bleiben unverändert) ----
+
+
 
     /*
     |--------------------------------------------------------------------------
