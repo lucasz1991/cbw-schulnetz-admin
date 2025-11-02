@@ -142,6 +142,45 @@ class File extends Model
         }
     }
 
+    // App/Models/File.php
+
+    public function getEphemeralPublicUrl(int $ttl = 300, ?string $disk = null): ?string
+    {
+        try {
+            // künstlichen Request an den MediaController bauen
+            $params = [
+                'file_id' => $this->id,
+                'expires' => $ttl,
+            ];
+
+            // optional: Disk explizit mitgeben (falls du es brauchst)
+            if ($disk) {
+                $params['disk'] = $disk; // 'private' oder 'public'
+            }
+
+            $request = Request::create('/admin/media/resolve', 'POST', $params);
+
+            /** @var \App\Http\Controllers\MediaController $controller */
+            $controller = app(\App\Http\Controllers\MediaController::class);
+            $response   = $controller->resolve($request);
+
+            if (method_exists($response, 'getData')) {
+                $data = $response->getData(true);
+
+                if (!empty($data['success']) && !empty($data['url'])) {
+                    return $data['url'];
+                }
+
+                Log::warning('Ephemeral-URL vom MediaController ohne URL', ['data' => $data, 'file_id' => $this->id]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('getEphemeralPublicUrl fehlgeschlagen: '.$e->getMessage(), ['file_id' => $this->id]);
+        }
+
+        return null;
+    }
+
+
     /** Morphable Beziehung – z. B. zu User, Course, Task, etc. */
     public function fileable(): MorphTo
     {

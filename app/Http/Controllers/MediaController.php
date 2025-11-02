@@ -68,4 +68,43 @@ class MediaController extends Controller
 
         return response()->json(['success' => false, 'message' => 'Löschen fehlgeschlagen.'], $response->status());
     }
+
+    public function resolve(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file_id' => 'required_without:url|nullable|integer|min:1',
+            'url'     => 'required_without:file_id|nullable|string|max:2048',
+            'expires' => 'nullable|integer|min:30|max:86400',
+            'disk'    => 'nullable|in:private,public',
+        ]);
+
+        $payload = [
+            // nur setzen, wenn vorhanden
+            'expires' => $request->input('expires'),
+            'disk'    => $request->input('disk'),
+        ];
+
+        if ($request->filled('file_id')) {
+            $payload['file_id'] = (int)$request->input('file_id');
+        } elseif ($request->filled('url')) {
+            $payload['url'] = $request->input('url');
+        }
+
+        // Aufruf der Basis-API
+        $response = Http::withHeaders([
+                'X-API-KEY' => $this->apiSettings['base_api_key'],
+            ])
+            ->withoutVerifying()
+            ->post($this->apiSettings['base_api_url'] . '/api/admin/resolve-file-url', $payload);
+
+        if ($response->successful()) {
+            return response()->json($response->json());
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Auflösung fehlgeschlagen.',
+            'status'  => $response->status(),
+        ], $response->status());
+    }
 }

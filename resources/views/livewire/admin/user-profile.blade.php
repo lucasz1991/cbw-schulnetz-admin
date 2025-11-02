@@ -1,76 +1,78 @@
 <div  x-data="{ selectedTab: $persist('userDetails') }">
-    <div class="mb-4 flex justify-between items-center" >
-        <x-back-button />
-                <!-- Weitere Optionen mit Dropdown -->
-        <div x-data="{ open: false }" class="relative">
-            <x-button 
-                @click="open = !open" 
-                class="btn-xs"
-            >
-                Optionen
-            </x-button>
-
-            <!-- Dropdown-Menü -->
-            <div 
-                x-show="open" 
-                @click.away="open = false" 
-                x-cloak 
-                class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-40"
-            >
-                <ul>
-                    <li>
-                        @if ($user->status)
-                            <button wire:click="deactivateUser()" class="block w-full px-4 py-2 text-left hover:bg-yellow-100">
-                                Deaktivieren
+    <div class="bg-white rounded-md border border-gray-200 p-4 mb-12">
+        <div class="mb-4 flex justify-between items-center" >
+            <x-back-button />
+                    <!-- Weitere Optionen mit Dropdown -->
+            <div x-data="{ open: false }" class="relative">
+                <x-button 
+                    @click="open = !open" 
+                    class="btn-xs"
+                >
+                    Optionen
+                </x-button>
+    
+                <!-- Dropdown-Menü -->
+                <div 
+                    x-show="open" 
+                    @click.away="open = false" 
+                    x-cloak 
+                    class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-40"
+                >
+                    <ul>
+                        <li>
+                            @if ($user->status)
+                                <button wire:click="deactivateUser()" class="block w-full px-4 py-2 text-left hover:bg-yellow-100">
+                                    Deaktivieren
+                                </button>
+                            @else
+                                <button wire:click="activateUser()" class="block w-full px-4 py-2 text-left hover:bg-green-100">
+                                    Aktivieren
+                                </button>
+                            @endif
+                        </li>
+                        <li>
+                            <button 
+                                wire:click="openMailModal({{ $user->id }})" 
+                                class="block w-full px-4 py-2 text-gray-700 hover:bg-blue-100 text-left"
+                            >
+                                Mail senden
                             </button>
-                        @else
-                            <button wire:click="activateUser()" class="block w-full px-4 py-2 text-left hover:bg-green-100">
-                                Aktivieren
-                            </button>
-                        @endif
-                    </li>
-                    <li>
-                        <button 
-                            wire:click="openMailModal({{ $user->id }})" 
-                            class="block w-full px-4 py-2 text-gray-700 hover:bg-blue-100 text-left"
-                        >
-                            Mail senden
-                        </button>
-                    </li>
-                </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-  <!-- Header-Bild -->
-  <div class="rounded-t-lg h-32 overflow-hidden bg-gray-200 relative">
-        <!-- Status Badge (links oben) -->
-        <div class="absolute top-2 left-2 px-3 py-1 rounded-full text-xs font-semibold text-white" 
-             :class="{ 'bg-green-500': {{ $user->isActive() ? 'true' : 'false' }}, 'bg-red-500': {{ !$user->isActive() ? 'true' : 'false' }} }">
-            {{ $user->isActive() ? 'Aktiv' : 'Inaktiv' }}
+      <!-- Header-Bild -->
+      <div class="rounded-t-lg h-32 overflow-hidden bg-gray-200 relative">
+            <!-- Status Badge (links oben) -->
+            <div class="absolute top-2 left-2 px-3 py-1 rounded-full text-xs font-semibold text-white" 
+                 :class="{ 'bg-green-500': {{ $user->isActive() ? 'true' : 'false' }}, 'bg-red-500': {{ !$user->isActive() ? 'true' : 'false' }} }">
+                {{ $user->isActive() ? 'Aktiv' : 'Inaktiv' }}
+            </div>
+    
+            <!-- Erstellungsdatum Badge (rechts oben) -->
+            <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-700 text-white">
+                Registriert: {{ $user->created_at->format('d.m.Y') }}
+            </div>
         </div>
-
-        <!-- Erstellungsdatum Badge (rechts oben) -->
-        <div class="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-700 text-white">
-            Registriert: {{ $user->created_at->format('d.m.Y') }}
+    
+        <!-- Profilbild -->
+        <div class="mx-auto w-32 h-32 relative -mt-16 border-4 border-white rounded-full overflow-hidden">
+            <img 
+                class="object-cover object-center h-32  aspect-square" 
+                src="{{ $user->profile_photo_url ?? 'https://via.placeholder.com/150' }}" 
+                alt="{{ $user->name }}"
+            >
         </div>
-    </div>
-
-    <!-- Profilbild -->
-    <div class="mx-auto w-32 h-32 relative -mt-16 border-4 border-white rounded-full overflow-hidden">
-        <img 
-            class="object-cover object-center h-32  aspect-square" 
-            src="{{ $user->profile_photo_url ?? 'https://via.placeholder.com/150' }}" 
-            alt="{{ $user->name }}"
-        >
-    </div>
-
-    <!-- Benutzerdetails -->
-    <div class="text-center mt-2 mb-6">
-        <h2 class="font-semibold text-lg">{{ $user->name }}</h2>
-        <!-- Role Badge  -->
-        <div class="mt-4 w-max mx-auto px-3 py-1 rounded-full text-xs font-semibold "  x-cloak
-             :class="{ 'text-green-600 bg-green-100': {{ $user->role == 'guest'  ? 'true' : 'false' }}, 'text-blue-600 bg-blue-100': {{ $user->role == 'tutor' ? 'true' : 'false' }} }">
-            {{ $user->role == 'tutor' ? 'Mitarbeiter' : 'Teilnehmer' }}
+    
+        <!-- Benutzerdetails -->
+        <div class="text-center mt-2 mb-6">
+            <h2 class="font-semibold text-lg">{{ $user->name }}</h2>
+            <!-- Role Badge  -->
+            <div class="mt-4 w-max mx-auto px-3 py-1 rounded-full text-xs font-semibold "  x-cloak
+                 :class="{ 'text-green-600 bg-green-100': {{ $user->role == 'guest'  ? 'true' : 'false' }}, 'text-blue-600 bg-blue-100': {{ $user->role == 'tutor' ? 'true' : 'false' }} }">
+                {{ $user->role == 'tutor' ? 'Mitarbeiter' : 'Teilnehmer' }}
+            </div>
         </div>
     </div>
 
@@ -167,13 +169,13 @@
                     <div wire:loading.delay.class.remove="opacity-0"
                         wire:target="uvsApiUpdate"
                         class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/70 opacity-0 transition-opacity">
-                    <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 shadow">
-                        <svg class="h-5 w-5 animate-spin text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                        </svg>
-                        <span class="text-sm text-gray-700">UVS-Daten werden aktualisiert…</span>
-                    </div>
+                        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 shadow">
+                            <svg class="h-5 w-5 animate-spin text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span class="text-sm text-gray-700">UVS-Daten werden aktualisiert…</span>
+                        </div>
                     </div>
                     {{-- Inhalt --}}
                     <div class="px-5 py-5">
@@ -321,10 +323,10 @@
             </x-ui.accordion.tab-panel>
 
         <x-ui.accordion.tab-panel for="userCourses">
-            <livewire:admin.user-profile.user-courses :user="$user" />
+            <livewire:admin.user-profile.user-courses :user="$user" lazy />
         </x-ui.accordion.tab-panel>
         <x-ui.accordion.tab-panel for="userMessages">
-            <livewire:admin.user-profile.user-messages :user="$user" />
+            <livewire:admin.user-profile.user-messages :user="$user" lazy />
         </x-ui.accordion.tab-panel>
     </x-ui.accordion.tabs>
 

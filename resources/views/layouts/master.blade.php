@@ -25,7 +25,17 @@
                 <div class="main-content group-data-[sidebar-size=sm]:ml-[70px]">
                     <div class="min-h-screen page-content px-1" style="box-shadow: inset 0px 80px 30px -10px rgba(0, 0, 0, 0.2);">
                         <div class="container-fluid px-0 md:px-5">
-                            <div class=" @if(Route::currentRouteName() !== 'admin.index') bg-white rounded-md border border-gray-200 p-4  @endif ">
+@php
+    $excludedUrls = [
+        '/',             // Base
+        'admin/user/*',  // alle /admin/user/... URLs
+    ];
+
+    $useBox = !request()->is($excludedUrls);
+@endphp
+
+
+                            <div class="{{ $useBox ? 'bg-white rounded-md border border-gray-200 p-4' : '' }}">
                                 {{ $slot }}
                             </div>
                         </div>

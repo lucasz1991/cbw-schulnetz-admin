@@ -1,4 +1,4 @@
-<div class="w-full">
+<div class="w-full relative">
     {{-- Kopf: Titel + Suche --}}
     <div class="mb-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <h2 class="text-2xl font-bold text-gray-800">Kurse</h2>
@@ -243,13 +243,12 @@
         @endif
     @endif
 
-    {{-- Ladeanzeige --}}
-    <div wire:loading>
-        <div class="flex justify-center items-center h-20">
-            <svg class="animate-spin h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg>
-        </div>
-    </div>
+                        {{-- Loading-Overlay beim Aktualisieren --}}
+                    <div wire:loading.delay.class.remove="opacity-0"
+                        class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/70 opacity-0 transition-opacity">
+                        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 shadow">
+                            <span class="loader"></span>
+                            <span class="text-sm text-gray-700">wird geladen…</span>
+                        </div>
+                    </div>
 </div>

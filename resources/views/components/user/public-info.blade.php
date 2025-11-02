@@ -50,10 +50,12 @@
 
     <span class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-800">
         <span>{{ $displayName }}</span>
-        <span
-            class="inline-block w-2 h-2 rounded-full {{ $hasUser ? 'bg-green-500/90' : 'bg-gray-300' }}"
-            title="{{ $hasUser ? 'Verknüpfter Benutzer vorhanden' : 'Kein verknüpfter Benutzer' }}"
-            aria-label="{{ $hasUser ? 'Status: aktiv' : 'Status: inaktiv' }}">
-        </span>
+        @if($hasUser)
+            @if($resolvedUser?->isOnline())
+                <span class="h-2 w-2 rounded-full bg-green-300" title="Online"></span>
+            @else
+                <span class="h-2 w-2 rounded-full bg-gray-300" title="Offline"></span>
+            @endif
+        @endif
     </span>
 </div>
