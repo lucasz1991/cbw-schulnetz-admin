@@ -33,6 +33,14 @@
             </div>
         </x-slot>
     </x-settings-collapse>
+        <x-settings-collapse>
+        <x-slot name="trigger">
+            Benutzer General Passwort
+        </x-slot>
+        <x-slot name="content">
+
+        </x-slot>
+    </x-settings-collapse>
     @if ($errors->any())
         <div class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             <div class="font-semibold mb-2">Bitte prüfen:</div>
