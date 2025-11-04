@@ -38,7 +38,7 @@
 <div class="flex items-center gap-2 {{ !$hasUser ? 'opacity-90' : '' }}">
     @if($hasUser && !empty($resolvedUser->profile_photo_url))
         <img
-            src="{{ $resolvedUser->profile_photo_url }}"
+            src="{{ $resolvedUser->getBaseProfilePhotoUrlAttribute() }}"
             class="w-{{ $size }} h-{{ $size }} rounded-full object-cover"
             >
     @else

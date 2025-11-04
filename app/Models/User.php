@@ -17,6 +17,8 @@ use App\Notifications\CustomVerifyEmail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\CustomResetPasswordNotification;
+use App\Models\Setting;
+
 
 
 
@@ -194,5 +196,21 @@ class User extends Authenticatable
         return $this->activities()
             ->where('created_at', '>=', now()->subMinutes($minutes))
             ->exists();
+    }
+
+    public function getBaseProfilePhotoUrlAttribute(): string
+    {
+        // 1) Kein Foto? → ui-avatars
+        if (empty($this->profile_photo_path)) {
+            $name = $this->person?->vorname || $this->person?->nachname
+                ? trim(($this->person->vorname ?? '') . ' ' . ($this->person->nachname ?? ''))
+                : ($this->name ?: ($this->email ?: 'Unbekannt'));
+            return 'https://ui-avatars.com/api/?name='
+                . urlencode($name)
+                . '&color=7F9CF5&background=EBF4FF&bold=true&size=96';
+        }
+        // 2) Andernfalls gespeichertes Foto zurückgeben mit base URL aus Settings
+        $baseUrl = Setting::getValue('base', 'base_api_url') ?? '';
+        return $baseUrl . Storage::url($this->profile_photo_path);
     }
 }
