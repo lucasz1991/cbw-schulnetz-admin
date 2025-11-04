@@ -210,7 +210,7 @@ class User extends Authenticatable
                 . '&color=7F9CF5&background=EBF4FF&bold=true&size=96';
         }
         // 2) Andernfalls gespeichertes Foto zurückgeben mit base URL aus Settings
-        $baseUrl = Setting::getValue('base', 'base_api_url') ?? '';
+        $baseUrl = Setting::getValue('api', 'base_api_url') ?? '';
         return $baseUrl . Storage::url($this->profile_photo_path);
     }
 }
