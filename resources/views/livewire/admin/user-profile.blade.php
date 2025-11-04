@@ -60,7 +60,7 @@
         <div class="mx-auto w-32 h-32 relative -mt-16 border-4 border-white rounded-full overflow-hidden">
             <img 
                 class="object-cover object-center h-32  aspect-square" 
-                src="{{ $user->profile_photo_url ?? 'https://via.placeholder.com/150' }}" 
+                src="{{ $user->baseProfilePhotoUrl ?? 'https://via.placeholder.com/150' }}" 
                 alt="{{ $user->name }}"
             >
         </div>
