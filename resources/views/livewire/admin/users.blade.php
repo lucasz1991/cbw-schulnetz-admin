@@ -160,7 +160,7 @@
                 <div class="col-span-5 font-bold pl-1 cursor-pointer flex items-center justify-between"  wire:click="toggleUserSelection({{ $user->id }})">
                     <div class="flex items-center space-x-4">
                         <img     class="h-10 w-10 rounded-full object-cover transition-all duration-300 {{ in_array($user->id, $selectedUsers) ? 'ring-4 ring-green-300' : '' }}" 
-                        src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" />
+                        src="{{ $user->baseProfilePhotoUrl }}" alt="{{ $user->name }}" />
                         <div>
                             <div class="text-sm font-medium">
                                 {{ $user->name }}
