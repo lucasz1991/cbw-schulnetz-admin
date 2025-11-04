@@ -72,13 +72,12 @@ class UserProfile extends Component
         if ($this->user && $this->user->person) {
             $this->user->person->apiupdate();
             $this->dispatch('showAlert', 'UVS-Daten wurden aktualisiert.', 'success');
-            $this->loadUser(); // Benutzer neu laden, um aktualisierte Personendaten zu erhalten
+            $this->loadUser();
         } else {
             $this->dispatch('showAlert', 'Benutzer oder Person nicht gefunden.', 'error');
         }
     }
     
-
     public function render()
     {
         return view('livewire.admin.user-profile', [
