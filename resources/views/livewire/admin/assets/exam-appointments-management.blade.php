@@ -115,67 +115,74 @@
     </div>
   </section>
 
-  {{-- Modal (sehr simpel, ohne x-ui) --}}
-  @if($showModal)
-    <div class="fixed inset-0 z-40 bg-black/40"></div>
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <form wire:submit.prevent="save" class="w-full max-w-2xl bg-white rounded shadow p-6 space-y-4">
-        <h3 class="text-lg font-semibold">{{ $editingId ? 'Prüfung bearbeiten' : 'Neue Prüfung' }}</h3>
+<x-dialog-modal wire:model="showModal" maxWidth="2xl">
+  <x-slot name="title">
+    {{ $editingId ? 'Prüfung bearbeiten' : 'Neue Prüfung' }}
+  </x-slot>
 
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm mb-1">Typ</label>
-            <select class="w-full border rounded px-3 py-2" wire:model="type">
-              <option value="intern">intern</option>
-              <option value="extern">extern</option>
-            </select>
-            @error('type') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-          </div>
-
-          <div>
-            <label class="block text-sm mb-1">Name</label>
-            <input type="text" class="w-full border rounded px-3 py-2" wire:model.defer="name">
-            @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-          </div>
-
-          <div>
-            <label class="block text-sm mb-1">Datum</label>
-            <input type="date" class="w-full border rounded px-3 py-2" wire:model="date">
-            @error('date') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-          </div>
-
-          <div>
-            <label class="block text-sm mb-1">Uhrzeit</label>
-            <input type="time" class="w-full border rounded px-3 py-2" wire:model="time">
-            @error('time') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-          </div>
-
-          <div>
-            <label class="block text-sm mb-1">Preis</label>
-            <input type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2" wire:model.defer="preis">
-            @error('preis') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-          </div>
-
-          <div>
-            <label class="block text-sm mb-1">Raum</label>
-            <input type="text" class="w-full border rounded px-3 py-2" wire:model.defer="room">
-            @error('room') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="inline-flex items-center gap-2">
-              <input type="checkbox" wire:model="pflicht_6w_anmeldung" class="border rounded">
-              <span>Pflicht: 6 Wochen vorher anmelden</span>
-            </label>
-            @error('pflicht_6w_anmeldung') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-          </div>
+  <x-slot name="content">
+    <form wire:submit.prevent="save" class="space-y-4">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm mb-1">Typ</label>
+          <select class="w-full border rounded px-3 py-2" wire:model="type">
+            <option value="intern">intern</option>
+            <option value="extern">extern</option>
+          </select>
+          @error('type') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
         </div>
 
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" class="px-3 py-2 rounded border" wire:click="$set('showModal', false)">Abbrechen</button>
-          <button type="submit" class="px-3 py-2 rounded bg-blue-600 text-white">Speichern</button>
+        <div>
+          <label class="block text-sm mb-1">Name</label>
+          <input type="text" class="w-full border rounded px-3 py-2" wire:model.defer="name">
+          @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
         </div>
-      </form>
+
+        <div>
+          <label class="block text-sm mb-1">Datum</label>
+          <input type="date" class="w-full border rounded px-3 py-2" wire:model="date">
+          @error('date') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">Uhrzeit</label>
+          <input type="time" class="w-full border rounded px-3 py-2" wire:model="time">
+          @error('time') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">Preis</label>
+          <input type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2" wire:model.defer="preis">
+          @error('preis') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1">Raum</label>
+          <input type="text" class="w-full border rounded px-3 py-2" wire:model.defer="room">
+          @error('room') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="inline-flex items-center gap-2">
+            <input type="checkbox" wire:model="pflicht_6w_anmeldung" class="border rounded">
+            <span>Pflicht: 6 Wochen vorher anmelden</span>
+          </label>
+          @error('pflicht_6w_anmeldung') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+        </div>
+      </div>
+    </form>
+  </x-slot>
+
+  <x-slot name="footer">
+    <div class="flex justify-end gap-2">
+      <button type="button" class="px-3 py-2 rounded border" wire:click="$set('showModal', false)">
+        Abbrechen
+      </button>
+      <button type="button" class="px-3 py-2 rounded bg-blue-600 text-white" wire:click="save">
+        Speichern
+      </button>
     </div>
-  @endif
+  </x-slot>
+</x-dialog-modal>
+
 </div>
