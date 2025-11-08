@@ -85,6 +85,7 @@
             'userDetails' => ['label' => 'Details',   'icon' => 'fad fa-id-card'],
             'userCourses'     => ['label' => 'Kurse', 'icon' => 'fad fa-book-open'],
             'userMessages'     => ['label' => 'Nachrichten', 'icon' => 'fad fa-envelope'],
+            'userRequests'     => ['label' => 'Anträge', 'icon' => 'fad fa-paper-plane'],
         ]"
         :collapseAt="'md'"
         default="userDetails"
@@ -327,6 +328,10 @@
         </x-ui.accordion.tab-panel>
         <x-ui.accordion.tab-panel for="userMessages">
             <livewire:admin.user-profile.user-messages :user="$user" lazy />
+        </x-ui.accordion.tab-panel>
+        <x-ui.accordion.tab-panel for="userRequests">
+            <livewire:admin.user-profile.user-requests :user="$user" lazy />
+            <livewire:admin.user-profile.request-detail-modal lazy />
         </x-ui.accordion.tab-panel>
     </x-ui.accordion.tabs>
 
