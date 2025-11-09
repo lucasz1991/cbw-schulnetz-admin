@@ -134,9 +134,9 @@
         <x-tables.table
             :columns="[
                 ['label'=>'Titel','key'=>'title','width'=>'30%','sortable'=>true,'hideOn'=>'none'],
-                ['label'=>'Tutor','key'=>'tutor_name','width'=>'20%','sortable'=>true,'hideOn'=>'md'],
                 ['label'=>'Termin','key'=>'planned_start_date','width'=>'18%','sortable'=>true,'hideOn'=>'xl'],
                 ['label'=>'Status','key'=>'is_active','width'=>'5%','sortable'=>true,'hideOn'=>'md'],
+                ['label'=>'Tutor','key'=>'tutor_name','width'=>'20%','sortable'=>true,'hideOn'=>'md'],
                 ['label'=>'','key'=>'activity','width'=>'27%','sortable'=>false,'hideOn'=>'md'],
             ]"
             :items="$courses"

@@ -265,7 +265,10 @@ class Course extends Model
 
     public function hasDocumentation(): bool
     {
-        return true;
+        if($this->documentation){
+            return true;
+        }
+        return false;
     }
 
     public function hasRedThread(): bool

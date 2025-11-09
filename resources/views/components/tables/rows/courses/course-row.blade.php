@@ -55,19 +55,10 @@
 
 </div>
 
-{{-- 1: Tutor (aus Person) --}}
-<div class="px-2 py-2 text-gray-700 truncate {{ $hc(1) }}">
-    @if($item->tutor !== null)
-        <span class="inline-flex items-center gap-1">
-            <x-user.public-info :person="$item->tutor" />
-        </span>
-    @else
-        <span class="text-gray-400">—</span>
-    @endif
-</div>
+
 
 {{-- 2: Zeitraum (planned_start_date / planned_end_date) --}}
-<div class="px-2 py-2 text-xs text-gray-600 {{ $hc(2) }}">
+<div class="px-2 py-2 text-xs text-gray-600 {{ $hc(1) }}">
     <div class="mb-1">
         <span class="px-2 py-0.5 text-[10px] leading-5 font-semibold rounded bg-slate-50 text-slate-700 border border-slate-200">
             {{ $termin_id }}
@@ -83,7 +74,7 @@
 </div>
 
 {{-- 3: Status (nur Icons mit Tooltip) --}}
-<div class="px-2 py-2 flex items-center gap-2 {{ $hc(3) }}">
+<div class="px-2 py-2 flex items-center gap-2 {{ $hc(2) }}">
     @switch($status)
         @case('scheduled')
             {{-- Geplant --}}
@@ -119,9 +110,20 @@
 </div>
 
 
+{{-- 1: Tutor (aus Person) --}}
+<div class="px-2 py-2 text-gray-700 truncate {{ $hc(3) }}">
+    @if($item->tutor !== null)
+        <span class="inline-flex items-center gap-1">
+            <x-user.public-info :person="$item->tutor" />
+        </span>
+    @else
+        <span class="text-gray-400">—</span>
+    @endif
+</div>
+
 {{-- 4: Aktivitäten (Teilnehmer & Termine) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
-    <div class="flex flex-wrap gap-2 items-center  pr-4">
+    <div class="flex  gap-2 items-center  pr-4">
         <div class=" relative h-max inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-400 mr-2" title="Teilnehmer">
             <i class="fal fa-users fa-lg"></i>
             <span
