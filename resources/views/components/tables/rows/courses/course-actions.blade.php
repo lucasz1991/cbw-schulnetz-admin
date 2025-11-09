@@ -10,5 +10,8 @@
         <x-dropdown-link href="{{ route('admin.courses.show', $item) }}" >
             Details
         </x-dropdown-link>
+        <x-dropdown-link href="#" wire:click.prevent="exportCourse({{ $item->id }})" class="hover:bg-green-100">
+            Exportieren
+        </x-dropdown-link>
     </x-slot>
 </x-dropdown>

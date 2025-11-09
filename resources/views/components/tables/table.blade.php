@@ -1,6 +1,7 @@
 @props([
     'columns' => [],
     'items' => [],
+    'selectedItems' => [],
     'empty' => 'Keine Einträge gefunden.',
     'class' => '',
     // Sort-Status (optional, nur für Pfeil & dir-Berechnung)
@@ -79,11 +80,14 @@
 
     {{-- Rows --}}
     @forelse($items as $item)
+    @php
+        $isSelected = in_array($item->id, (array) $selectedItems);
+    @endphp
     <div class="relative border-b py-2 text-sm md:px-2 hover:bg-blue-50">
         <div class="grid items-center" style="grid-template-columns: {{ $gridTemplate }} min-content;">
         {{-- Zellen --}}
         @if($rowView)
-            @include($rowView, ['item' => $item, 'columnsMeta' => $columns, 'hideClass' => $hideClass])
+            @include($rowView, ['item' => $item, 'isSelected' => $isSelected, 'columnsMeta' => $columns, 'hideClass' => $hideClass])
         @else
             @foreach($columns as $col)
             <div class="px-2 py-2 {{ $hideClass($col['hideOn']) }}">—</div>

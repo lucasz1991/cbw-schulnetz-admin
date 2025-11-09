@@ -34,7 +34,9 @@
         . urlencode($displayName)
         . "&color={$avatarColor}&background={$avatarBg}&bold=true&size={$avatarSize}";
 @endphp
-
+@if($hasUser)
+<a href="@if($hasUser){{ route('admin.user-profile', ['userId' => $resolvedUser->id]) }}@else#@endif" class="inline-block">
+@endif
 <div class="flex items-center gap-2 {{ !$hasUser ? 'opacity-90' : '' }}">
     @if($hasUser && !empty($resolvedUser->profile_photo_url))
         <img
@@ -59,3 +61,6 @@
         @endif
     </span>
 </div>
+@if($hasUser)
+</a>
+@endif

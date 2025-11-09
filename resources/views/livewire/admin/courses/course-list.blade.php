@@ -16,16 +16,67 @@
             </div>
         </div>
     </div>
-    <div class="flex justify-between mb-4">
-        <h1 class="flex items-center text-lg font-semibold px-2 py-1">
-            <span>Bausteine</span>
-            <span class="ml-2 bg-white text-sky-600 text-xs shadow border border-sky-200 font-bold px-2 py-1 flex items-center justify-center rounded-full h-7 leading-none">
-                {{ $coursesTotal }}
-            </span>
-        </h1>
+    <h1 class="flex items-center text-lg font-semibold px-2 py-1">
+        <span>Bausteine</span>
+        <span class="ml-2 bg-white text-sky-600 text-xs shadow border border-sky-200 font-bold px-2 py-1 flex items-center justify-center rounded-full h-7 leading-none">
+            {{ $coursesTotal }}
+        </span>
+    </h1>
+    <div class="flex justify-between my-4">
+        <div class="flex items-center gap-4">
+                        <x-button 
+                wire:click="toggleSelectAll" 
+                class="btn-xs mr-3"
+            >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+            </svg>
+            </x-button>
+{{-- Bulk Actions via x-dropdown --}}
+@php
+    $isDisabled = count($selectedCourses) === 0;
+@endphp
+
+<x-dropdown align="left" >
+    {{-- Trigger --}}
+    <x-slot name="trigger">
+        <button
+            type="button"
+            @class([
+                'text-sm border px-3 py-1 rounded relative flex items-center justify-center bg-gray-100',
+                'cursor-not-allowed opacity-50' => $isDisabled,
+                'cursor-pointer' => !$isDisabled,
+            ])
+            @if($isDisabled) disabled @endif
+        >
+            <svg class="w-4 h-4 text-gray-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                 width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M5.005 11.19V12l6.998 4.042L19 12v-.81M5 16.15v.81L11.997 21l6.998-4.042v-.81M12.003 3 5.005 7.042l6.998 4.042L19 7.042 12.003 3Z"/>
+            </svg>
+
+            @if(!$isDisabled)
+                <span class="ml-2 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    {{ count($selectedCourses) }}
+                </span>
+            @endif
+        </button>
+    </x-slot>
+
+    {{-- Content --}}
+    <x-slot name="content">
+            <x-dropdown-link href="#" wire:click.prevent="removeSelectedCourses" class="hover:bg-green-100">
+                Auswahl entfernen
+            </x-dropdown-link>
+            <x-dropdown-link href="#" wire:click.prevent="exportCourses" class="hover:bg-green-100">
+                Exportieren
+            </x-dropdown-link>
+    </x-slot>
+</x-dropdown>
+            </div>
 
         <div class="flex items-center space-x-2">
-            {{-- Titel + Gesamtzähler --}}
+
 
             {{-- Suchfeld --}}
             <x-tables.search-field 
@@ -59,6 +110,21 @@
                     @endforeach
                 </select>
             </div>
+
+            {{-- PPer page --}}
+            <div class="relative">
+                <select 
+                    wire:model.live="perPage"
+                    class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                >
+                    <option value="15">15 pro Seite</option>
+                    <option value="30">30 pro Seite</option>
+                    <option value="50">50 pro Seite</option>
+                    <option value="100">100 pro Seite</option>
+
+                </select> 
+            </div>
+
         </div>
 
 
@@ -71,9 +137,10 @@
                 ['label'=>'Tutor','key'=>'tutor_name','width'=>'15%','sortable'=>true,'hideOn'=>'md'],
                 ['label'=>'Termin','key'=>'planned_start_date','width'=>'18%','sortable'=>true,'hideOn'=>'xl'],
                 ['label'=>'Status','key'=>'is_active','width'=>'10%','sortable'=>true,'hideOn'=>'md'],
-                ['label'=>'Aktivitäten','key'=>'activity','width'=>'22%','sortable'=>false,'hideOn'=>'md'],
+                ['label'=>'Aktivitäten','key'=>'activity','width'=>'27%','sortable'=>false,'hideOn'=>'md'],
             ]"
             :items="$courses"
+            :selected-items="$selectedCourses"
             row-view="components.tables.rows.courses.course-row"
             actions-view="components.tables.rows.courses.course-actions"
             :sort-by="$sortBy ?? null"

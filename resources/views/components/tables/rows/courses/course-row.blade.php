@@ -26,21 +26,29 @@
         $status = $now->lt($start) ? 'scheduled' : 'active';
     }
 
-    // Counts (aus Accessors/withCounts)
-    $participantsCount = (int) ($item->participants_count ?? 0);
+
 
 @endphp
 
 {{-- 0: Titel --}}
-<div class="px-2 py-2  pr-4 {{ $hc(0) }}">
-    @if($klassenId)
-    <div class="mb-1">
-            <span class="px-2 py-0.5 text-[10px] leading-5 font-semibold rounded bg-slate-50 text-slate-700 border border-slate-200">
-                {{ $klassenId }}
-            </span>
+<div class="px-2 py-2  pr-4 {{ $hc(0) }} cursor-pointer" wire:click="$dispatch('toggleCourseSelection', [{{ $item->id }}])">
+<div class="grid grid-cols-[auto_1fr] gap-2 items-center">
+    <div class="flex items-center">
+        <div 
+            class="w-4 h-4 rounded-full border cursor-pointer transition {{ $isSelected ? 'ring-4 ring-green-300 bg-green-100 border-green-600' : 'border-gray-400' }}"
+        >
         </div>
-    @endif
-    <div class="px-1 font-semibold truncate">{{ $title }}</div>
+    </div>
+
+    <!-- WICHTIG: min-w-0 auf diese Spalte -->
+    <div class="flex flex-col min-w-0">
+        <!-- truncate funktioniert jetzt -->
+        <div class="px-1 font-semibold truncate">
+            {{ $title }}
+        </div>
+    </div>
+</div>
+
 
 
 
@@ -99,9 +107,10 @@
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M16 14a4 4 0 10-8 0v3h8v-3zM12 7a3 3 0 110-6 3 3 0 010 6z"/>
             </svg>
-            {{ $participantsCount }}
+            {{ $item->participants_count ?? 0 }}
         </span>
 
 
     </div>
 </div>
+

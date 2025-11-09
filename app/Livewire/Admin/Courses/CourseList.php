@@ -7,7 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Course;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-
+use Livewire\Attributes\On;
 
 class CourseList extends Component
 {
@@ -36,6 +36,8 @@ class CourseList extends Component
 
     // Für das Select in der View
     public $terms = [];
+
+    public $selectedCourses = [];
 
     protected $listeners = [
         'openCourseSettings' => 'refreshList',
@@ -185,6 +187,7 @@ if (!empty($this->selectedTerm)) {
         return view('livewire.admin.courses.course-list', [
             'courses' => $courses,
             'terms'   => $this->terms,
+            'selectedCourses' => $this->selectedCourses,
         ])->layout('layouts.master');
     }
 
@@ -193,18 +196,55 @@ if (!empty($this->selectedTerm)) {
      * Rückgabe: Collection/Array von Objekten: { id: string, name: string }
      * Label inkl. Count, Sortierung lexikografisch nach termin_id.
      */
-protected function loadTermOptionsFromCourses()
-{
-    return \App\Models\Course::query()
-        ->whereNotNull('termin_id')
-        ->groupBy('termin_id')
-        ->orderBy('termin_id', 'asc')
-        ->selectRaw('termin_id, COUNT(*) AS cnt')
-        ->get()
-        ->map(fn($row) => (object)[
-            'id'   => (string) $row->termin_id,
-            'name' => (string) $row->termin_id.' ('.$row->cnt.')',
-        ]);
-}
+    protected function loadTermOptionsFromCourses()
+    {
+        return \App\Models\Course::query()
+            ->whereNotNull('termin_id')
+            ->groupBy('termin_id')
+            ->orderBy('termin_id', 'asc')
+            ->selectRaw('termin_id, COUNT(*) AS cnt')
+            ->get()
+            ->map(fn($row) => (object)[
+                'id'   => (string) $row->termin_id,
+                'name' => (string) $row->termin_id.' ('.$row->cnt.')',
+            ]);
+    }
+
+    public function removeSelectedCourses()
+    {
+        $this->selectedCourses = [];
+    }
+
+    public function exportCourses()
+    {
+        $this->dispatch('showAlert', 'Export erfolgreich!', 'success');
+
+    }
+
+    public function toggleSelectAll()
+    {
+        if (count($this->selectedCourses) === 0) {
+            // Alle Kurse der aktuellen Seite auswählen
+            $coursesOnPage = $this->baseQuery()
+                ->paginate($this->perPage)
+                ->pluck('id')
+                ->toArray();
+            $this->selectedCourses = $coursesOnPage;
+        } else {
+            // Auswahl aufheben
+            $this->selectedCourses = [];
+        }
+    }
+
+
+    #[On('toggleCourseSelection')]
+    public function toggleCourseSelection($courseId)
+    {
+        if (in_array($courseId, $this->selectedCourses)) {
+            $this->selectedCourses = array_filter($this->selectedCourses, fn($id) => $id != $courseId);
+        } else {
+            $this->selectedCourses[] = $courseId;
+        }
+    }
 
 }

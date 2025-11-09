@@ -255,7 +255,7 @@
                             >
                                 <ul class="text-sm text-gray-700">
                                     <li>
-                                    <a href="{{ route('admin.user-profile', ['userId' => $user->id]) }}"  wire:navigate
+                                    <a href="{{ route('admin.user-profile', ['userId' => $user->id]) }}" 
                                       class="block w-full px-4 py-2 text-left hover:bg-gray-100">
                                         Profil
                                     </a>
