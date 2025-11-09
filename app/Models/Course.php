@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Course extends Model
 {
@@ -144,6 +145,11 @@ class Course extends Model
         return $this->morphOne(FilePool::class, 'filepoolable');
     }
 
+    public function files(): MorphMany
+    {
+        return $this->morphMany(\App\Models\File::class, 'fileable');
+    }
+
 
 
     // ---- STATUS: Accessors --------------------------------------------------
@@ -260,25 +266,163 @@ class Course extends Model
             ]);
     }
 
+// ---- Gemeinsames Status-Mapping -------------------------------------------
+/**
+ * 0 = fehlt (rot), 1 = ok (grün), 2 = teilweise/ausstehend (gelb)
+ */
+public function assetsStateMeta(int $state): array
+{
+    return match ($state) {
+        0 => ['icon' => 'fad fa-times-circle',  'color' => 'text-red-600',    'bg' => 'bg-white',   'title' => 'Fehlt'],
+        1 => ['icon' => 'fad fa-check-circle',  'color' => 'text-green-600',  'bg' => 'bg-white',   'title' => 'Vollständig'],
+        2 => ['icon' => 'fad fa-spinner',       'color' => 'text-yellow-600', 'bg' => 'bg-white',   'title' => 'Teilweise / ausstehend'],
+        default => ['icon' => 'fad fa-question-circle','color'=>'text-gray-400','bg'=>'bg-gray-50', 'title' => 'Unbekannt'],
+    };
+}
 
-    // ---- Hilffunctionen zu Status zu Dokumentations, Roten Fäden und Teilnehmer Bestätigungen -----------------------------------------------
+// Optional: ein kleiner Renderer, falls du im Blade direkt ein <i> ausgeben willst.
+protected function renderAssetIcon(string $baseTitle, int $state): string
+{
+    $m = $this->assetsStateMeta($state);
+    return sprintf('<i class="%s %s" title="%s: %s"></i>', $m['icon'], $m['color'], e($baseTitle), e($m['title']));
+}
 
-    public function hasDocumentation(): bool
-    {
-        if($this->documentation){
-            return true;
-        }
-        return false;
+
+/**
+ * 0 = keine/fehlende Doku, 1 = alle vergangene Tage dokumentiert, 2 = teils dokumentiert
+ */
+public function documentationState(): int
+{
+    $today = now()->toDateString();
+
+    $pastDays = $this->days()
+        ->whereDate('date', '<=', $today)   // Feldnamen ggf. anpassen
+        ->get(['id', 'notes']);
+
+    if ($pastDays->isEmpty()) {
+        // Keine vergangenen Tage -> als "fehlt" werten (0) oder 1, wenn du "nichts zu dokumentieren" als ok siehst
+        return 0;
     }
 
-    public function hasRedThread(): bool
+    $total  = $pastDays->count();
+    $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '')->count();
+
+    if ($filled === 0)        return 0;
+    if ($filled < $total)     return 2;
+    return 1;
+}
+
+// Optionales Icon (wenn du direkt im Blade ohne Logik ausgeben willst)
+public function getDocumentationIconHtmlAttribute(): string
+{
+    return $this->renderAssetIcon('Dokumentation', $this->documentationState());
+}
+
+/**
+ * 0 = fehlt, 1 = vorhanden, 2 = (optional) teilw./ausstehend – falls du z. B. mehrere Pflichtdateien erwartest
+ */
+public function redThreadState(): int
+{
+    $exists = $this->files()
+        ->where('type',  'roter_faden')
+        ->exists();
+
+    return $exists ? 1 : 0;
+}
+
+public function getRedThreadIconHtmlAttribute(): string
+{
+    return $this->renderAssetIcon('Roter Faden', $this->redThreadState());
+}
+
+
+public function participantsConfirmationsState(): int
+{
+    return 0;
+}
+
+public function getParticipantsConfirmationsIconHtmlAttribute(): string
+{
+    return $this->renderAssetIcon('Teilnahmebestätigungen', $this->participantsConfirmationsState());
+}
+
+
+    // ---- STATUS: Icon/Badge-Meta ----------------------------------------------
+
+    /**
+     * Liefert konsolidierte Meta-Daten für Status-Anzeige.
+     * icon  = FontAwesome 5 Klasse (du nutzt "fad")
+     * color = Tailwind Text-Farbe
+     * bg    = Tailwind Hintergrund (für Badge-Variante)
+     * title = Tooltip-Text
+     * size  = Icon-Größe
+     */
+    public function statusMeta(): array
     {
-        return false;
+        return match ($this->status) {
+            'scheduled' => [
+                'icon'  => 'fad fa-calendar',
+                'color' => 'text-yellow-600',
+                'bg'    => 'bg-yellow-100',
+                'title' => 'Geplant',
+                'size'  => 'text-xl',
+            ],
+            'active' => [
+                'icon'  => 'fad fa-play-circle',
+                'color' => 'text-green-600',
+                'bg'    => 'bg-green-100',
+                'title' => 'Aktiv (läuft)',
+                'size'  => 'text-xl',
+            ],
+            'completed' => [
+                'icon'  => 'fad fa-check-circle',
+                'color' => 'text-blue-400',
+                'bg'    => 'bg-blue-100',
+                'title' => 'Abgeschlossen',
+                'size'  => 'text-xl',
+            ],
+            default => [
+                'icon'  => 'fad fa-question-circle',
+                'color' => 'text-gray-400',
+                'bg'    => 'bg-gray-50',
+                'title' => 'Unbekannt',
+                'size'  => 'text-lg',
+            ],
+        };
     }
 
-    public function hasParticipantsConfirmed(): bool
+    /** Klassenstring für das Icon (ohne title) */
+    public function getStatusIconAttribute(): string
     {
-        return true;
+        $m = $this->statusMeta();
+        return trim("{$m['icon']} {$m['color']} {$m['size']}");
+    }
+
+    /** Tooltip-Text */
+    public function getStatusIconTitleAttribute(): string
+    {
+        return $this->statusMeta()['title'];
+    }
+
+    /** Kompletter <i> Tag als HTML (für {!! !!}) */
+    public function getStatusIconHtmlAttribute(): string
+    {
+        $m = $this->statusMeta();
+        $classes = trim("{$m['icon']} {$m['color']} {$m['size']}");
+        return '<i class="'.$classes.'" title="'.e($m['title']).'"></i>';
+    }
+
+    /**
+     * Kleine Badge/Pill mit Icon (ohne Text, nur Tooltip).
+     * Beispiel-Styling: dezenter BG + abgerundet.
+     */
+    public function getStatusPillHtmlAttribute(): string
+    {
+        $m = $this->statusMeta();
+        $iconOnly = '<i class="'.$m['icon'].' '.$m['color'].'"></i>';
+
+        return '<span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded '.$m['bg'].' '.$m['color'].'"
+                    title="'.e($m['title']).'">'.$iconOnly.'</span>';
     }
 
 }

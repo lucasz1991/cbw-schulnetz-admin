@@ -58,56 +58,30 @@
 
 
 {{-- 2: Zeitraum (planned_start_date / planned_end_date) --}}
-<div class="px-2 py-2 text-xs text-gray-600 {{ $hc(1) }}">
-    <div class="mb-1">
-        <span class="px-2 py-0.5 text-[10px] leading-5 font-semibold rounded bg-slate-50 text-slate-700 border border-slate-200">
+<div class="flex justify-center px-2 py-2 text-xs {{ $hc(1) }}">
+    <div class="inline-flex flex-col items-center justify-center px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 shadow-sm">
+        <div class="font-semibold text-[10px] leading-tight">
             {{ $termin_id }}
-        </span>
+        </div>
+
+        <div class="w-6 border-t border-slate-200 my-0.5"></div>
+
+        @if($startLbl || $endLbl)
+            <div class="font-medium text-[10px] leading-tight">
+                {{ $startLbl ?? '—' }} – {{ $endLbl ?? '—' }}
+            </div>
+        @else
+            <div class="text-gray-400 text-[10px]">—</div>
+        @endif
     </div>
-    @if($startLbl || $endLbl)
-        <span class="pl-1 text-green-700">{{ $startLbl ?? '—' }}</span>
-        <span>–</span>
-        <span class="text-red-700">{{ $endLbl ?? '—' }}</span>
-    @else
-        <span class="text-gray-400">—</span>
-    @endif
 </div>
 
-{{-- 3: Status (nur Icons mit Tooltip) --}}
+
+{{-- 3: Status (nur Icons mit Tooltip) bg-yellow-100  text-yellow-600 text-blue-400 bg-blue-100 --}}
 <div class="px-2 py-2 flex items-center gap-2 {{ $hc(2) }}">
-    @switch($status)
-        @case('scheduled')
-            {{-- Geplant --}}
-            <i
-                class="fad fa-calendar text-sky-600 text-xl"
-                title="Geplant"
-            ></i>
-            @break
-
-        @case('active')
-            {{-- Aktiv (läuft) --}}
-            <i
-                class="fad fa-play-circle text-green-600 text-xl"
-                title="Aktiv (läuft)"
-            ></i>
-            @break
-
-        @case('completed')
-            {{-- Abgeschlossen --}}
-            <i
-                class="fad fa-check-circle text-gray-400 text-xl"
-                title="Abgeschlossen"
-            ></i>
-            @break
-
-        @default
-            {{-- unbekannt --}}
-            <i
-                class="fad fa-question-circle text-gray-400 text-lg"
-                title="Unbekannt"
-            ></i>
-    @endswitch
+    <i class="{{ $item->status_icon }}" title="{{ $item->status_icon_title }}"></i>
 </div>
+
 
 
 {{-- 1: Tutor (aus Person) --}}
@@ -128,7 +102,7 @@
             <i class="fal fa-users fa-lg"></i>
             <span
                     class="absolute -top-3 -right-3 flex items-center justify-center
-                        min-w-4 h-4 text-[11px] font-semibold bg-white text-blue-700 border border-blue-400 p-[3px]
+                        min-w-4 h-4 text-[10px] font-semibold bg-white text-blue-700 border border-blue-400 p-[2px]
                         rounded-full shadow-sm"
                 >
                     {{ $item->participants_count ?? 0 }}
@@ -138,22 +112,22 @@
 
         <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Dokumentation vollständig">
             <i class="fal fa-chalkboard-teacher fa-lg"></i>
-            <div class="absolute -top-2 -right-2 bg-white rounded-full aspect-square ">
-                <i class="fad fa-check-circle text-green-600  fa-lg"></i>
+            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square  p-[2px]">
+                {!! $item->documentation_icon_html !!}
             </div>
         </div>
 
         <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Roten Faden hochgeladen">
             <i class="fal fa-file-pdf fa-lg"></i>
-            <div class="absolute -top-2 -right-2 bg-white rounded-full aspect-square ">
-                <i class="fad fa-times-circle text-red-600  fa-lg"></i>
+            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square  p-[2px]">
+                {!! $item->red_thread_icon_html !!}
             </div>
         </div>
 
         <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Teilnahmebestätigungen ausstehend">
             <i class="fal fa-file-signature fa-lg"></i>
-            <div class="absolute -top-2 -right-2 bg-yellow-100 rounded-full aspect-square p-[3px]">
-                <i class="fad fa-spinner text-yellow-600 "></i>
+            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square p-[2px]">
+                {!! $item->participants_confirmations_icon_html !!}
             </div>
         </div>
 
