@@ -82,33 +82,78 @@
     @endif
 </div>
 
-{{-- 3: Status (inkl. Aktiv-Badge) --}}
+{{-- 3: Status (nur Icons mit Tooltip) --}}
 <div class="px-2 py-2 flex items-center gap-2 {{ $hc(3) }}">
     @switch($status)
         @case('scheduled')
-            <span class="px-2 py-1 text-xs font-semibold rounded bg-sky-50 text-sky-700">Geplant</span>
+            {{-- Geplant --}}
+            <i
+                class="fad fa-calendar text-sky-600 text-xl"
+                title="Geplant"
+            ></i>
             @break
-        @case('active')
-            <span class="px-2 py-1 text-xs font-semibold rounded bg-green-50 text-green-700">Aktiv (läuft)</span>
-            @break
-        @case('completed')
-            <span class="px-2 py-1 text-xs font-semibold rounded bg-emerald-50 text-emerald-700">Abgeschlossen</span>
-            @break
-        @default
-            <span class="text-xs text-gray-400">—</span>
-    @endswitch
 
+        @case('active')
+            {{-- Aktiv (läuft) --}}
+            <i
+                class="fad fa-play-circle text-green-600 text-xl"
+                title="Aktiv (läuft)"
+            ></i>
+            @break
+
+        @case('completed')
+            {{-- Abgeschlossen --}}
+            <i
+                class="fad fa-check-circle text-gray-400 text-xl"
+                title="Abgeschlossen"
+            ></i>
+            @break
+
+        @default
+            {{-- unbekannt --}}
+            <i
+                class="fad fa-question-circle text-gray-400 text-lg"
+                title="Unbekannt"
+            ></i>
+    @endswitch
 </div>
 
+
 {{-- 4: Aktivitäten (Teilnehmer & Termine) --}}
-<div class="px-2 py-2 text-xs {{ $hc(4) }}">
+<div class="px-2 py-1 text-xs {{ $hc(4) }}">
     <div class="flex flex-wrap gap-2 items-center">
-        <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
-            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M16 14a4 4 0 10-8 0v3h8v-3zM12 7a3 3 0 110-6 3 3 0 010 6z"/>
-            </svg>
-            {{ $item->participants_count ?? 0 }}
-        </span>
+        <div class=" relative h-max inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-400 mr-2" title="Teilnehmer">
+            <i class="fal fa-users fa-lg"></i>
+            <span
+                    class="absolute -top-3 -right-3 flex items-center justify-center
+                        min-w-4 h-4 text-[11px] font-semibold bg-white text-blue-700 border border-blue-400 p-[3px]
+                        rounded-full shadow-sm"
+                >
+                    {{ $item->participants_count ?? 0 }}
+                </span> 
+        </div>
+
+
+        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Dokumentation vollständig">
+            <i class="fal fa-chalkboard-teacher fa-lg"></i>
+            <div class="absolute -top-2 -right-2 bg-white rounded-full aspect-square ">
+                <i class="fad fa-check-circle text-green-600  fa-lg"></i>
+            </div>
+        </div>
+
+        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Roten Faden hochgeladen">
+            <i class="fal fa-file-pdf fa-lg"></i>
+            <div class="absolute -top-2 -right-2 bg-white rounded-full aspect-square ">
+                <i class="fad fa-times-circle text-red-600  fa-lg"></i>
+            </div>
+        </div>
+
+        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Roten Faden hochgeladen">
+            <i class="fal fa-file-signature fa-lg"></i>
+            <div class="absolute -top-2 -right-2 bg-yellow-100 rounded-full aspect-square p-[3px]">
+                <i class="fad fa-spinner text-yellow-600 "></i>
+            </div>
+        </div>
 
 
     </div>

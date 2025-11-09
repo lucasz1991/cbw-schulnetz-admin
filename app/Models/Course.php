@@ -259,4 +259,23 @@ class Course extends Model
                 }
             ]);
     }
+
+
+    // ---- Hilffunctionen zu Status zu Dokumentations, Roten Fäden und Teilnehmer Bestätigungen -----------------------------------------------
+
+    public function hasDocumentation(): bool
+    {
+        return true;
+    }
+
+    public function hasRedThread(): bool
+    {
+        return false;
+    }
+
+    public function hasParticipantsConfirmed(): bool
+    {
+        return true;
+    }
+
 }
