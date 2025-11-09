@@ -1,17 +1,31 @@
 <div class="px-2">
+        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 23.625 23.625" fill="currentColor" aria-hidden="true">
+                    <path
+                        d="M11.812 0C5.289 0 0 5.289 0 11.812s5.289 11.813 11.812 11.813 11.813-5.29 11.813-11.813S18.335 0 11.812 0zm2.459 18.307c-.608.24-1.092.422-1.455.548a3.838 3.838 0 0 1-1.262.189c-.736 0-1.309-.18-1.717-.539s-.611-.814-.611-1.367c0-.215.015-.435.045-.659a8.23 8.23 0 0 1 .147-.759l.761-2.688c.067-.258.125-.503.171-.731.046-.23.068-.441.068-.633 0-.342-.071-.582-.212-.717-.143-.135-.412-.201-.813-.201-.196 0-.398.029-.605.09-.205.063-.383.12-.529.176l.201-.828c.498-.203.975-.377 1.43-.521a4.225 4.225 0 0 1 1.29-.218c.731 0 1.295.178 1.692.53.395.353.594.812.594 1.376 0 .117-.014.323-.041.617a4.129 4.129 0 0 1-.152.811l-.757 2.68a7.582 7.582 0 0 0-.167.736 3.892 3.892 0 0 0-.073.626c0 .356.079.599.239.728.158.129.435.194.827.194.185 0 .392-.033.626-.097.232-.064.4-.121.506-.17l-.203.827zm-.134-10.878a1.807 1.807 0 0 1-1.275.492c-.496 0-.924-.164-1.28-.492a1.57 1.57 0 0 1-.533-1.193c0-.465.18-.865.533-1.196a1.812 1.812 0 0 1 1.28-.497c.497 0 .923.165 1.275.497.353.331.53.731.53 1.196 0 .467-.177.865-.53 1.193z"
+                        data-original="#030104" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <div class="text-sm">
+                    <p class="font-medium">Tipp:</p>
+                    <p class="mt-1">Sie können die Bausteine nach ihrem Status filtern (aktiv, inaktiv, geplant, abgeschlossen) und nach Terminen gruppieren.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="flex justify-between mb-4">
-        <x-slot name="header">
-            <x-slot name="title">Kursliste</x-slot>
-        </x-slot>
+        <h1 class="flex items-center text-lg font-semibold px-2 py-1">
+            <span>Bausteine</span>
+            <span class="ml-2 bg-white text-sky-600 text-xs shadow border border-sky-200 font-bold px-2 py-1 flex items-center justify-center rounded-full h-7 leading-none">
+                {{ $coursesTotal }}
+            </span>
+        </h1>
 
         <div class="flex items-center space-x-2">
             {{-- Titel + Gesamtzähler --}}
-            <h1 class="flex items-center text-lg font-semibold px-2 py-1">
-                <span>Kurse</span>
-                <span class="ml-2 bg-white text-sky-600 text-xs shadow border border-sky-200 font-bold px-2 py-1 flex items-center justify-center rounded-full h-7 leading-none">
-                    {{ $coursesTotal }}
-                </span>
-            </h1>
 
             {{-- Suchfeld --}}
             <x-tables.search-field 
@@ -33,24 +47,31 @@
                 </select>
             </div>
 
-            {{-- (Optional: Später weitere Filter hier ergänzen) --}}
+            {{-- Hier ein Select feld für die Termin_id s der Course  --}}
+            <div class="relative">
+                <select 
+                    wire:model.live="selectedTerm"
+                    class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                >
+                    <option value="">alle Termine</option>
+                    @foreach($terms as $term)
+                        <option value="{{ $term->id }}">{{ $term->name }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
 
-        {{-- + Button --}}
-        <x-link-button 
-            @click="$dispatch('open-course-create-edit')" 
-            class="btn-xs py-0 leading-[0]"
-        >+</x-link-button>
+
     </div>
 
     <div class="w-full">
         <x-tables.table
             :columns="[
-                ['label'=>'Titel','key'=>'title','width'=>'28%','sortable'=>true,'hideOn'=>'none'],
-                ['label'=>'Tutor','key'=>'tutor_name','width'=>'20%','sortable'=>true,'hideOn'=>'md'],
-                ['label'=>'Zeitraum','key'=>'planned_start_date','width'=>'22%','sortable'=>true,'hideOn'=>'xl'],
-                ['label'=>'Status','key'=>'is_active','width'=>'12%','sortable'=>true,'hideOn'=>'md'],
-                ['label'=>'Aktivitäten','key'=>'activity','width'=>'18%','sortable'=>false,'hideOn'=>'md'],
+                ['label'=>'Titel','key'=>'title','width'=>'30%','sortable'=>true,'hideOn'=>'none'],
+                ['label'=>'Tutor','key'=>'tutor_name','width'=>'15%','sortable'=>true,'hideOn'=>'md'],
+                ['label'=>'Termin','key'=>'planned_start_date','width'=>'18%','sortable'=>true,'hideOn'=>'xl'],
+                ['label'=>'Status','key'=>'is_active','width'=>'10%','sortable'=>true,'hideOn'=>'md'],
+                ['label'=>'Aktivitäten','key'=>'activity','width'=>'22%','sortable'=>false,'hideOn'=>'md'],
             ]"
             :items="$courses"
             row-view="components.tables.rows.courses.course-row"
@@ -63,6 +84,5 @@
             {{ $courses->links() }}
         </div>
 
-        @livewire('admin.courses.course-create-edit')
     </div>
 </div>
