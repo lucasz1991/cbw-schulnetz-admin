@@ -121,7 +121,7 @@
 
 {{-- 4: Aktivitäten (Teilnehmer & Termine) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
-    <div class="flex flex-wrap gap-2 items-center">
+    <div class="flex flex-wrap gap-2 items-center  pr-4">
         <div class=" relative h-max inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-400 mr-2" title="Teilnehmer">
             <i class="fal fa-users fa-lg"></i>
             <span
@@ -148,7 +148,7 @@
             </div>
         </div>
 
-        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Roten Faden hochgeladen">
+        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Teilnahmebestätigungen ausstehend">
             <i class="fal fa-file-signature fa-lg"></i>
             <div class="absolute -top-2 -right-2 bg-yellow-100 rounded-full aspect-square p-[3px]">
                 <i class="fad fa-spinner text-yellow-600 "></i>

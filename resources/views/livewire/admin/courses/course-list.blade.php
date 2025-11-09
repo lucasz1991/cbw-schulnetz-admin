@@ -137,7 +137,7 @@
                 ['label'=>'Tutor','key'=>'tutor_name','width'=>'20%','sortable'=>true,'hideOn'=>'md'],
                 ['label'=>'Termin','key'=>'planned_start_date','width'=>'18%','sortable'=>true,'hideOn'=>'xl'],
                 ['label'=>'Status','key'=>'is_active','width'=>'5%','sortable'=>true,'hideOn'=>'md'],
-                ['label'=>'Aktivitäten','key'=>'activity','width'=>'27%','sortable'=>false,'hideOn'=>'md'],
+                ['label'=>'','key'=>'activity','width'=>'27%','sortable'=>false,'hideOn'=>'md'],
             ]"
             :items="$courses"
             :selected-items="$selectedCourses"
