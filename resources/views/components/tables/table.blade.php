@@ -96,7 +96,7 @@
 
         {{-- Actions rechts, ohne absolute --}}
         @if($actionsView)
-            <div class="justify-self-end relative right-8">
+            <div class="justify-self-end relative right-9">
             @include($actionsView, ['item' => $item])
             </div>
         @endif

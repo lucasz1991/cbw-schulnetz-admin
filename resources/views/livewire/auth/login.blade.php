@@ -104,9 +104,6 @@
             </a>
         @endif
         <div class="max-md:space-y-3 max-sm:text-right ml-3">
-            <x-button href="{{ route('register') }}" wire:navigate>
-                Registrieren
-            </x-button>
             <x-button class="ms-4">
                 Einloggen
             </x-button>

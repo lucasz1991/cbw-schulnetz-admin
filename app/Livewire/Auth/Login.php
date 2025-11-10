@@ -3,25 +3,21 @@
 namespace App\Livewire\Auth;
 
 use Livewire\Component;
-
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class Login extends Component
 {
-
     public $message;
     public $messageType;
     public $email = '';
     public $password = '';
     public $remember = false;
 
-
-
     protected $rules = [
         'email' => 'required|email|max:255|exists:users,email',
         'password' => 'required|min:6|max:255',
-
     ];
     
     protected $messages = [
@@ -38,39 +34,64 @@ class Login extends Component
     {
         $this->validate();
 
-        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password, 'role' => 'admin'], $this->remember)) {
+        // 🔹 Login-Versuch
+        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+            Log::warning('Fehlgeschlagener Loginversuch', [
+                'email' => $this->email,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
             throw ValidationException::withMessages([
                 'email' => 'Die eingegebene E-Mail-Adresse oder das Passwort ist falsch.',
             ]);
         }
-            // Benutzer abrufen
+
+        // 🔹 Benutzer holen
         $user = Auth::user();
 
-        // Admin-Rolle prüfen
-        if ($user->role !== 'admin' && $user->role !== 'superadmin') {
-            auth('web')->logout(); // Falls kein Admin, sofort ausloggen
+        // 🔹 Nur admin/staff erlaubt
+        if (!in_array($user->role, ['admin', 'staff'])) {
+
+            Log::notice('Login verweigert – keine Admin/Staff-Rolle', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            Auth::logout();
+
             throw ValidationException::withMessages([
                 'email' => 'Du hast keinen Zugriff auf das Admin-Panel.',
             ]);
         }
-        $this->dispatch('showAlert','Willkommen zurück!', 'success');
+
+        // 🔹 Erfolgreicher Login
+        Log::info('Erfolgreicher Admin/Staff-Login', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'role' => $user->role,
+            'ip' => request()->ip(),
+        ]);
+
+        $this->dispatch('showAlert', 'Willkommen zurück!', 'success');
+
         return $this->redirect('/dashboard');
     }
 
     public function mount()
     {
-        // Überprüfen, ob eine Nachricht in der Session existiert
         if (session()->has('message')) {
             $this->message = session()->get('message');
             $this->messageType = session()->get('messageType', 'default'); 
-            // Event zum Anzeigen der Nachricht dispatchen
             $this->dispatch('showAlert', $this->message, $this->messageType);
         }
     }
 
-
     public function render()
     {
-        return view('livewire.auth.login')->layout("layouts/app");
+        return view('livewire.auth.login')->layout('layouts/master-without-nav');
     }
 }

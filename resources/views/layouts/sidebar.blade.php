@@ -16,30 +16,32 @@
                 <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">System-Verwaltung</li>
 
 
-                <li>
-                    <a href="{{ route('admin.config') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                        <i data-feather="settings" fill="#545a6d33"></i>
-                        <span data-key="t-config"> Einstellungen</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.webcontentmanager') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                        <i data-feather="grid" fill="#545a6d33"></i>
-                        <span data-key="t-webcontentmanager">Web Inhalte</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.employees') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                        <i data-feather="users" fill="#545a6d33"></i>
-                        <span data-key="t-employees">Mitarbeiter</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.safety') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                        <i data-feather="activity" fill="#545a6d33"></i>
-                        <span data-key="t-safety">Aktivitäten</span>
-                    </a>
-                </li>
+                    <li>
+                        <a href="{{ route('admin.config') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <i data-feather="settings" fill="#545a6d33"></i>
+                            <span data-key="t-config"> Einstellungen</span>
+                        </a>
+                    </li>
+                @if(Auth::user()->role == "admin" )
+                    <li>
+                        <a href="{{ route('admin.webcontentmanager') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <i data-feather="grid" fill="#545a6d33"></i>
+                            <span data-key="t-webcontentmanager">Web Inhalte</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.employees') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <i data-feather="users" fill="#545a6d33"></i>
+                            <span data-key="t-employees">Mitarbeiter</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.safety') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <i data-feather="activity" fill="#545a6d33"></i>
+                            <span data-key="t-safety">Aktivitäten</span>
+                        </a>
+                    </li>
+                @endif
                 <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Management</li>
 
                 <li>
@@ -55,12 +57,14 @@
                                 <span>Termine</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="{{ route('admin.mails') }}"  class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                                <i data-feather="mail" fill="#545a6d33"></i>
-                                <span data-key="t-mails">Nachrichten</span>
-                            </a>
-                        </li>
+                        @if(Auth::user()->role == "admin" )
+                            <li>
+                                <a href="{{ route('admin.mails') }}"  class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                    <i data-feather="mail" fill="#545a6d33"></i>
+                                    <span data-key="t-mails">Nachrichten</span>
+                                </a>
+                            </li>
+                        @endif
                     </ul>
                 </li>
 

@@ -3,25 +3,39 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; 
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
+use App\Providers\RouteServiceProvider;
 
 class RoleMiddleware
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Aufruf in Routes: ->middleware('role:admin,staff')
+     * Alle übergebenen Rollen wirken als ODER-Bedingung.
      */
-    public function handle($request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, string ...$roles)
     {
-        if (!Auth::check() || Auth::user()->role !== $role) {
-            if (Auth::check() && Auth::user()->role !== 'admin' && Auth::user()->role !== 'superadmin') {
-                // User is authenticated but does not have the required role
-                auth('web')->logout();
-            }
+        // nicht eingeloggt → zur Login-Seite / Home
+        if (! Auth::check()) {
+            return redirect()->guest(RouteServiceProvider::HOME);
+        }
+
+        $user = Auth::user();
+
+        // Falls keine Rollen übergeben wurden, sicherheitshalber blocken
+        if (empty($roles)) {
+            return redirect(RouteServiceProvider::HOME);
+        }
+
+        // Zugriff nur erlauben, wenn User-Rolle in den erlaubten Rollen ist
+        if (! in_array($user->role, $roles, true)) {
+            // Optionales „hartes“ Verhalten: ausloggen & Session invalidieren
+            // request()->session()->invalidate();
+            // request()->session()->regenerateToken();
+            // Auth::logout();
+
             return redirect(RouteServiceProvider::HOME);
         }
 

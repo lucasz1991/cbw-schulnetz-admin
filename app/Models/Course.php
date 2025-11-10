@@ -402,7 +402,7 @@ class Course extends Model
     {
         return match ($this->status) {
             'scheduled' => [
-                'icon'  => 'far fa-calendar-check',
+                'icon'  => 'far fa-clock',
                 'color' => 'text-yellow-600',
                 'bg'    => 'bg-yellow-100',
                 'title' => 'Geplant',

@@ -97,7 +97,7 @@
 
 {{-- 4: Aktivitäten (Teilnehmer & Termine) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
-    <div class="flex  gap-2 items-center  pr-4">
+    <div class="flex  gap-2 items-center  pr-8">
         <div class=" relative h-max inline-flex items-center gap-1 px-1 py-1 rounded bg-blue-50 text-blue-700 border border-blue-300 mr-2" title="Teilnehmer">
             <i class="fal fa-users fa-lg"></i>
             <span
