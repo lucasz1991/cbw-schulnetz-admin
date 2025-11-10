@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\DB;
+
 
 class Course extends Model
 {
@@ -266,85 +268,124 @@ class Course extends Model
             ]);
     }
 
-// ---- Gemeinsames Status-Mapping -------------------------------------------
-/**
- * 0 = fehlt (rot), 1 = ok (grün), 2 = teilweise/ausstehend (gelb)
- */
-public function assetsStateMeta(int $state): array
-{
-    return match ($state) {
-        0 => ['icon' => 'fad fa-times-circle',  'color' => 'text-red-600',    'bg' => 'bg-white',   'title' => 'Fehlt'],
-        1 => ['icon' => 'fad fa-check-circle',  'color' => 'text-green-600',  'bg' => 'bg-white',   'title' => 'Vollständig'],
-        2 => ['icon' => 'fad fa-spinner',       'color' => 'text-yellow-600', 'bg' => 'bg-white',   'title' => 'Teilweise / ausstehend'],
-        default => ['icon' => 'fad fa-question-circle','color'=>'text-gray-400','bg'=>'bg-gray-50', 'title' => 'Unbekannt'],
-    };
-}
-
-// Optional: ein kleiner Renderer, falls du im Blade direkt ein <i> ausgeben willst.
-protected function renderAssetIcon(string $baseTitle, int $state): string
-{
-    $m = $this->assetsStateMeta($state);
-    return sprintf('<i class="%s %s" title="%s: %s"></i>', $m['icon'], $m['color'], e($baseTitle), e($m['title']));
-}
-
-
-/**
- * 0 = keine/fehlende Doku, 1 = alle vergangene Tage dokumentiert, 2 = teils dokumentiert
- */
-public function documentationState(): int
-{
-    $today = now()->toDateString();
-
-    $pastDays = $this->days()
-        ->whereDate('date', '<=', $today)   // Feldnamen ggf. anpassen
-        ->get(['id', 'notes']);
-
-    if ($pastDays->isEmpty()) {
-        // Keine vergangenen Tage -> als "fehlt" werten (0) oder 1, wenn du "nichts zu dokumentieren" als ok siehst
-        return 0;
+    // ---- Gemeinsames Status-Mapping -------------------------------------------
+    /**
+     * 0 = fehlt (rot), 1 = ok (grün), 2 = teilweise/ausstehend (gelb)
+     */
+    public function assetsStateMeta(int $state): array
+    {
+        return match ($state) {
+            0 => ['icon' => 'fad fa-times-circle',  'color' => 'text-red-600',    'bg' => 'bg-white',   'title' => 'Fehlt'],
+            1 => ['icon' => 'fad fa-check-circle',  'color' => 'text-green-600',  'bg' => 'bg-white',   'title' => 'Vollständig'],
+            2 => ['icon' => 'fad fa-spinner',       'color' => 'text-yellow-600', 'bg' => 'bg-white',   'title' => 'Teilweise / ausstehend'],
+            default => ['icon' => 'fad fa-question-circle','color'=>'text-gray-400','bg'=>'bg-gray-50', 'title' => 'Unbekannt'],
+        };
     }
 
-    $total  = $pastDays->count();
-    $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '')->count();
-
-    if ($filled === 0)        return 0;
-    if ($filled < $total)     return 2;
-    return 1;
-}
-
-// Optionales Icon (wenn du direkt im Blade ohne Logik ausgeben willst)
-public function getDocumentationIconHtmlAttribute(): string
-{
-    return $this->renderAssetIcon('Dokumentation', $this->documentationState());
-}
-
-/**
- * 0 = fehlt, 1 = vorhanden, 2 = (optional) teilw./ausstehend – falls du z. B. mehrere Pflichtdateien erwartest
- */
-public function redThreadState(): int
-{
-    $exists = $this->files()
-        ->where('type',  'roter_faden')
-        ->exists();
-
-    return $exists ? 1 : 0;
-}
-
-public function getRedThreadIconHtmlAttribute(): string
-{
-    return $this->renderAssetIcon('Roter Faden', $this->redThreadState());
-}
+    // Optional: ein kleiner Renderer, falls du im Blade direkt ein <i> ausgeben willst.
+    protected function renderAssetIcon(string $baseTitle, int $state): string
+    {
+        $m = $this->assetsStateMeta($state);
+        return sprintf('<i class="%s %s" title="%s: %s"></i>', $m['icon'], $m['color'], e($baseTitle), e($m['title']));
+    }
 
 
-public function participantsConfirmationsState(): int
-{
-    return 0;
-}
+    /**
+     * 0 = keine/fehlende Doku, 1 = alle vergangene Tage dokumentiert, 2 = teils dokumentiert
+     */
+    public function documentationState(): int
+    {
+        $today = now()->toDateString();
 
-public function getParticipantsConfirmationsIconHtmlAttribute(): string
-{
-    return $this->renderAssetIcon('Teilnahmebestätigungen', $this->participantsConfirmationsState());
-}
+        $pastDays = $this->days()
+            ->whereDate('date', '<=', $today)   // Feldnamen ggf. anpassen
+            ->get(['id', 'notes']);
+
+        if ($pastDays->isEmpty()) {
+            // Keine vergangenen Tage -> als "fehlt" werten (0) oder 1, wenn du "nichts zu dokumentieren" als ok siehst
+            return 0;
+        }
+
+        $total  = $pastDays->count();
+        $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '')->count();
+
+        if ($filled === 0)        return 0;
+        if ($filled < $total)     return 2;
+        return 1;
+    }
+
+    // Optionales Icon (wenn du direkt im Blade ohne Logik ausgeben willst)
+    public function getDocumentationIconHtmlAttribute(): string
+    {
+        return $this->renderAssetIcon('Dokumentation', $this->documentationState());
+    }
+
+    /**
+     * 0 = fehlt, 1 = vorhanden, 2 = (optional) teilw./ausstehend – falls du z. B. mehrere Pflichtdateien erwartest
+     */
+    public function redThreadState(): int
+    {
+        $exists = $this->files()
+            ->where('type',  'roter_faden')
+            ->exists();
+
+        return $exists ? 1 : 0;
+    }
+
+    public function getRedThreadIconHtmlAttribute(): string
+    {
+        return $this->renderAssetIcon('Roter Faden', $this->redThreadState());
+    }
+
+
+    public function participantsConfirmationsState(): int
+    {
+        // Distinct aktive Teilnehmer zählen
+        $total = DB::table('course_participant_enrollments')
+            ->where('course_id', $this->id)
+            ->whereNull('deleted_at')
+            ->where('is_active', true)
+            ->distinct()
+            ->count('person_id');
+
+        if ($total === 0) {
+            // Kein Teilnehmer -> als "fehlt" werten (0). 
+            // Falls du das als "ok" sehen willst, ändere auf "return 1;"
+            return 0;
+        }
+
+        // Distinct bestätigte Personen (nur mit acknowledged_at) für diesen Kurs
+        $ack = DB::table('course_material_acknowledgements')
+            ->where('course_id', $this->id)
+            ->whereNotNull('acknowledged_at')
+            ->distinct()
+            ->count('person_id');
+
+        if ($ack === 0)       return 0; // keiner bestätigt
+        if ($ack < $total)    return 2; // teilweise / ausstehend
+        return 1;                       // alle bestätigt
+    }
+
+
+    public function getParticipantsConfirmationsIconHtmlAttribute(): string
+    {
+        return $this->renderAssetIcon('Teilnahmebestätigungen', $this->participantsConfirmationsState());
+    }
+
+    public function invoiceState()
+    {
+        $exists = $this->files()
+            ->where('type',  'invoice')
+            ->exists();
+
+        return $exists ? 1 : 0;
+    }
+
+    public function getInvoiceIconHtmlAttribute(): string
+    {
+        return $this->renderAssetIcon('Dozenten Rechnung', $this->invoiceState());
+    }
+
 
 
     // ---- STATUS: Icon/Badge-Meta ----------------------------------------------
@@ -361,25 +402,25 @@ public function getParticipantsConfirmationsIconHtmlAttribute(): string
     {
         return match ($this->status) {
             'scheduled' => [
-                'icon'  => 'fad fa-calendar',
+                'icon'  => 'far fa-calendar-check',
                 'color' => 'text-yellow-600',
                 'bg'    => 'bg-yellow-100',
                 'title' => 'Geplant',
-                'size'  => 'text-xl',
+                'size'  => 'text-lg',
             ],
             'active' => [
                 'icon'  => 'fad fa-play-circle',
                 'color' => 'text-green-600',
                 'bg'    => 'bg-green-100',
                 'title' => 'Aktiv (läuft)',
-                'size'  => 'text-xl',
+                'size'  => 'text-lg',
             ],
             'completed' => [
                 'icon'  => 'fad fa-check-circle',
-                'color' => 'text-blue-400',
+                'color' => 'text-blue-600',
                 'bg'    => 'bg-blue-100',
                 'title' => 'Abgeschlossen',
-                'size'  => 'text-xl',
+                'size'  => 'text-lg',
             ],
             default => [
                 'icon'  => 'fad fa-question-circle',

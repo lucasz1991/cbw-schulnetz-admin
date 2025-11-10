@@ -22,16 +22,17 @@
             {{ $coursesTotal }}
         </span>
     </h1>
-    <div class="flex justify-between my-4">
+    <div class="flex justify-between my-4 space-x-2">
         <div class="flex items-center gap-4">
-                        <x-button 
+            <x-ui.buttons.button-basic 
                 wire:click="toggleSelectAll" 
-                class="btn-xs mr-3"
+                :size="'sm'"
+                title="Alle Auswählen/Entfernen" 
             >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-            </svg>
-            </x-button>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                </svg>
+            </x-ui.buttons.button-basic >
 {{-- Bulk Actions via x-dropdown --}}
 @php
     $isDisabled = count($selectedCourses) === 0;
@@ -43,7 +44,7 @@
         <button
             type="button"
             @class([
-                'text-sm border px-3 py-1 rounded relative flex items-center justify-center bg-gray-100',
+                'text-sm border px-3 py-1 rounded-lg relative flex items-center justify-center bg-gray-100',
                 'cursor-not-allowed opacity-50' => $isDisabled,
                 'cursor-pointer' => !$isDisabled,
             ])
@@ -65,10 +66,12 @@
 
     {{-- Content --}}
     <x-slot name="content">
-            <x-dropdown-link href="#" wire:click.prevent="removeSelectedCourses" class="hover:bg-green-100">
+            <x-dropdown-link href="#" wire:click.prevent="removeSelectedCourses" class="hover:bg-red-100">
+                <i class="far fa-align-slash mr-2"></i>
                 Auswahl entfernen
             </x-dropdown-link>
             <x-dropdown-link href="#" wire:click.prevent="exportCourses" class="hover:bg-green-100">
+                <i class="far fa-download mr-2"></i>
                 Exportieren
             </x-dropdown-link>
     </x-slot>
@@ -90,7 +93,7 @@
                     wire:model.live="active"
                     class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                 >
-                    <option value="">alle</option>
+                    <option value="">Status auswählen</option>
                     <option value="active">aktive</option>
                     <option value="inactive">inaktive</option>
                     <option value="planned">geplante</option>

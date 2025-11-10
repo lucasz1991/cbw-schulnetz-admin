@@ -98,11 +98,11 @@
 {{-- 4: Aktivitäten (Teilnehmer & Termine) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
     <div class="flex  gap-2 items-center  pr-4">
-        <div class=" relative h-max inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-400 mr-2" title="Teilnehmer">
+        <div class=" relative h-max inline-flex items-center gap-1 px-1 py-1 rounded bg-blue-50 text-blue-700 border border-blue-300 mr-2" title="Teilnehmer">
             <i class="fal fa-users fa-lg"></i>
             <span
-                    class="absolute -top-3 -right-3 flex items-center justify-center
-                        min-w-4 h-4 text-[10px] font-semibold bg-white text-blue-700 border border-blue-400 p-[2px]
+                    class="absolute -top-2 -right-2 flex items-center justify-center
+                        min-w-4 h-4 text-[10px] font-semibold bg-white text-blue-700 border border-blue-200 p-[2px]
                         rounded-full shadow-sm"
                 >
                     {{ $item->participants_count ?? 0 }}
@@ -110,27 +110,33 @@
         </div>
 
 
-        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Dokumentation vollständig">
+        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Dokumentation">
             <i class="fal fa-chalkboard-teacher fa-lg"></i>
             <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square  p-[2px]">
                 {!! $item->documentation_icon_html !!}
             </div>
         </div>
 
-        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Roten Faden hochgeladen">
+        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Roten Faden">
             <i class="fal fa-file-pdf fa-lg"></i>
             <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square  p-[2px]">
                 {!! $item->red_thread_icon_html !!}
             </div>
         </div>
 
-        <div class=" relative inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 text-gray-700 border border-gray-400 mr-2" title="Teilnahmebestätigungen ausstehend">
+        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Teilnahmebestätigungen">
             <i class="fal fa-file-signature fa-lg"></i>
             <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square p-[2px]">
                 {!! $item->participants_confirmations_icon_html !!}
             </div>
         </div>
 
+        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Rechnung">
+            <i class="fal fa-money-check-alt fa-lg"></i>
+            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square p-[2px]">
+                {!! $item->invoice_icon_html !!}
+            </div>
+        </div>
 
     </div>
 </div>

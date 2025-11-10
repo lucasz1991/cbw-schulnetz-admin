@@ -43,7 +43,7 @@
                 <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Management</li>
 
                 <li>
-                    <a href="javascript: void(0);" aria-expanded="false" class="block :rtl:pr-10 py-2.5 px-6 text-sm font-medium text-gray-950 transition-all duration-150 ease-linear nav-menu hover:text-violet-500 dark:text-gray-300 dark:active:text-white dark:hover:text-white">
+                    <a href="javascript: void(0);" aria-expanded="false" class="block :rtl:pr-10 py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear nav-menu hover:text-blue-500 ">
                         <i data-feather="sliders" fill="#545a6d33"></i>
                         <span data-key="t-auth" >Verwaltung</span>
                     </a>
