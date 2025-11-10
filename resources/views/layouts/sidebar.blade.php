@@ -12,7 +12,7 @@
                         <span data-key="t-dashboard"> Dashboard</span>
                     </a>
                 </li>
-
+    @if(Auth::user()->current_team_id <= 2 )
                 <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">System-Verwaltung</li>
 
 
@@ -42,6 +42,7 @@
                         </a>
                     </li>
                 @endif
+    @endif
                 <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Management</li>
 
                 <li>
@@ -80,12 +81,26 @@
                         <span data-key="t-users">Bausteine</span>
                     </a>
                 </li>
+<!--
+                <li>
+                    <a href="javascript: void(0);" aria-expanded="false" class="block :rtl:pr-10 py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear nav-menu hover:text-blue-500 ">
+                        <i data-feather="sliders" fill="#545a6d33"></i>
+                        <span data-key="t-auth" >ToDo's</span>
+                    </a>
+                    <ul>
 
-
+                        <li>
+                            <a href="" class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                <i data-feather="edit-3" fill="#545a6d33"></i>
+                                <span>Teilnehmer Anfragen</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 
 
                 
-                <!--<li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Dev Tests</li>
+                <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Dev Tests</li>
 
                 <li>
                     <a href="#"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">

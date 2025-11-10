@@ -42,7 +42,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
         Route::get('/', AdminDashboard::class)->name('admin.index');
         Route::get('/config', AdminConfig::class)->name('admin.config');
         Route::get('/web-content-manager', WebContentManager::class)->name('admin.webcontentmanager');
-        Route::get('/rating-structure', Index::class)->name('admin.ratingstructure.index');
         Route::get('/adminmessages', AdminMessageBox::class)->name('admin.messages');
          
         //Route::get('/exports', Exports::class)->name('admin.exports'); 

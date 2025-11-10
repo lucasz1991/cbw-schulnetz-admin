@@ -56,11 +56,11 @@ class File extends Model
     public function getIconOrThumbnailAttribute(): string
     {
         $mime = $this->mime_type ?? '';
-        $path = $this->path ?? '';
+        $path = $this->getEphemeralPublicUrl() ?? '';
 
         return match (true) {
             // URL aus dem public-Disk
-            str_starts_with($mime, 'image/') => Storage::disk(self::DISK)->url($path),
+            str_starts_with($mime, 'image/') => $path,
             str_starts_with($mime, 'video/') => asset('site-images/fileicons/file-video.png'),
             str_starts_with($mime, 'audio/') => asset('site-images/fileicons/file-audio.png'),
             str_contains($mime, 'pdf')       => asset('site-images/fileicons/file-pdf.png'),
