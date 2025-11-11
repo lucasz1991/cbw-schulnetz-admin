@@ -62,6 +62,7 @@
                 </div>
             </x-slot>
         </x-settings-collapse>
+        @if(Auth::user()->role == "admin" )
         <x-settings-collapse>
             <x-slot name="trigger">
                 Grundfarben
@@ -143,6 +144,7 @@
                 </div>
             </x-slot>
         </x-settings-collapse>
+        @endif
         <x-settings-collapse>
             <x-slot name="trigger">
             Logos & Favicon
