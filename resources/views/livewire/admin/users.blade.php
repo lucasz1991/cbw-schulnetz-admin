@@ -46,7 +46,7 @@
                     class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                 >
                     <option value="">alle</option>
-                    <option value="tutor">Mitarbeiter</option>
+                    <option value="tutor">Dozenten</option>
                     <option value="guest">Teilnehmer</option>
                 </select>
             </div>
@@ -176,7 +176,7 @@
                         @endif
                     </div>
                     <div class="mx-5  text-gray-600 text-xs px-2 py-0.5 rounded-full {{ ucfirst($user->role) == 'Tutor' ? 'bg-blue-100' : 'bg-green-100' }}">
-                        <span class="text-xs font-normal {{ ucfirst($user->role) == 'Tutor' ? 'text-blue-600' : 'text-green-600' }}">{{ ucfirst($user->role) == 'Tutor' ? 'Mitarbeiter' : 'Teilnehmer' }}</span>
+                        <span class="text-xs font-normal {{ ucfirst($user->role) == 'Tutor' ? 'text-blue-600' : 'text-green-600' }}">{{ ucfirst($user->role) == 'Tutor' ? 'Dozent' : 'Teilnehmer' }}</span>
                     </div>
                 </div>
                 <div class="col-span-4 cursor-pointer flex items-center space-x-2" wire:click="toggleUserSelection({{ $user->id }})">

@@ -71,7 +71,7 @@
             <!-- Role Badge  -->
             <div class="mt-4 w-max mx-auto px-3 py-1 rounded-full text-xs font-semibold "  x-cloak
                  :class="{ 'text-green-600 bg-green-100': {{ $user->role == 'guest'  ? 'true' : 'false' }}, 'text-blue-600 bg-blue-100': {{ $user->role == 'tutor' ? 'true' : 'false' }} }">
-                {{ $user->role == 'tutor' ? 'Mitarbeiter' : 'Teilnehmer' }}
+                {{ $user->role == 'tutor' ? 'Dozent' : 'Teilnehmer' }}
             </div>
         </div>
     </div>
