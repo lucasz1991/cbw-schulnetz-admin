@@ -11,9 +11,22 @@
             <i class="far fa-pen mr-2"></i>
             Bearbeiten
         </x-dropdown-link>
+
+        @if ($item->status)
+            <x-dropdown-link wire:click.prevent="deactivateUser({{ $item->id }})" class="hover:bg-yellow-100">
+                <i class="far fa-pause-circle mr-2"></i>
+                Deaktivieren
+            </x-dropdown-link>
+        @else
+            <x-dropdown-link wire:click.prevent="activateUser({{ $item->id }})" class="hover:bg-green-100">
+                <i class="far fa-play-circle mr-2"></i>
+                Aktivieren
+            </x-dropdown-link>
+        @endif
+
         <x-dropdown-link href="#" wire:click.prevent="" class="hover:bg-red-100">
-            <i class="far fa-times-circle  mr-2"></i>
-            Deaktivieren
+            <i class="far fa-times-circle mr-2"></i>
+            Löschen
         </x-dropdown-link>
     </x-slot>
 </x-dropdown>

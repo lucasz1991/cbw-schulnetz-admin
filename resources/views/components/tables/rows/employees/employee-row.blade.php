@@ -38,9 +38,47 @@
 
 {{-- 2: Team (Badge) --}}
 <div class="flex items-center px-2 py-2 text-xs {{ $hc(2) }}">
-    <span class="inline-flex items-center px-2 py-0.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 shadow-sm">
-        {{ $team }}
-    </span>
+    <div class="flex items-center">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 shadow-sm mr-2">
+            {{ $team }}
+        </span>
+                                <span title="{{ $item->status ? 'Aktiv' : 'Inaktiv' }}" class="h-4 w-4 rounded-full flex items-center justify-center {{ $item->status ? 'bg-green-400' : 'bg-red-400' }}" >    
+                                @if ($item->status)
+                                    <!-- SVG für Aktiv (Haken) -->
+                                    <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        class="h-3 w-3 text-white" 
+                                        fill="none" 
+                                        viewBox="0 0 24 24" 
+                                        stroke-width="4" 
+                                        stroke="currentColor"
+                                    >
+                                        <path 
+                                            stroke-linecap="round" 
+                                            stroke-linejoin="round" 
+                                            d="M5 13l4 4L19 7" 
+                                        />
+                                    </svg>
+                                @else
+                                    <!-- SVG für Inaktiv (X) -->
+                                    <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        class="h-3 w-3 text-white" 
+                                        fill="none" 
+                                        viewBox="0 0 24 24" 
+                                        stroke-width="4" 
+                                        stroke="currentColor"
+                                    >
+                                        <path 
+                                            stroke-linecap="round" 
+                                            stroke-linejoin="round" 
+                                            d="M6 18L18 6M6 6l12 12" 
+                                        />
+                                    </svg>
+                                @endif
+    
+                            </span>
+    </div>
 </div>
 
 {{-- 3: Erstellt am --}}

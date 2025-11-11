@@ -124,7 +124,7 @@
             :columns="[
                 ['label'=>'Name','key'=>'name','width'=>'35%','sortable'=>true,'hideOn'=>'none'],
                 ['label'=>'E-Mail','key'=>'email','width'=>'30%','sortable'=>true,'hideOn'=>'md'],
-                ['label'=>'Team','key'=>'team','width'=>'20%','sortable'=>false,'hideOn'=>'lg'],
+                ['label'=>'Status','key'=>'team','width'=>'20%','sortable'=>false,'hideOn'=>'lg'],
                 ['label'=>'Erstellt','key'=>'created_at','width'=>'15%','sortable'=>true,'hideOn'=>'md'],
             ]"
             :items="$employees"

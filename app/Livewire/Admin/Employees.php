@@ -82,6 +82,30 @@ class Employees extends Component
         $this->selectAll = false;
     }
 
+        public function activateUser($userId)
+    {
+        $user = User::find($userId);
+
+        if ($user && !$user->status) {
+                $user->update(['status' => true]);
+                $this->dispatch('showAlert', 'Benutzer erfolgreich aktiviert.', 'success');
+        } else {
+            $this->dispatch('showAlert', 'Benutzer ist bereits aktiv.', 'info');
+        }
+    }
+
+    public function deactivateUser($userId)
+    {
+        $user = User::find($userId);
+
+        if ($user && $user->status) {
+                $user->update(['status' => false]);
+                $this->dispatch('showAlert', 'Benutzer erfolgreich deaktiviert.', 'success');
+        } else {
+            $this->dispatch('showAlert', 'Benutzer ist bereits inaktiv.', 'info');
+        }
+    }
+
 public function getEmployeesProperty()
 {
     $allowedRoles = ['admin','staff'];

@@ -29,14 +29,11 @@ class RoleMiddleware
             return redirect(RouteServiceProvider::HOME);
         }
 
-        // Zugriff nur erlauben, wenn User-Rolle in den erlaubten Rollen ist
         if (! in_array($user->role, $roles, true)) {
-            // Optionales „hartes“ Verhalten: ausloggen & Session invalidieren
-            // request()->session()->invalidate();
-            // request()->session()->regenerateToken();
-            // Auth::logout();
-
-            return redirect(RouteServiceProvider::HOME);
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+Auth::guard('web')->logout();
+            return redirect()->route('login')->withErrors(['status' => 'Dein Konto hat die Falsche Rolle für diesen Bereich. Bitte wende dich an die Administration.']);
         }
 
         return $next($request);
