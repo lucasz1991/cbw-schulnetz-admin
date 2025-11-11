@@ -24,9 +24,5 @@
             </x-dropdown-link>
         @endif
 
-        <x-dropdown-link href="#" wire:click.prevent="" class="hover:bg-red-100">
-            <i class="far fa-times-circle mr-2"></i>
-            Löschen
-        </x-dropdown-link>
     </x-slot>
 </x-dropdown>
