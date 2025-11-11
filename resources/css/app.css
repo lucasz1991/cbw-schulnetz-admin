@@ -47,7 +47,9 @@ select:focus {
   box-shadow: none;
   border-color: inherit; /* Keine Änderung der Randfarbe */
 }
-
+select, select > option{
+  font-family: 'Arial' !important;
+}
 body.font-quicksand{
   font-family: 'Quicksand';
 }
