@@ -113,7 +113,45 @@
                     @endforeach
                 </select>
             </div>
-
+            
+            {{-- Inhalts-Status Filter --}}
+            <div class="relative">
+              <select
+                wire:model.live="contentFilter"
+                class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                title="Inhalts-Status filtern"
+              >
+                <option value="">Inhalts-Status</option>
+            
+                <optgroup label="Allgemein">
+                  <option value="all_ok">vollständig</option>
+                  <option value="all_partial">teilweise</option>
+                  <option value="all_missing">fehlt</option>
+                </optgroup>
+            
+                <optgroup label="Dokumentation">
+                  <option value="doc_ok">vollständig</option>
+                  <option value="doc_partial">teilweise</option>
+                  <option value="doc_missing">fehlt</option>
+                </optgroup>
+            
+                <optgroup label="Roter Faden">
+                  <option value="rf_ok">vorhanden</option>
+                  <option value="rf_missing">fehlt</option>
+                </optgroup>
+            
+                <optgroup label="Bestätigungen">
+                  <option value="ack_ok">alle bestätigt</option>
+                  <option value="ack_partial">teilweise bestätigt</option>
+                  <option value="ack_missing">keine bestätigt</option>
+                </optgroup>
+            
+                <optgroup label="Rechnung (optional)">
+                  <option value="inv_ok">vorhanden</option>
+                  <option value="inv_missing">fehlt</option>
+                </optgroup>
+              </select>
+            </div>
             {{-- PPer page --}}
             <div class="relative">
                 <select 
@@ -128,44 +166,6 @@
                 </select> 
             </div>
 
-{{-- Inhalts-Status Filter --}}
-<div class="relative">
-  <select
-    wire:model.live="contentFilter"
-    class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-    title="Inhalts-Status filtern"
-  >
-    <option value="">Inhalts-Status</option>
-
-    <optgroup label="Allgemein">
-      <option value="all_ok">vollständig</option>
-      <option value="all_partial">teilweise</option>
-      <option value="all_missing">fehlt</option>
-    </optgroup>
-
-    <optgroup label="Dokumentation">
-      <option value="doc_ok">vollständig</option>
-      <option value="doc_partial">teilweise</option>
-      <option value="doc_missing">fehlt</option>
-    </optgroup>
-
-    <optgroup label="Roter Faden">
-      <option value="rf_ok">vorhanden</option>
-      <option value="rf_missing">fehlt</option>
-    </optgroup>
-
-    <optgroup label="Bestätigungen">
-      <option value="ack_ok">alle bestätigt</option>
-      <option value="ack_partial">teilweise bestätigt</option>
-      <option value="ack_missing">keine bestätigt</option>
-    </optgroup>
-
-    <optgroup label="Rechnung (optional)">
-      <option value="inv_ok">vorhanden</option>
-      <option value="inv_missing">fehlt</option>
-    </optgroup>
-  </select>
-</div>
 
 
         </div>
