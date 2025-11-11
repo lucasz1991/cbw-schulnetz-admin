@@ -100,23 +100,22 @@
                         <p class="font-semibold text-lg">Uploads</p>
                         <div class="mt-3">
                             @if(!empty($recentUploads))
-@foreach($recentUploads as $file)
-    <div class="flex items-center justify-between py-2">
-        <div class="flex items-center gap-2">
-            <img src="{{ $file->icon_or_thumbnail }}" alt="icon" class="w-6 h-6 rounded">
-            <div>
-                <p class="font-medium text-gray-800">{{ $file->name }}</p>
-                <p class="text-xs text-gray-500">
-                    {{ $file->mime_type }} · {{ $file->created_at->format('d.m.Y H:i') }}
-                </p>
-            </div>
-        </div>
-        <span class="text-xs text-gray-500">
-            {{ number_format($file->size / 1024, 1) }} KB
-        </span>
-    </div>
-@endforeach
-
+                                @foreach($recentUploads as $file)
+                                    <div class="flex items-center justify-between py-2">
+                                        <div class="flex items-center gap-2">
+                                            <img src="{{ $file->icon_or_thumbnail }}" alt="icon" class="w-6 h-6 rounded">
+                                            <div>
+                                                <p class="font-medium text-gray-800">{{ $file->name }}</p>
+                                                <p class="text-xs text-gray-500">
+                                                    {{ $file->mime_type }} · {{ $file->created_at->format('d.m.Y H:i') }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-gray-500">
+                                            {{ number_format($file->size / 1024, 1) }} KB
+                                        </span>
+                                    </div>
+                                @endforeach
                             @else
                                 <p class="text-sm text-gray-500">Keine Uploads in den letzten 7 Tagen.</p>
                             @endif
