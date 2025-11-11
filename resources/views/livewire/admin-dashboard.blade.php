@@ -97,7 +97,7 @@
                 {{-- Letzte Uploads (7 Tage) --}}
                 <div class="bg-white rounded-md border border-gray-200 shadow-sm">
                     <div class="p-4">
-                        <p class="font-semibold text-lg">Uploads – letzte 7 Tage</p>
+                        <p class="font-semibold text-lg">Uploads</p>
                         <div class="mt-3">
                             @if(!empty($recentUploads))
 @foreach($recentUploads as $file)
@@ -131,13 +131,14 @@
                         <div class="mt-3">
                             @if(!empty($recentMessages))
                                 <ul class="divide-y divide-gray-100 text-sm">
-@foreach($recentMessages as $m)
-    <p class="font-semibold">{{ $m->subject }}</p>
-    <p class="text-xs text-gray-500">
-        {{ $m->sender?->name ?? 'Unbekannt' }} · {{ $m->created_at->diffForHumans() }}
-    </p>
-    <p>Dateianhänge: {{ $m->files->count() }}</p>
-@endforeach
+                                    @foreach($recentMessages as $m)
+                                        <p class="font-semibold">{{ $m->recipient->name }}</p>
+                                        <p class="font-semibold">{{ $m->subject }}</p>
+                                        <p class="text-xs text-gray-500">
+                                            {{ $m->sender?->name ?? 'Unbekannt' }} · {{ $m->created_at->diffForHumans() }}
+                                        </p>
+                                        <p>Dateianhänge: {{ $m->files->count() }}</p>
+                                    @endforeach
                                 </ul>
                             @else
                                 <p class="text-sm text-gray-500">Keine ungelesenen Nachrichten.</p>

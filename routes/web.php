@@ -36,7 +36,7 @@ use App\Http\Controllers\PagebuilderProjectController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->group(function () {
+Route::middleware(['auth:sanctum', 'auth.status', config('jetstream.auth_session'), 'verified'])->group(function () {
     // Admin Routes
     Route::middleware(['role:admin,staff'])->group(function () {
         Route::get('/', AdminDashboard::class)->name('admin.index');
