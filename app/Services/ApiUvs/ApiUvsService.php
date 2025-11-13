@@ -110,6 +110,30 @@ class ApiUvsService
         ]);
     }
 
+        /**
+     * Führt eine SQL-Leseabfrage über die UVS-API aus (POST /api/sql).
+     *
+     * @param  string  $sql                Vollständiges SQL-Statement (SELECT/CTE/EXPLAIN/SHOW/DESCRIBE etc.)
+     * @param  bool    $clientSideGuard    Wenn true, blockt lokal offensichtliche Schreib-/DDL-Statements
+     * @return array{ok:bool,status:?int,message?:string,data?:mixed}
+     */
+    public function runSql(string $sql, bool $clientSideGuard = true): array
+    {
+        // Optionaler Client-Schutz (Server blockt das ohnehin noch einmal)
+        if ($clientSideGuard) {
+            if (preg_match('/\b(insert|update|delete|merge|replace|upsert|alter|drop|create|truncate|rename|grant|revoke|call|handler|load\s+data|outfile|infile|into\s+dumpfile)\b/i', $sql)) {
+                return [
+                    'ok'      => false,
+                    'status'  => 400,
+                    'message' => 'Schreibende oder gefährliche SQL-Befehle sind auf Client-Seite blockiert.',
+                ];
+            }
+
+        }
+
+        return $this->request('POST', '/api/sql', ['query' => $sql]);
+    }
+
     // =========================
     //   HTTP Helper
     // =========================

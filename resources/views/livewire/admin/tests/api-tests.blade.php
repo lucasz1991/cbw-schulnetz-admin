@@ -124,4 +124,64 @@
             </tbody>
         </table>
     </div>
+    {{-- SQL Runner --}}
+<div class="bg-white border rounded-lg p-4">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold">SQL Runner (POST /api/sql)</h3>
+        <div class="text-xs text-gray-500">
+            Nur Leseabfragen (Server blockt INSERT/UPDATE/DELETE/DDL)
+        </div>
+    </div>
+
+    <label class="text-sm block">
+        SQL
+        <textarea
+            class="mt-1 w-full border rounded px-3 py-2 font-mono text-xs"
+            rows="6"
+            wire:model.defer="sqlQuery"
+            placeholder="SELECT * FROM person WHERE institut_id = 1 ORDER BY nachname"
+        ></textarea>
+    </label>
+
+    <div class="mt-3 flex items-center gap-2">
+        <button class="px-3 py-2 rounded border bg-white" wire:click="runSqlManual" @disabled($running)>
+            @if($running) Läuft… @else SQL ausführen @endif
+        </button>
+        <button class="px-3 py-2 rounded border bg-white" wire:click="clearSqlResult">Ausgabe leeren</button>
+    </div>
+
+    @php $r = $results['sql_run'] ?? null; @endphp
+    <div class="mt-4">
+        @if($r)
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs
+                    @class([
+                        'bg-green-100 text-green-700' => $r['ok'] ?? false,
+                        'bg-red-100 text-red-700' => !($r['ok'] ?? false),
+                    ])">
+                    {{ ($r['ok'] ?? false) ? 'OK' : 'Fehler' }}
+                </span>
+                <span class="text-xs text-gray-500">
+                    {{ $r['status'] ?? '—' }} · {{ $r['duration'] ?? '—' }} ms
+                </span>
+            </div>
+            <div class="text-xs text-gray-600 mt-1">{{ $r['message'] ?? '' }}</div>
+
+            @if(!empty($r['preview']))
+                <details class="mt-2">
+                    <summary class="text-xs text-gray-500 cursor-pointer">Antwort ansehen</summary>
+                    <div class="mt-1 bg-black text-white p-4 rounded max-h-80 overflow-auto">
+                        <pre class="text-[11px] whitespace-pre leading-5">
+<code class="language-json">{{ $r['preview'] }}</code></pre>
+                    </div>
+                </details>
+            @endif
+
+            <div class="text-[11px] text-gray-400 mt-1">Stand: {{ $r['timestamp'] ?? '' }}</div>
+        @else
+            <span class="text-xs text-gray-400">Noch keine SQL ausgeführt.</span>
+        @endif
+    </div>
+</div>
+
 </div>

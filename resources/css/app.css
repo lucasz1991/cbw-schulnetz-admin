@@ -8,6 +8,7 @@
   font-weight: 100 900;
   font-style: normal;
 }
+
 @font-face {
   font-family: 'NotoSans';
   src: url('@fonts/NotoSans-VariableFont_wdth,wght.ttf') format('truetype');

@@ -83,7 +83,7 @@
                         <span data-key="t-users">Bausteine</span>
                     </a>
                 </li>
-<!--
+                @if(Auth::user()->role == "admin" )
                 <li>
                     <a href="javascript: void(0);" aria-expanded="false" class="block :rtl:pr-10 py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear nav-menu hover:text-blue-500 ">
                         <i data-feather="sliders" fill="#545a6d33"></i>
@@ -98,18 +98,18 @@
                             </a>
                         </li>
                     </ul>
-                </li>
+                </li>-->
                 
 
-                
                 <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Dev Tests</li>
 
                 <li>
-                    <a href="#"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                    <a href="{{ route('admin.tests.api') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                         <i data-feather="tool" fill="#545a6d33"></i>
                         <span data-key="t-tools">Api Tests</span>
                     </a>
-                </li>-->
+                </li>
+                @endif
             </ul>
         </div>
         <!-- Sidebar -->

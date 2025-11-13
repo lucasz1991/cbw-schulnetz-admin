@@ -17,6 +17,9 @@ class ApiTests extends Component
     public string $personId = '1-0035645';       // "{institut_id}-{person_nr}"
     public string $courseClassId = '25V20-1-VBMG51';             // Beispielklasse
 
+    public string $sqlQuery = "SELECT person_id, nachname, vorname FROM person WHERE institut_id = 1 ORDER BY nachname";
+
+
     // Such-/Listen-Parameter
     public ?string $searchTerm = null;
     public ?int $limit = 10;
@@ -224,6 +227,56 @@ class ApiTests extends Component
                 ],
             ], 200),
         ]);
+    }
+
+        public function runSqlManual(): void
+    {
+        // Optional: Fake aktiv
+        if ($this->useFake) {
+            $this->installFakes();
+        }
+
+        $svc = app(ApiUvsService::class);
+
+        $start = microtime(true);
+        try {
+            $resp = $svc->runSql($this->sqlQuery, true);
+
+            $ms      = (int) round((microtime(true) - $start) * 1000);
+            $ok      = (bool)($resp['ok'] ?? false);
+            $status  = $resp['status'] ?? null;
+            $message = $resp['message'] ?? ($ok ? 'OK' : 'Fehler');
+            $data    = $resp['data'] ?? null;
+
+            $this->results['sql_run'] = [
+                'ok'         => $ok,
+                'status'     => $status,
+                'duration'   => $ms,
+                'message'    => $message,
+                'preview'    => $this->preview($data),
+                'timestamp'  => now()->format('Y-m-d H:i:s'),
+            ];
+        } catch (\Throwable $e) {
+            $this->results['sql_run'] = [
+                'ok'         => false,
+                'status'     => null,
+                'duration'   => (int) round((microtime(true) - $start) * 1000),
+                'message'    => $e->getMessage(),
+                'preview'    => null,
+                'timestamp'  => now()->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        Cache::put($this->cacheKey(), $this->results, now()->addMinutes(60));
+        $this->dispatch('$refresh');
+        $this->render();
+    }
+
+    public function clearSqlResult(): void
+    {
+        unset($this->results['sql_run']);
+        Cache::put($this->cacheKey(), $this->results, now()->addMinutes(60));
+        $this->dispatch('notify', type: 'success', message: 'SQL-Ausgabe geleert.');
     }
 
     public function render()

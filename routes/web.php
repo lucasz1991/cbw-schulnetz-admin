@@ -22,7 +22,7 @@ use App\Livewire\Admin\Assets\ExamAppointmentsManagement;
 
 use App\Http\Controllers\PagebuilderProjectController;
 
-//use App\Livewire\Admin\Tests\ApiTests;
+use App\Livewire\Admin\Tests\ApiTests;
 
 
 
@@ -63,6 +63,6 @@ Route::middleware(['auth:sanctum', 'auth.status', config('jetstream.auth_session
         Route::post('/admin/pagebuilder/upload', [PagebuilderProjectController::class, 'uploadImage']);
         Route::get('/admin/pagebuilder/assets', [PagebuilderProjectController::class, 'getAssets']);
 
-        //Route::get('/admin/tests/api', ApiTests::class)->name('admin.tests.api');
+        Route::get('/admin/tests/api', ApiTests::class)->name('admin.tests.api');
     });
 });
