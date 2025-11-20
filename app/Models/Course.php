@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
@@ -644,107 +645,94 @@ foreach ($days as $day) {
     );
 }
 
-    public function exportDokuPdf(): StreamedResponse
-    {
-        // Tage + Dozent laden
-        $this->loadMissing(['days', 'tutor']);
+public function exportDokuPdf(): ?StreamedResponse
+{
+    // Tage + Dozent holen
+    $this->loadMissing(['days', 'tutor']);
 
-        $days = $this->days()
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
+    $days = $this->days()
+        ->orderBy('date')
+        ->orderBy('start_time')
+        ->get();
 
-        if ($days->isEmpty()) {
-            abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+    if ($days->isEmpty()) {
+        abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+    }
+
+    // Meta-Daten aus erstem/letztem Tag
+    $from = $days->first()->date instanceof Carbon
+        ? $days->first()->date
+        : Carbon::parse($days->first()->date);
+
+    $to = $days->last()->date instanceof Carbon
+        ? $days->last()->date
+        : Carbon::parse($days->last()->date);
+
+    $meta = [
+        'date_from'   => $from,
+        'date_to'     => $to,
+        'num_days'    => $days->count(),
+        'class_label' => $this->klassen_id,
+        'module'      => $this->settings['kurzbez_ba'] ?? $this->title,
+        'location'    => $this->room ?? '—',
+        'year'        => $from->format('Y'),
+        'tutor_name'  => optional($this->tutor)->full_name
+            ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
+    ];
+
+    // Daten pro Tag vorbereiten
+    $rows = $days->map(function ($day, $idx) {
+        $date = $day->date instanceof Carbon
+            ? $day->date
+            : Carbon::parse($day->date);
+
+        $start = $day->start_time
+            ? Carbon::parse($day->start_time)->format('H:i')
+            : '08:00';
+
+        $end = $day->end_time
+            ? Carbon::parse($day->end_time)->format('H:i')
+            : '16:00';
+
+        // Unterrichtseinheiten (UE) – falls du ein Feld hast (z. B. std),
+        // sonst leer lassen.
+        $ue = $day->std ?? null;
+        if (is_numeric($ue)) {
+            // optional: 9.00 → 9
+            $ue = (int) round((float) $ue);
         }
 
-        // Zeitraum
-        $first = $days->first();
-        $last  = $days->last();
-
-        $from = $first->date instanceof \Carbon\Carbon
-            ? $first->date
-            : \Carbon\Carbon::parse($first->date);
-
-        $to = $last->date instanceof \Carbon\Carbon
-            ? $last->date
-            : \Carbon\Carbon::parse($last->date);
-
-        // Meta-Daten für den Kopf
-        $meta = [
-            'date_from'   => $from,
-            'date_to'     => $to,
-            'room'        => $this->room ?? 'online',
-            'class_label' => $this->klassen_id,
-            'module'      => $this->settings['kurzbez_ba'] ?? $this->title,
-            'tutor_name'  => optional($this->tutor)->full_name
-                ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
+        return [
+            'index'      => $idx + 1,
+            'date'       => $date,
+            'time_range' => $start.'-'.$end,
+            'notes_html' => $day->notes ?? '',   // HTML aus course_days.notes
+            'ue'         => $ue,
         ];
+    });
 
-        // Zeilen-Daten: Datum, Zeitspanne, HTML-Notizen
-        $rows = $days->map(function ($day) {
-            $date = $day->date instanceof \Carbon\Carbon
-                ? $day->date
-                : \Carbon\Carbon::parse($day->date);
+    // View zu HTML
+    $html = view('pdf.courses.documentation', [
+        'meta' => $meta,
+        'rows' => $rows,
+    ])->render();
 
-            $start = $day->start_time ?? null;
-            $end   = $day->end_time   ?? null;
+    // HTML in Encoding, das DomPDF mag
+    $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8, ISO-8859-1, Windows-1252');
 
-            $timeStr = '';
-            if ($start) {
-                $startStr = $start instanceof \Carbon\Carbon
-                    ? $start->format('H:i')
-                    : \Carbon\Carbon::parse($start)->format('H:i');
+    $pdf = Pdf::loadHTML($html)
+        ->setPaper('a4', 'portrait');
 
-                if ($end) {
-                    $endStr = $end instanceof \Carbon\Carbon
-                        ? $end->format('H:i')
-                        : \Carbon\Carbon::parse($end)->format('H:i');
+    $filename = sprintf(
+        'Unterrichtsdokumentation_%s.pdf',
+        $this->klassen_id ?: $from->format('Y-m-d')
+    );
 
-                    $timeStr = $startStr.' - '.$endStr;
-                } else {
-                    $timeStr = $startStr;
-                }
-            } elseif ($end) {
-                $endStr = $end instanceof \Carbon\Carbon
-                    ? $end->format('H:i')
-                    : \Carbon\Carbon::parse($end)->format('H:i');
-                $timeStr = '– '.$endStr;
-            }
-
-            return [
-                'date'       => $date,
-                'time_range' => $timeStr,
-                'notes_html' => (string) ($day->notes ?? ''),
-            ];
-        });
-
-        // Blade-View rendern
-        $html = view('pdf.courses.doku', [
-            'meta' => $meta,
-            'rows' => $rows,
-        ])->render();
-
-        // Encoding-Fix, damit DomPDF nicht mit "Malformed UTF-8" stirbt
-        $html = mb_convert_encoding(
-            $html,
-            'HTML-ENTITIES',
-            'UTF-8, ISO-8859-1, Windows-1252'
-        );
-
-        $pdf = Pdf::loadHTML($html)
-            ->setPaper('a4', 'portrait');
-
-        $filename = sprintf(
-            'Unterrichtsdokumentation_%s.pdf',
-            $this->klassen_id ?: $this->id
-        );
-
-        return response()->streamDownload(
-            fn () => print($pdf->output()),
-            $filename
-        );
-    }
+    return response()->streamDownload(
+        fn () => print($pdf->output()),
+        $filename
+    );
+}
 
 
 }
