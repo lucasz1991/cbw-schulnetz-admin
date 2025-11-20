@@ -53,7 +53,6 @@
                         type="button"
                         :size="'sm'"
                         class="px-2"
-                        title="KI-Assistent für diesen Eintrag"
                     >
                         <i class="fad fa-download text-[16px]"></i>
                         <span class="hidden md:inline-block ml-2">Download</span>
@@ -67,7 +66,7 @@
                             wire:click="exportAttendancePdf"
                             class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
                         >
-                            <i class="fal fa-comments-alt text-[14px] text-gray-500"></i>
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
                             <span>Anwehenheit</span>
                         </button>
                         <button
@@ -75,7 +74,7 @@
                             wire:click="exportDokuPdf"
                             class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
                         >
-                            <i class="fal fa-comments-alt text-[14px] text-gray-500"></i>
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
                             <span>Dokumentation</span>
                         </button>
                     </div>
