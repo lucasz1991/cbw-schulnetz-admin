@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Courses;
 use Livewire\Component;
 use App\Models\Course;
 use Illuminate\Support\Carbon;
+use Symfony\Component\HttpFoundation\Response;
 
 class CourseShow extends Component
 {
@@ -37,7 +38,18 @@ class CourseShow extends Component
         return 'unknown';
     }
 
+    /**
+     * Export Functions
+     */
+    public function exportAttendancePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return $this->course->exportAttendanceListPdf();
+    }
 
+    public function exportDokuPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return $this->course->exportDokuPdf();
+    }
 
 
     public function render()

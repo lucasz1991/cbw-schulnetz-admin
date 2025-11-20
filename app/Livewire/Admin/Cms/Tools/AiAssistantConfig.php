@@ -11,27 +11,27 @@ class AiAssistantConfig extends Component
 
     public function mount()
     {
-        $this->status = Setting::getValue('ai_assistant', 'status', 0);
-        $this->assistantName = Setting::getValue('ai_assistant', 'assistant_name', '');
-        $this->apiUrl = Setting::getValue('ai_assistant', 'api_url', '');
-        $this->apiKey = Setting::getValue('ai_assistant', 'api_key', '');
-        $this->aiModel = Setting::getValue('ai_assistant', 'ai_model', '');
-        $this->modelTitle = Setting::getValue('ai_assistant', 'model_title', '');
-        $this->refererUrl = Setting::getValue('ai_assistant', 'referer_url', '');
-        $this->trainContent = Setting::getValue('ai_assistant', 'train_content', '');
+        $this->status           = Setting::getValue('ai_assistant', 'status', 0);
+        $this->assistantName    = Setting::getValue('ai_assistant', 'assistant_name', '');
+        $this->apiUrl           = Setting::getValue('ai_assistant', 'api_url', '');
+        $this->apiKey           = Setting::getValue('ai_assistant', 'api_key', '');
+        $this->aiModel          = Setting::getValue('ai_assistant', 'ai_model', '');
+        $this->modelTitle       = Setting::getValue('ai_assistant', 'model_title', '');
+        $this->refererUrl       = Setting::getValue('ai_assistant', 'referer_url', '');
+        $this->trainContent     = Setting::getValue('ai_assistant', 'train_content', '');
     }
 
     public function saveSettings()
     {
         $this->validate([
-            'status' => 'boolean',
+            'status'        => 'boolean',
             'assistantName' => 'nullable|string|max:255',
-            'apiUrl' => 'nullable|url',
-            'apiKey' => 'nullable|string|max:255',
-            'aiModel' => 'nullable|string|max:255',
-            'modelTitle' => 'nullable|string|max:255',
-            'refererUrl' => 'nullable|url',
-            'trainContent' => 'nullable|string',
+            'apiUrl'        => 'nullable|url',
+            'apiKey'        => 'nullable|string|max:255',
+            'aiModel'       => 'nullable|string|max:255',
+            'modelTitle'    => 'nullable|string|max:255',
+            'refererUrl'    => 'nullable|url',
+            'trainContent'  => 'nullable|string',
         ]);
 
         Setting::setValue('ai_assistant', 'status', $this->status);

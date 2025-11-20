@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 
 class Course extends Model
 {
@@ -465,5 +470,281 @@ class Course extends Model
         return '<span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded '.$m['bg'].' '.$m['color'].'"
                     title="'.e($m['title']).'">'.$iconOnly.'</span>';
     }
+
+
+/**
+ * Rekursive UTF-8-Bereinigung für PDF-Daten.
+ */
+protected function sanitizePdfData($value)
+{
+    if (is_array($value)) {
+        $clean = [];
+        foreach ($value as $k => $v) {
+            $clean[$this->sanitizePdfData($k)] = $this->sanitizePdfData($v);
+        }
+        return $clean;
+    }
+
+    if (is_object($value)) {
+        // Eloquent Collections / Models etc. durchlaufen
+        if ($value instanceof \Illuminate\Support\Collection) {
+            return $value->map(fn ($v) => $this->sanitizePdfData($v))->all();
+        }
+
+        if ($value instanceof \Illuminate\Database\Eloquent\Model) {
+            // nur Attribute + Relations, die wir wirklich brauchen,
+            // aber fürs PDF reicht meist ->toArray()
+            return $this->sanitizePdfData($value->toArray());
+        }
+
+        return $value;
+    }
+
+    if (is_string($value)) {
+        // Versuche, aus Latin1/Win-1252 etc. nach UTF-8 zu konvertieren
+        $encoded = @mb_convert_encoding($value, 'UTF-8', 'UTF-8, ISO-8859-1, Windows-1252');
+        // Sicherstellen, dass der String wirklich gültiges UTF-8 ist
+        return mb_check_encoding($encoded, 'UTF-8') ? $encoded : utf8_encode($encoded);
+    }
+
+    return $value;
+}
+
+
+public function exportAttendanceListPdf(): ?StreamedResponse
+{
+    // Tage + Dozent + Teilnehmer holen
+    $this->loadMissing(['days', 'participants', 'tutor']);
+
+    $days = $this->days()
+        ->orderBy('date')
+        ->get();
+
+    if ($days->isEmpty()) {
+        // Kannst auch null zurückgeben, wenn du es lieber in Livewire abfängst
+        abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+    }
+
+    // Teilnehmer-Liste (nur aktive, dank Relation-Filter)
+    $participants = $this->participants
+        ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? $p->last_name ?? ''))
+        ->values();
+
+    $personIds = $participants->pluck('id')->all();
+
+    // Attendance-JSON in Matrix [person_id][day_id] => Symbol
+$attendanceMatrix = []; // [person_id][day_id] => 'x x' / 'x f' / 'f x' / 'f f' / 'E E' etc.
+
+foreach ($days as $day) {
+    $att = $day->attendance_data ?? [];
+    $map = Arr::get($att, 'participants', []);
+
+    foreach ($personIds as $pid) {
+        $row = $map[$pid] ?? null;
+
+        // Default: kein Eintrag => voll anwesend (morgens & Ende => x x)
+        $morning = 'x';
+        $end     = 'x';
+
+        if ($row) {
+            $present = (bool)($row['present'] ?? false);
+            $excused = (bool)($row['excused'] ?? false);
+            $leftEarlyMinutes = (int)($row['left_early_minutes'] ?? 0);
+
+            if ($excused) {
+                // ganzer Tag entschuldigt
+                $morning = 'E';
+                $end     = 'E';
+            } else {
+                // Morgens: wenn explizit present=false, dann f
+                if ($present === false) {
+                    $morning = 'f';
+                } elseif ($present === true) {
+                    $morning = 'x';
+                }
+
+                // Ende:
+                // - wenn jemand früher gegangen ist -> f
+                // - wenn gar nicht anwesend -> f
+                // - sonst x
+                if ($present === false) {
+                    $end = 'f';
+                } elseif ($leftEarlyMinutes > 0) {
+                    $end = 'f';
+                } else {
+                    $end = 'x';
+                }
+            }
+        }
+
+        // Zwei Zeichen (z.B. "x x", "x f", "f x", "f f", "E E")
+        $attendanceMatrix[$pid][$day->id] = $morning.' '.$end;
+    }
+}
+
+
+    // Meta-Daten
+    $startDate = $days->first()->date;
+    $endDate   = $days->last()->date;
+
+    $firstDay  = $days->first();
+    $startTime = $firstDay->start_time ?? null; // 'H:i:s' oder Carbon?
+
+    $meta = [
+        'date_from'   => $startDate,
+        'date_to'     => $endDate,
+        'num_days'    => $days->count(),
+        'room'        => $this->room ?? 'online',
+        'start_time'  => $startTime instanceof \Carbon\Carbon
+            ? $startTime->format('H:i')
+            : (is_string($startTime)
+                ? \Carbon\Carbon::parse($startTime)->format('H:i')
+                : null),
+        'class_label' => $this->klassen_id,
+        'module'      => $this->settings['kurzbez_ba'] ?? $this->title,
+        'tutor_name'  => optional($this->tutor)->full_name
+            ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
+    ];
+
+    // Zeilenstruktur
+    $rows = $participants->map(function ($person) use ($days, $attendanceMatrix) {
+        $cells = $days->map(function ($day) use ($person, $attendanceMatrix) {
+            return $attendanceMatrix[$person->id][$day->id] ?? '';
+        });
+
+        return [
+            'person' => $person,
+            'cells'  => $cells,
+        ];
+    });
+
+    // Blade-View zu HTML rendern
+    $html = view('pdf.courses.attendance-list', [
+        'days' => $days,
+        'rows' => $rows,
+        'meta' => $meta,
+    ])->render();
+
+    // HTML nach etwas "robusterem" Encoding konvertieren
+    $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8, ISO-8859-1, Windows-1252');
+
+    // PDF aus HTML erzeugen
+    $pdf = Pdf::loadHTML($html)
+        ->setPaper('a4', 'landscape');
+
+    $filename = sprintf(
+        'Klassen-Anwesenheitsliste_%s.pdf',
+        $this->klassen_id ?: $this->id
+    );
+
+    // 🔥 WICHTIG: StreamedResponse zurückgeben – exakt wie bei deinen ReportBook-Exports
+    return response()->streamDownload(
+        fn () => print($pdf->output()),
+        $filename
+    );
+}
+
+    public function exportDokuPdf(): StreamedResponse
+    {
+        // Tage + Dozent laden
+        $this->loadMissing(['days', 'tutor']);
+
+        $days = $this->days()
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get();
+
+        if ($days->isEmpty()) {
+            abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+        }
+
+        // Zeitraum
+        $first = $days->first();
+        $last  = $days->last();
+
+        $from = $first->date instanceof \Carbon\Carbon
+            ? $first->date
+            : \Carbon\Carbon::parse($first->date);
+
+        $to = $last->date instanceof \Carbon\Carbon
+            ? $last->date
+            : \Carbon\Carbon::parse($last->date);
+
+        // Meta-Daten für den Kopf
+        $meta = [
+            'date_from'   => $from,
+            'date_to'     => $to,
+            'room'        => $this->room ?? 'online',
+            'class_label' => $this->klassen_id,
+            'module'      => $this->settings['kurzbez_ba'] ?? $this->title,
+            'tutor_name'  => optional($this->tutor)->full_name
+                ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
+        ];
+
+        // Zeilen-Daten: Datum, Zeitspanne, HTML-Notizen
+        $rows = $days->map(function ($day) {
+            $date = $day->date instanceof \Carbon\Carbon
+                ? $day->date
+                : \Carbon\Carbon::parse($day->date);
+
+            $start = $day->start_time ?? null;
+            $end   = $day->end_time   ?? null;
+
+            $timeStr = '';
+            if ($start) {
+                $startStr = $start instanceof \Carbon\Carbon
+                    ? $start->format('H:i')
+                    : \Carbon\Carbon::parse($start)->format('H:i');
+
+                if ($end) {
+                    $endStr = $end instanceof \Carbon\Carbon
+                        ? $end->format('H:i')
+                        : \Carbon\Carbon::parse($end)->format('H:i');
+
+                    $timeStr = $startStr.' - '.$endStr;
+                } else {
+                    $timeStr = $startStr;
+                }
+            } elseif ($end) {
+                $endStr = $end instanceof \Carbon\Carbon
+                    ? $end->format('H:i')
+                    : \Carbon\Carbon::parse($end)->format('H:i');
+                $timeStr = '– '.$endStr;
+            }
+
+            return [
+                'date'       => $date,
+                'time_range' => $timeStr,
+                'notes_html' => (string) ($day->notes ?? ''),
+            ];
+        });
+
+        // Blade-View rendern
+        $html = view('pdf.courses.doku', [
+            'meta' => $meta,
+            'rows' => $rows,
+        ])->render();
+
+        // Encoding-Fix, damit DomPDF nicht mit "Malformed UTF-8" stirbt
+        $html = mb_convert_encoding(
+            $html,
+            'HTML-ENTITIES',
+            'UTF-8, ISO-8859-1, Windows-1252'
+        );
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait');
+
+        $filename = sprintf(
+            'Unterrichtsdokumentation_%s.pdf',
+            $this->klassen_id ?: $this->id
+        );
+
+        return response()->streamDownload(
+            fn () => print($pdf->output()),
+            $filename
+        );
+    }
+
 
 }

@@ -37,6 +37,50 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
+            <x-ui.dropdown.anchor-dropdown
+                align="right"
+                width="48"
+                dropdownClasses="mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+                contentClasses="bg-white"
+                :overlay="false"
+                :trap="false"
+                :scrollOnOpen="false"
+                :offset="6"
+            >
+                {{-- Trigger bleibt wie bisher --}}
+                <x-slot name="trigger">
+                    <x-ui.buttons.button-basic
+                        type="button"
+                        :size="'sm'"
+                        class="px-2"
+                        title="KI-Assistent für diesen Eintrag"
+                    >
+                        <i class="fad fa-download text-[16px]"></i>
+                        <span class="hidden md:inline-block ml-2">Download</span>
+                    </x-ui.buttons.button-basic>
+                </x-slot>
+
+                <x-slot name="content">
+                    <div class="py-1 text-sm text-gray-700">
+                        <button
+                            type="button"
+                            wire:click="exportAttendancePdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-comments-alt text-[14px] text-gray-500"></i>
+                            <span>Anwehenheit</span>
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="exportDokuPdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-comments-alt text-[14px] text-gray-500"></i>
+                            <span>Dokumentation</span>
+                        </button>
+                    </div>
+                </x-slot>
+            </x-ui.dropdown.anchor-dropdown>
             <x-link-button href="{{ url()->previous() }}" class="btn-xs">← Zurück</x-link-button>
         </div>
     </div>
@@ -112,4 +156,4 @@
             <div class="text-sm text-neutral-400">Keine Teilnehmer vorhanden.</div>
         @endif
     </div>
-</div>
+</div>  
