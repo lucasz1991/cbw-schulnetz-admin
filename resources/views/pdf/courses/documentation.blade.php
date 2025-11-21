@@ -234,7 +234,6 @@
             <td class="col-sign sign-cell">
                 <div class="sign-cell-inner">
                     <span class="sign-label-top">Unterschrift<br>Instruktor/-in</span>
-                    {{-- hier bewusst leer für Signatur --}}
                     <span class="sign-label-bottom">{{ $meta['tutor_name'] }}</span>
                 </div>
             </td>
@@ -253,5 +252,6 @@
     </tr>
 </table>
 
-</body>
+</body> 
+
 </html>
