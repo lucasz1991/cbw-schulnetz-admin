@@ -77,30 +77,32 @@
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
                             <span>Dokumentation</span>
                         </button>
-                        <button
-                            type="button"
-                            wire:click="exportDokuPdf"
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
-                            <span>Material Bestätigungen</span>
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="exportDokuPdf"
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
-                            <span>Dozenten Rechnung</span>
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="exportDokuPdf"
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
-                            <span>Prüfungs Ergebnisse</span>
-                        </button>
+<button
+    type="button"
+    wire:click="exportMaterialConfirmationsPdf"
+    class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+>
+    <i class="fal fa-download text-[14px] text-gray-500"></i>
+    <span>Material-Bestätigungen</span>
+</button>
+
+<button
+    type="button"
+    wire:click="exportInvoicePdf"
+    class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+>
+    <i class="fal fa-download text-[14px] text-gray-500"></i>
+    <span>Dozenten-Rechnung</span>
+</button>
+
+<button
+    type="button"
+    wire:click="exportExamResultsPdf"
+    class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+>
+    <i class="fal fa-download text-[14px] text-gray-500"></i>
+    <span>Prüfungsergebnisse</span>
+</button>
                     </div>
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>

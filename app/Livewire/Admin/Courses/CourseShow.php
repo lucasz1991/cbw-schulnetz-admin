@@ -50,7 +50,22 @@ class CourseShow extends Component
     {
         return $this->course->exportDokuPdf();
     }
+    
+    
+    public function exportMaterialConfirmationsPdf(): ?StreamedResponse
+    {
+        return $this->course->exportMaterialConfirmationsPdf();
+    }
 
+    public function exportInvoicePdf(): ?StreamedResponse
+    {
+        return $this->course->exportInvoicePdf();
+    }
+
+    public function exportExamResultsPdf(): ?StreamedResponse
+    {
+        return $this->course->exportExamResultsPdf();
+    }
 
     public function render()
     {

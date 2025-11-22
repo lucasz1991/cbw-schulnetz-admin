@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Arr;
@@ -726,6 +727,94 @@ public function exportDokuPdf(): ?StreamedResponse
     $filename = sprintf(
         'Unterrichtsdokumentation_%s.pdf',
         $this->klassen_id ?: $from->format('Y-m-d')
+    );
+
+    return response()->streamDownload(
+        fn () => print($pdf->output()),
+        $filename
+    );
+}
+
+public function exportMaterialConfirmationsPdf(): ?StreamedResponse
+{
+    // Teilnehmer + Bestätigungen aus der Pivot-Logik
+    $rows = DB::table('course_participant_enrollments as cpe')
+        ->join('persons as p', 'p.id', '=', 'cpe.person_id')
+        ->leftJoin('course_material_acknowledgements as cma', function ($join) {
+            $join->on('cma.course_id', '=', 'cpe.course_id')
+                 ->on('cma.person_id', '=', 'cpe.person_id');
+        })
+        ->where('cpe.course_id', $this->id)
+        ->whereNull('cpe.deleted_at')
+        ->where('cpe.is_active', 1)
+        ->orderBy('p.nachname')
+        ->orderBy('p.vorname')
+        ->get([
+            'p.nachname',
+            'p.vorname',
+            'p.geburtsdatum',
+            'cma.acknowledged_at',
+        ]);
+
+    if ($rows->isEmpty()) {
+        abort(404, 'Keine Teilnehmer / Materialbestätigungen vorhanden.');
+    }
+
+    $pdf = Pdf::loadView('pdf.courses.material-confirmations', [
+        'course' => $this,
+        'rows'   => $rows,
+    ]);
+
+    $filename = sprintf(
+        'Material-Bestaetigungen_%s.pdf',
+        $this->klassen_id ?: $this->id
+    );
+
+    return response()->streamDownload(
+        fn () => print($pdf->output()),
+        $filename
+    );
+}
+
+public function exportInvoicePdf(): ?StreamedResponse
+{
+    $file = $this->files()
+        ->where('type', 'invoice')
+        ->latest()
+        ->first();
+
+    if (!$file || !$file->path) {
+        abort(404, 'Keine Dozentenrechnung für diesen Kurs hinterlegt.');
+    }
+
+    $downloadName = $file->name ?: sprintf(
+        'Dozenten-Rechnung_%s.pdf',
+        $this->klassen_id ?: $this->id
+    );
+
+    return Storage::disk('private')->download($file->path, $downloadName);
+}
+
+
+public function exportExamResultsPdf(): ?StreamedResponse
+{
+    // Teilnehmer aus Relation
+    $participants = $this->participants
+        ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? $p->last_name ?? ''))
+        ->values();
+
+    if ($participants->isEmpty()) {
+        abort(404, 'Keine Teilnehmer für diesen Kurs gefunden.');
+    }
+
+    $pdf = Pdf::loadView('pdf.courses.exam-results', [
+        'course'       => $this,
+        'participants' => $participants,
+    ]);
+
+    $filename = sprintf(
+        'Pruefungsergebnisse_%s.pdf',
+        $this->klassen_id ?: $this->id
     );
 
     return response()->streamDownload(
