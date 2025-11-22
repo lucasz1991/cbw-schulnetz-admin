@@ -31,7 +31,7 @@
 @endphp
 
 {{-- 0: Titel --}}
-<div class="px-2 py-2  pr-4 {{ $hc(0) }} cursor-pointer" wire:click="$dispatch('toggleCourseSelection', [{{ $item->id }}])">
+<div class="px-2 py-2  pr-4 {{ $hc(0) }} cursor-pointer" wire:click="$dispatch('toggleCourseSelection', [{{ $item->id }}])" x-on:dblclick="window.location='{{ route('admin.courses.show', $item) }}'">
 <div class="grid grid-cols-[auto_1fr] gap-2 items-center">
     <div class="flex items-center">
         <div 
@@ -41,7 +41,7 @@
     </div>
 
     <!-- WICHTIG: min-w-0 auf diese Spalte -->
-    <div class="flex flex-col min-w-0">
+    <div class="flex flex-col min-w-0" title="{{ $title }}">
         <!-- truncate funktioniert jetzt -->
         <div class="px-1 font-semibold truncate">
             {{ $title }}
