@@ -141,185 +141,194 @@
                 </div>
                 </div>
 
-                {{-- UVS Personendaten --}}
-                @if($user->person)
-                <div class="relative mt-6 rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-gray-100 shadow-sm">
-                    {{-- Header mit Update-Button --}}
-                    <div class="flex items-start justify-between border-b border-gray-100 px-5 py-4">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+{{-- UVS Personendaten (unterstützt mehrere Personen pro User) --}}
+@php
+    // Alle Personen des Users einsammeln: bevorzugt persons-Relation, sonst fallback auf person
+    $persons = $user->persons ?? collect($user->person ? [$user->person] : []);
+@endphp
+
+@if($persons->count())
+    @foreach($persons as $person)
+        <div class="relative mt-6 rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-gray-100 shadow-sm">
+            {{-- Header mit Update-Button --}}
+            <div class="flex items-start justify-between border-b border-gray-100 px-5 py-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
                         <i class="fad fa-user-cog text-gray-500"></i>
                         UVS Personendetails
-                        </h3>
-                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                        @if($persons->count() > 1)
+                            <span class="text-xs font-normal text-gray-500">
+                                (Person-ID: {{ $person->person_id }}, Institut: {{ $person->institut_id }})
+                            </span>
+                        @endif
+                    </h3>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
                         <i class="fad fa-clock"></i>
-                        {{ $user->person->last_api_update?->diffForHumans() ?? $user->person->last_api_update->diffForHumans() }}
-                        </span>
-                    </div>
+                        {{ $person->last_api_update?->diffForHumans() ?? ($person->last_api_update ? $person->last_api_update->diffForHumans() : '—') }}
+                    </span>
+                </div>
 
-                    <button
-                        wire:click="uvsApiUpdate"
-                        class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        title="UVS-Daten aktualisieren"
-                    >
-                        <i class="fad fa-sync"></i>
-                        Aktualisieren
-                    </button>
-                    </div>
-                    {{-- Loading-Overlay beim Aktualisieren --}}
-                    <div wire:loading.delay.class.remove="opacity-0"
-                        wire:target="uvsApiUpdate"
-                        class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/70 opacity-0 transition-opacity">
-                        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 shadow">
-                            <svg class="h-5 w-5 animate-spin text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                            </svg>
-                            <span class="text-sm text-gray-700">UVS-Daten werden aktualisiert…</span>
-                        </div>
-                    </div>
-                    {{-- Inhalt --}}
-                    <div class="px-5 py-5">
-                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                        {{-- Persönliche Informationen --}}
-                        <div class="rounded-lg border border-gray-200/70 bg-white p-4">
+                <button
+                    wire:click="uvsApiUpdate({{ $person->id }})"
+                    class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    title="UVS-Daten dieser Person aktualisieren"
+                >
+                    <i class="fad fa-sync"></i>
+                    Aktualisieren
+                </button>
+            </div>
+
+
+
+            {{-- Inhalt --}}
+            <div class="px-5 py-5">
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    {{-- Persönliche Informationen --}}
+                    <div class="rounded-lg border border-gray-200/70 bg-white p-4">
                         <h4 class="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
                             <i class="fad fa-id-badge text-gray-500"></i>
                             Persönliche Informationen
                         </h4>
                         <dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Person-ID</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->person_id }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Person-ID</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->person_id }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Institut-ID</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->institut_id }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Institut-ID</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->institut_id }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Person-Nr.</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->person_nr }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Person-Nr.</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->person_nr }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</dt>
-                            <dd class="mt-1">
-                                <span class="inline-flex items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-sky-200">
-                                <i class="fad fa-badge-check"></i> {{ $user->person->status }}
-                                </span>
-                            </dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">email_priv</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->email_priv }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Aktualisiert am</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->upd_date }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</dt>
+                                <dd class="mt-1">
+                                    <span class="inline-flex items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-sky-200">
+                                        <i class="fad fa-badge-check"></i> {{ $person->status }}
+                                    </span>
+                                </dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Titel</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->titel_kennz }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Aktualisiert am</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->upd_date }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Vorname</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->vorname }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Titel</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->titel_kennz }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nachname</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->nachname }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Vorname</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->vorname }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geschlecht</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->geschlecht }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nachname</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->nachname }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nationalität</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->nationalitaet }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geschlecht</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->geschlecht }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Familienstand</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->familien_stand }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Nationalität</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->nationalitaet }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsdatum</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->geburt_datum }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Familienstand</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->familien_stand }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsname</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->geburt_name }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsdatum</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->geburt_datum }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsland</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->geburt_land }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsname</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->geburt_name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsland</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->geburt_land }}</dd>
                             </div>
                             <div class="sm:col-span-2">
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsort</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->geburt_ort }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Geburtsort</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->geburt_ort }}</dd>
                             </div>
                         </dl>
-                        </div>
-                        {{-- Adresse --}}
-                        <div class="rounded-lg border border-gray-200/70 bg-white p-4">
+                    </div>
+
+                    {{-- Adresse --}}
+                    <div class="rounded-lg border border-gray-200/70 bg-white p-4">
                         <h4 class="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
                             <i class="fad fa-map-marker-alt text-gray-500"></i>
                             Adresse
                         </h4>
                         <dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Landeskürzel</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->lkz }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Landeskürzel</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->lkz }}</dd>
                             </div>
                             <div class="sm:col-span-2">
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Straße</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->strasse }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Straße</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->strasse }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Adresszusatz 1</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->adresszusatz1 }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Adresszusatz 1</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->adresszusatz1 }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Adresszusatz 2</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->adresszusatz2 }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Adresszusatz 2</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->adresszusatz2 }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->plz }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->plz }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ort</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->ort }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ort</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->ort }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ (Postfach)</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->plz_pf }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ (Postfach)</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->plz_pf }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Postfach</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->postfach }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Postfach</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->postfach }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ (Geschäftskunde)</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->plz_gk }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ (Geschäftskunde)</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->plz_gk }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ (alt)</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->plz_alt }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">PLZ (alt)</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->plz_alt }}</dd>
                             </div>
                             <div>
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ort (alt)</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->ort_alt }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ort (alt)</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->ort_alt }}</dd>
                             </div>
                             <div class="sm:col-span-2">
-                            <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Straße (alt)</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->person->strasse_alt }}</dd>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Straße (alt)</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ $person->strasse_alt }}</dd>
                             </div>
                         </dl>
-                        </div>
-                    </div>
                     </div>
                 </div>
-                @else
-                <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                    <i class="fad fa-info-circle mr-2"></i>
-                    Keine Personendetails verfügbar.
-                </div>
-                @endif
+            </div>
+        </div>
+    @endforeach
+@else
+    <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
+        <i class="fad fa-info-circle mr-2"></i>
+        Keine Personendetails verfügbar.
+    </div>
+@endif
+
             </div>
             </x-ui.accordion.tab-panel>
 

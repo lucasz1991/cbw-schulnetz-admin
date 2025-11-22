@@ -114,45 +114,85 @@
         </div>
     @endif
 
-    <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
-        <div class="flex items-center justify-between mb-3">
-            <div class="text-sm font-semibold">Unterrichtstage</div>
-        </div>
-        @if($course->days->isNotEmpty())
-            <ul class="divide-y divide-neutral-100">
-                @foreach($course->days as $d)
-                    <li class="py-2 text-sm flex justify-between">
-                        <span>{{ optional($d->date)->locale('de')->isoFormat('dd, ll') }}</span>
-                        <span class="text-neutral-500">
-                            @if(!empty($d->start_time) || !empty($d->end_time))
-                                {{ $d->start_time ?? '—' }}–{{ $d->end_time ?? '—' }}
-                            @endif
-                            @if(!empty($d->room))
-                                · Raum {{ $d->room }}
-                            @endif
+    <x-ui.accordion.tabs
+        :tabs="[
+            'courseDays' => [
+                'label' => 'Unterrichts Einheiten',
+                'icon'  => 'fad fa-calendar-day',
+            ],
+            'courseParticipants' => [
+                'label' => 'Teilnehmer',
+                'icon'  => 'fad fa-users',
+            ],
+        ]"
+        :collapseAt="'md'"
+        default="courseDays"
+        persist-key="tutor.course.{{ $course->id }}.tabs"
+        class="mt-4"
+    >
+        <x-ui.accordion.tab-panel for="courseDays">
+            <div class="">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="inline-flex items-center gap-2">
+                        <span class="flex h-7 w-7 items-center justify-center rounded-full bg-sky-50">
+                            <i class="fad fa-calendar-day text-[13px] text-sky-600"></i>
                         </span>
-                    </li>
-                @endforeach
-            </ul>
-        @else
-            <div class="text-sm text-neutral-400">Keine Termine vorhanden.</div>
-        @endif
-    </div>
+                        <div class="text-sm font-semibold">Unterrichts Einheiten</div>
+                    </div>
+                </div>
 
-    <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
-        <div class="flex items-center justify-between mb-3">
-            <div class="text-sm font-semibold">Teilnehmer</div>
-        </div>
-        @if($course->participants->isNotEmpty())
-            <ul class="grid md:grid-cols-2 gap-2 text-sm">
-                @foreach($course->participants as $p)
-                    <li class="px-3 py-2 ">
-                        <x-user.public-info :person="$p" />
-                    </li>
-                @endforeach
-            </ul>
-        @else
-            <div class="text-sm text-neutral-400">Keine Teilnehmer vorhanden.</div>
-        @endif
-    </div>
+                @if($course->days->isNotEmpty())
+                    <ul class="divide-y divide-neutral-100 text-sm">
+                        @foreach($course->days as $d)
+                            <li class="py-2 flex items-center justify-between">
+                                <div class="flex flex-col">
+                                    <span class="font-medium text-neutral-800">
+                                        {{ optional($d->date)->locale('de')->isoFormat('dd, ll') }}
+                                    </span>
+                                    <span class="text-xs text-neutral-500">
+                                        @if(!empty($d->start_time) || !empty($d->end_time))
+                                            {{ $d->start_time ?? '—' }}–{{ $d->end_time ?? '—' }}
+                                        @else
+                                            Zeit nicht hinterlegt
+                                        @endif
+                                    </span>
+                                </div>
+                                <div class="text-xs text-neutral-500">
+                                    @if(!empty($d->room))
+                                        Raum {{ $d->room }}
+                                    @endif
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <div class="text-sm text-neutral-400">Keine Termine vorhanden.</div>
+                @endif
+            </div>
+        </x-ui.accordion.tab-panel>
+        <x-ui.accordion.tab-panel for="courseParticipants">
+            <div class="">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="inline-flex items-center gap-2">
+                        <span class="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50">
+                            <i class="fad fa-users text-[13px] text-emerald-600"></i>
+                        </span>
+                        <div class="text-sm font-semibold">Teilnehmer</div>
+                    </div>
+                </div>
+
+                @if($course->participants->isNotEmpty())
+                    <ul class="grid md:grid-cols-2 gap-2 text-sm">
+                        @foreach($course->participants as $p)
+                            <li class="px-3 py-2 rounded-xl border border-transparent hover:border-emerald-100 hover:bg-emerald-50/60 transition">
+                                <x-user.public-info :person="$p" />
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <div class="text-sm text-neutral-400">Keine Teilnehmer vorhanden.</div>
+                @endif
+            </div>
+        </x-ui.accordion.tab-panel>
+    </x-ui.accordion.tabs>
 </div>  

@@ -166,6 +166,11 @@ class User extends Authenticatable
         return $this->hasOne(Person::class, 'user_id');
     }
 
+    public function persons()
+    {
+        return $this->hasMany(Person::class, 'user_id');
+    }
+
     
     public function hasAccessToInvoice($filename)
     {
