@@ -55,7 +55,7 @@
                         class="px-2"
                     >
                         <i class="fad fa-download text-[16px]"></i>
-                        <span class="hidden md:inline-block ml-2">Download</span>
+                        <span class="hidden md:inline-block ml-2">Exporte</span>
                     </x-ui.buttons.button-basic>
                 </x-slot>
 
@@ -67,7 +67,7 @@
                             class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
                         >
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
-                            <span>Anwehenheit</span>
+                            <span>Anwesenheit</span>
                         </button>
                         <button
                             type="button"
@@ -76,6 +76,30 @@
                         >
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
                             <span>Dokumentation</span>
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="exportDokuPdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>Material Bestätigungen</span>
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="exportDokuPdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>Dozenten Rechnung</span>
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="exportDokuPdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>Prüfungs Ergebnisse</span>
                         </button>
                     </div>
                 </x-slot>
