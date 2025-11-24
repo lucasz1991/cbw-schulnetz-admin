@@ -1,7 +1,7 @@
-<div class="space-y-4">
+<div class="space-y-8">
 
     {{-- Hinweisbox --}}
-    <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4">
+    <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md shadow-sm">
         <div class="flex">
             <div class="flex-shrink-0">
                 <svg class="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.625 23.625" fill="currentColor" aria-hidden="true">
@@ -9,7 +9,7 @@
                 </svg>
             </div>
             <div class="ml-3 text-sm">
-                <h2 class="text-lg font-semibold mb-2">Hinweis zur Aufgabenverwaltung</h2>
+                <h2 class="text-lg font-semibold mb-1">Hinweis zur Aufgabenverwaltung</h2>
                 <p>
                     Hier findest du alle offenen, in Bearbeitung befindlichen und abgeschlossenen Aufgaben.
                     Du kannst sie übernehmen und als erledigt markieren.
@@ -58,126 +58,27 @@
         </div>
     </div>
 
-    {{-- Tabellen-Header --}}
-    <div class="grid grid-cols-12 bg-gray-100 p-2 font-semibold text-gray-700 border-b border-gray-300 text-xs sm:text-sm">
-        <div class="col-span-1">ID</div>
-        <div class="col-span-2">Typ</div>
-        <div class="col-span-3">Kontext</div>
-        <div class="col-span-2">Ersteller</div>
-        <div class="col-span-2">Zugewiesen an</div>
-        <div class="col-span-2 text-right">Status</div>
-    </div>
-
-    {{-- Aufgaben-Liste --}}
-    <div class="bg-white border rounded-md divide-y">
-        @forelse($tasks as $task)
-            <div x-data="{ open: false }"
-                 wire:key="task-{{ $task->id }}"
-                 @click.away="open = false"
-                 class="transition">
-
-                {{-- Tabellenzeile --}}
-                <div @click="open = !open"
-                     class="grid grid-cols-12 items-center p-2 text-xs sm:text-sm cursor-pointer hover:bg-gray-50"
-                     :class="{ 'bg-blue-50': open }">
-
-                    <div class="col-span-1">
-                        #{{ $task->id }}
-                    </div>
-
-                    <div class="col-span-2">
-                        {{ $task->task_type_text }}
-                    </div>
-
-                    <div class="col-span-3">
-                        @if($task->context)
-                            <span class="text-gray-600 font-medium">
-                                {{ $task->context_text }}
-                            </span>
-                        @else
-                            <span class="text-gray-400">Kein Kontext</span>
-                        @endif
-                    </div>
-
-                    <div class="col-span-2">
-                        {{ $task->creator?->name ?? 'Unbekannt' }}
-                    </div>
-
-                    <div class="col-span-2">
-                        {{ $task->assignedAdmin?->name ?? 'Nicht zugewiesen' }}
-                    </div>
-
-                    <div class="col-span-2 text-right">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                            @if($task->status === \App\Models\AdminTask::STATUS_OPEN)
-                                bg-red-100 text-red-800
-                            @elseif($task->status === \App\Models\AdminTask::STATUS_IN_PROGRESS)
-                                bg-yellow-100 text-yellow-800
-                            @else
-                                bg-green-100 text-green-800
-                            @endif">
-                            {{ $task->status_icon }} {{ $task->status_text }}
-                        </span>
-
-                        @if($task->is_overdue)
-                            <span class="ml-1 text-xs text-red-600 font-semibold">Überfällig</span>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Detail-Bereich --}}
-                <div x-show="open" x-collapse x-cloak class="bg-blue-50 p-4 border-t text-xs sm:text-sm">
-                    <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-                        <div class="space-y-1">
-                            <h3 class="text-base font-semibold mb-1">📝 Aufgaben-Details</h3>
-                            <p><strong>Beschreibung:</strong> {{ $task->description ?: 'Keine Beschreibung angegeben.' }}</p>
-                            <p><strong>Erstellt am:</strong> {{ $task->created_at->format('d.m.Y H:i') }}</p>
-                            @if($task->due_at)
-                                <p><strong>Fällig bis:</strong> {{ $task->due_at->format('d.m.Y H:i') }}</p>
-                            @endif
-                            <p><strong>Priorität:</strong> {{ $task->priority_text }}</p>
-                        </div>
-
-                        <div class="sm:text-right space-y-1">
-                            <p><strong>Ersteller:</strong> {{ $task->creator?->name ?? 'Unbekannt' }}</p>
-                            <p><strong>Zugewiesen an:</strong> {{ $task->assignedAdmin?->name ?? 'Niemand' }}</p>
-                            @if($task->completed_at)
-                                <p><strong>Abgeschlossen am:</strong> {{ $task->completed_at->format('d.m.Y H:i') }}</p>
-                            @endif
-                        </div>
-                    </div>
-
-                    {{-- Footer mit Buttons --}}
-                    <div class="mt-4 flex justify-end gap-2 border-t pt-3">
-                        @if(!$task->assigned_to || $task->assigned_to === auth()->id())
-                            @if(!$task->assigned_to)
-                                <button wire:click="assignToMe({{ $task->id }})"
-                                        type="button"
-                                        class="inline-flex items-center px-3 py-1 rounded-md border border-blue-500 text-blue-600 text-xs font-medium hover:bg-blue-50">
-                                    ➕ Übernehmen
-                                </button>
-                            @endif
-
-                            @if($task->status !== \App\Models\AdminTask::STATUS_COMPLETED)
-                                <button wire:click="markAsCompleted({{ $task->id }})"
-                                        type="button"
-                                        class="inline-flex items-center px-3 py-1 rounded-md border border-green-500 text-green-600 text-xs font-medium hover:bg-green-50">
-                                    ✅ Abschließen
-                                </button>
-                            @endif
-                        @endif
-                    </div>
-                </div>
-            </div>
-        @empty
-            <div class="p-4 text-sm text-gray-500">
-                Es sind aktuell keine Aufgaben vorhanden.
-            </div>
-        @endforelse
-    </div>
+    {{-- Aufgaben-Tabelle --}}
+    <x-tables.table
+        :columns="[
+            ['label' => 'ID',          'key' => 'id',               'width' => '6%',  'sortable' => false,  'hideOn' => 'md'],
+            ['label' => 'Typ',         'key' => 'task_type_text',   'width' => '16%', 'sortable' => false,  'hideOn' => 'none'],
+            ['label' => 'Kontext',     'key' => 'context_text',     'width' => '20%', 'sortable' => false, 'hideOn' => 'sm'],
+            ['label' => 'Ersteller',   'key' => 'creator_name',     'width' => '14%', 'sortable' => false,  'hideOn' => 'lg'],
+            ['label' => 'Zugewiesen',  'key' => 'assigned_name',    'width' => '14%', 'sortable' => false,  'hideOn' => 'md'],
+            ['label' => 'Fällig bis',  'key' => 'due_at',           'width' => '12%', 'sortable' => false,  'hideOn' => 'sm'],
+            ['label' => 'Status',      'key' => 'status',           'width' => '18%', 'sortable' => false,  'hideOn' => 'none'],
+        ]"
+        :items="$tasks"
+        :sort-by="$sortBy ?? null"
+        :sort-dir="$sortDir ?? 'asc'"
+        row-view="components.tables.rows.admin-tasks.task-row"
+        action-view=""
+    />
 
     {{-- Pagination --}}
     <div class="mt-4">
         {{ $tasks->links() }}
     </div>
+<livewire:admin.tasks.admin-task-detail wire:key="admin-task-detail-global"  />
 </div>
