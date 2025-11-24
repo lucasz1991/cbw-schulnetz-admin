@@ -24,7 +24,7 @@
     {{-- Kopfzeile + Filter --}}
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Admin-Aufgaben</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Mitarbeiter-Aufgaben</h1>
             <p class="text-gray-500 text-sm">
                 Verwalte Aufgaben zu Kursen, Teilnehmern und anderen Vorgängen im Schulnetz.
             </p>

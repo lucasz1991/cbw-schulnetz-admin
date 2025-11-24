@@ -87,6 +87,6 @@ class AdminTasksList extends Component
         return view('livewire.admin.admin-tasks-list', [
             'tasks'     => $tasks,
             'openCount' => $openCount,
-        ])->layout('layouts.admin'); // Layout ggf. an dein Projekt anpassen
+        ])->layout('layouts.master');
     }
 }
