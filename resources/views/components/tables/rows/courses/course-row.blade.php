@@ -43,9 +43,12 @@
     <!-- WICHTIG: min-w-0 auf diese Spalte -->
     <div class="flex flex-col min-w-0" title="{{ $title }}">
         <!-- truncate funktioniert jetzt -->
-        <div class="px-1 font-semibold truncate">
-            {{ $title }}
-        </div>
+         <div class="px-1">
+             <div class=" font-semibold truncate">
+                 {{ $title }}
+            </div>
+                <span>{{ $item->course_short_name ?? '—' }}</span>
+         </div>
     </div>
 </div>
 

@@ -78,6 +78,7 @@
     <div class="flex items-start justify-between gap-4">
         <div>
             <h1 class="text-xl font-semibold">{{ $course->title ?? 'Kurs' }}</h1>
+            <div class="mt-1 text-sm text-gray-500">{{ $course->course_short_name }}</div>
             <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
                 @if($course->klassen_id)
                     <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">Klasse: {{ $course->klassen_id }}</span>
