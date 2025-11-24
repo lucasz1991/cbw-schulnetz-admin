@@ -14,7 +14,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-
+use App\Models\CourseMaterialAcknowledgement;
 
 class Course extends Model
 {
@@ -158,6 +158,11 @@ class Course extends Model
     {
         return $this->morphMany(\App\Models\File::class, 'fileable');
     }
+
+    public function materialAcknowledgements()
+{
+    return $this->hasMany(CourseMaterialAcknowledgement::class);
+}
 
 
 
@@ -735,32 +740,44 @@ public function exportDokuPdf(): ?StreamedResponse
     );
 }
 
-public function exportMaterialConfirmationsPdf(): ?StreamedResponse
+public function exportMaterialConfirmationsPdf(): StreamedResponse|false
 {
-    // Teilnehmer + Bestätigungen aus der Pivot-Logik
-    $rows = DB::table('course_participant_enrollments as cpe')
-        ->join('persons as p', 'p.id', '=', 'cpe.person_id')
-        ->leftJoin('course_material_acknowledgements as cma', function ($join) {
-            $join->on('cma.course_id', '=', 'cpe.course_id')
-                 ->on('cma.person_id', '=', 'cpe.person_id');
-        })
-        ->where('cpe.course_id', $this->id)
-        ->whereNull('cpe.deleted_at')
-        ->where('cpe.is_active', 1)
-        ->orderBy('p.nachname')
-        ->orderBy('p.vorname')
-        ->get([
-            'p.nachname',
-            'p.vorname',
-            'p.geburtsdatum',
-            'cma.acknowledged_at',
-        ]);
+    // Teilnehmer aus Relation
+    $participants = $this->participants
+        ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? ''))
+        ->values();
 
-    if ($rows->isEmpty()) {
-        abort(404, 'Keine Teilnehmer / Materialbestätigungen vorhanden.');
+    if ($participants->isEmpty()) {
+        return false; // -> Keine Teilnehmer
     }
 
-    $pdf = Pdf::loadView('pdf.courses.material-confirmations', [
+    // Acks laden
+    $acks = $this->materialAcknowledgements()
+        ->with(['person', 'enrollment', 'files'])
+        ->get()
+        ->groupBy('person_id');
+
+    // Rows bauen
+    $rows = $participants->map(function ($person) use ($acks) {
+        $list = $acks->get($person->id);
+        $ack  = $list?->sortByDesc('acknowledged_at')->first();
+        $signatureFile = $ack?->latestParticipantSignature();
+
+        return [
+            'person'         => $person,
+            'ack'            => $ack,
+            'acknowledged_at'=> $ack?->acknowledged_at,
+            'signature'      => $signatureFile,
+        ];
+    });
+
+    // keine einzige Bestätigung vorhanden?
+    if ($rows->every(fn ($row) => $row['ack'] === null)) {
+        return false;
+    }
+
+    // PDF rendern
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.courses.material-confirmations', [
         'course' => $this,
         'rows'   => $rows,
     ]);
@@ -775,6 +792,7 @@ public function exportMaterialConfirmationsPdf(): ?StreamedResponse
         $filename
     );
 }
+
 
 public function exportInvoicePdf(): ?StreamedResponse
 {

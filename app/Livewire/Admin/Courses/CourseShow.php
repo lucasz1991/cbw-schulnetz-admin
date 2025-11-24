@@ -53,7 +53,17 @@ class CourseShow extends Component
     
     public function exportMaterialConfirmationsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
-        return $this->course->exportMaterialConfirmationsPdf();
+                $result = $this->course->exportMaterialConfirmationsPdf();
+
+        if ($result === false) {
+            $this->dispatch('toast', [
+                'type' => 'warning',
+                'title' => 'Keine Bestätigungen',
+                'message' => 'Es liegen noch keine Materialbestätigungen vor.',
+            ]);
+        }else {
+            return $result;
+        }
     }
 
     public function exportInvoicePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse

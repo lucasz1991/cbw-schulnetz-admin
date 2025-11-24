@@ -1,43 +1,11 @@
-<div class="px-4 py-4 space-y-6">
+<div class="px-4 py-4 !pt-0 space-y-6">
     <div class="flex items-start justify-between gap-4">
+        {{-- linke Buttons --}}
         <div>
-            <h1 class="text-xl font-semibold">{{ $course->title ?? 'Kurs' }}</h1>
-            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                @if($course->klassen_id)
-                    <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">Klasse: {{ $course->klassen_id }}</span>
-                @endif
-                @if($course->termin_id)
-                    <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">Termin: {{ $course->termin_id }}</span>
-                @endif
-                @if($course->room)
-                    <span class="px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">Raum {{ $course->room }}</span>
-                @endif 
-
-                {{-- Zeitraum --}}
-                <span class="px-2 py-0.5 rounded border border-green-200 bg-green-50 text-green-700">
-                    {{ optional($course->planned_start_date)->locale('de')->isoFormat('ll') ?? '—' }}
-                    –
-                    {{ optional($course->planned_end_date)->locale('de')->isoFormat('ll') ?? '—' }}
-                </span>
-                @php
-                    $status = $this->status;
-                    $badge = match($status) {
-                        'planned'  => ['bg' => 'bg-sky-50',     'text' => 'text-sky-700',     'label' => 'Geplant'],
-                        'active'   => ['bg' => 'bg-green-50',   'text' => 'text-green-700',   'label' => 'Aktiv'],
-                        'finished' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'label' => 'Abgeschlossen'],
-                        default    => ['bg' => 'bg-gray-50',    'text' => 'text-gray-600',    'label' => '—'],
-                    };
-                @endphp
-                <span class="px-2 py-0.5 rounded border border-gray-200 {{ $badge['bg'] }} {{ $badge['text'] }}">{{ $badge['label'] }}</span>
-                @if($course->is_active)
-                    <span class="px-2 py-0.5 rounded border border-lime-200 bg-lime-50 text-lime-700">aktiv</span>
-                @else
-                    <span class="px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-600">inaktiv</span>
-                @endif
-            </div>
+            <x-ui.buttons.button-basic href="{{ url()->previous() }}" :size="'sm'" class="px-2">← Zurück</x-ui.buttons.button-basic>
         </div>
-        <div class="flex items-center gap-2">
-            <x-ui.dropdown.anchor-dropdown
+        {{-- rechte Buttons --}}
+        <x-ui.dropdown.anchor-dropdown
                 align="right"
                 width="48"
                 dropdownClasses="mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
@@ -77,36 +45,72 @@
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
                             <span>Dokumentation</span>
                         </button>
-<button
-    type="button"
-    wire:click="exportMaterialConfirmationsPdf"
-    class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
->
-    <i class="fal fa-download text-[14px] text-gray-500"></i>
-    <span>Material-Bestätigungen</span>
-</button>
+                        <button
+                            type="button"
+                            wire:click="exportMaterialConfirmationsPdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>Material-Bestätigungen</span>
+                        </button>
 
-<button
-    type="button"
-    wire:click="exportInvoicePdf"
-    class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
->
-    <i class="fal fa-download text-[14px] text-gray-500"></i>
-    <span>Dozenten-Rechnung</span>
-</button>
+                        <button
+                            type="button"
+                            wire:click="exportInvoicePdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>Dozenten-Rechnung</span>
+                        </button>
 
-<button
-    type="button"
-    wire:click="exportExamResultsPdf"
-    class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
->
-    <i class="fal fa-download text-[14px] text-gray-500"></i>
-    <span>Prüfungsergebnisse</span>
-</button>
+                        <button
+                            type="button"
+                            wire:click="exportExamResultsPdf"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>Prüfungsergebnisse</span>
+                        </button>
                     </div>
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>
-            <x-link-button href="{{ url()->previous() }}" class="btn-xs">← Zurück</x-link-button>
+    </div>
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-semibold">{{ $course->title ?? 'Kurs' }}</h1>
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                @if($course->klassen_id)
+                    <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">Klasse: {{ $course->klassen_id }}</span>
+                @endif
+                @if($course->termin_id)
+                    <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">Termin: {{ $course->termin_id }}</span>
+                @endif
+                @if($course->room)
+                    <span class="px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">Raum {{ $course->room }}</span>
+                @endif 
+
+                {{-- Zeitraum --}}
+                <span class="px-2 py-0.5 rounded border border-green-200 bg-green-50 text-green-700">
+                    {{ optional($course->planned_start_date)->locale('de')->isoFormat('ll') ?? '—' }}
+                    –
+                    {{ optional($course->planned_end_date)->locale('de')->isoFormat('ll') ?? '—' }}
+                </span>
+                @php
+                    $status = $this->status;
+                    $badge = match($status) {
+                        'planned'  => ['bg' => 'bg-sky-50',     'text' => 'text-sky-700',     'label' => 'Geplant'],
+                        'active'   => ['bg' => 'bg-green-50',   'text' => 'text-green-700',   'label' => 'Aktiv'],
+                        'finished' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'label' => 'Abgeschlossen'],
+                        default    => ['bg' => 'bg-gray-50',    'text' => 'text-gray-600',    'label' => '—'],
+                    };
+                @endphp
+                <span class="px-2 py-0.5 rounded border border-gray-200 {{ $badge['bg'] }} {{ $badge['text'] }}">{{ $badge['label'] }}</span>
+                @if($course->is_active)
+                    <span class="px-2 py-0.5 rounded border border-lime-200 bg-lime-50 text-lime-700">aktiv</span>
+                @else
+                    <span class="px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-600">inaktiv</span>
+                @endif
+            </div>
         </div>
     </div>
 

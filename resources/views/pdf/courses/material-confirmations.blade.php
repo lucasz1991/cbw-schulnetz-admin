@@ -51,19 +51,24 @@
     </tr>
     </thead>
     <tbody>
-    @foreach($rows as $row)
-        @php
-            $name = trim(($row->nachname ?? '').', '.($row->vorname ?? ''));
-            $dob  = $row->geburtsdatum ? \Carbon\Carbon::parse($row->geburtsdatum)->format('d.m.Y') : '';
-            $ack  = $row->acknowledged_at ? \Carbon\Carbon::parse($row->acknowledged_at)->format('d.m.Y H:i') : '';
-        @endphp
-        <tr>
-            <td>{{ $name }}</td>
-            <td>{{ $dob }}</td>
-            <td>{{ $ack }}</td>
-            <td></td>
-        </tr>
-    @endforeach
+@foreach($rows as $row)
+    @php
+        /** @var \App\Models\Person $person */
+        $person = $row['person'];
+        $ack    = $row['ack'];
+    @endphp
+
+    <tr>
+        <td>{{ $person->nachname }}</td>
+        <td>{{ $person->vorname }}</td>
+        <td>{{ optional($person->geburtsdatum)->format('d.m.Y') }}</td>
+        <td>
+            {{ $ack?->acknowledged_at?->format('d.m.Y H:i') ?? '—' }}
+        </td>
+        {{-- Optional: Signatur-Hinweis --}}
+        {{-- <td>{{ $row['signature'] ? 'Signiert' : '—' }}</td> --}}
+    </tr>
+@endforeach
     </tbody>
 </table>
 
