@@ -51,18 +51,17 @@ class CourseShow extends Component
         return $this->course->exportDokuPdf();
     }
     
-    
-    public function exportMaterialConfirmationsPdf(): ?StreamedResponse
+    public function exportMaterialConfirmationsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         return $this->course->exportMaterialConfirmationsPdf();
     }
 
-    public function exportInvoicePdf(): ?StreamedResponse
+    public function exportInvoicePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         return $this->course->exportInvoicePdf();
     }
 
-    public function exportExamResultsPdf(): ?StreamedResponse
+    public function exportExamResultsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         return $this->course->exportExamResultsPdf();
     }
