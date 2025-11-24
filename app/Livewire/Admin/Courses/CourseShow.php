@@ -51,20 +51,22 @@ class CourseShow extends Component
         return $this->course->exportDokuPdf();
     }
     
-    public function exportMaterialConfirmationsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
-    {
-                $result = $this->course->exportMaterialConfirmationsPdf();
+public function exportMaterialConfirmationsPdf(): ?StreamedResponse
+{
+    $result = $this->course->exportMaterialConfirmationsPdf();
 
-        if ($result === false) {
-            $this->dispatch('toast', [
-                'type' => 'warning',
-                'title' => 'Keine Bestätigungen',
-                'message' => 'Es liegen noch keine Materialbestätigungen vor.',
-            ]);
-        }else {
-            return $result;
-        }
+    if ($result === false) {
+        $this->dispatch('toast', [
+            'type'    => 'warning',
+            'title'   => 'Keine Bestätigungen',
+            'message' => 'Es liegen noch keine Materialbestätigungen vor.',
+        ]);
+
+        return null; // <— wichtig
     }
+
+    return $result;
+}
 
     public function exportInvoicePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
