@@ -86,25 +86,14 @@
                     </div>
 
                     <div class="col-span-2">
-                        {{ $task->task_type }}
+                        {{ $task->task_type_text }}
                     </div>
 
                     <div class="col-span-3">
                         @if($task->context)
-                            {{-- einfache generische Anzeige je nach Kontext --}}
-                            @if($task->context instanceof \App\Models\Course)
-                                <span class="text-blue-600 font-medium">
-                                    Kurs: {{ $task->context->title ?? 'Kurs #'.$task->context->id }}
-                                </span>
-                            @elseif($task->context instanceof \App\Models\User)
-                                <span class="text-green-600 font-medium">
-                                    User: {{ $task->context->name ?? 'User #'.$task->context->id }}
-                                </span>
-                            @else
-                                <span class="text-gray-600">
-                                    {{ class_basename($task->context) }} #{{ $task->context->id }}
-                                </span>
-                            @endif
+                            <span class="text-gray-600 font-medium">
+                                {{ $task->context_text }}
+                            </span>
                         @else
                             <span class="text-gray-400">Kein Kontext</span>
                         @endif
@@ -145,7 +134,7 @@
                             <p><strong>Erstellt am:</strong> {{ $task->created_at->format('d.m.Y H:i') }}</p>
                             @if($task->due_at)
                                 <p><strong>Fällig bis:</strong> {{ $task->due_at->format('d.m.Y H:i') }}</p>
-                            @endif>
+                            @endif
                             <p><strong>Priorität:</strong> {{ $task->priority_text }}</p>
                         </div>
 

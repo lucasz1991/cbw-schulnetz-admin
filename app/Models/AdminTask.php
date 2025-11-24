@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Course;
+use App\Models\ReportBook;
 
 class AdminTask extends Model
 {
@@ -87,13 +90,31 @@ class AdminTask extends Model
         };
     }
 
+    public function getTaskTypeTextAttribute(): string
+    {
+        return match ($this->task_type) {
+            'reportbook_review'   => 'Berichtsheft prüfen',
+            default               => 'Unbekannte Aufgabe',
+        };
+    }
+
+    public function getContextTextAttribute(): string
+    {
+        return match ($this->context_type) {
+            Course::class       => 'Kurs: ' . ($this->context->title ?? 'Unbekannt'),
+            User::class         => 'User: ' . ($this->context->name ?? 'Unbekannt'),
+            ReportBook::class   => 'Berichtsheft: ' . ($this->context->course->title ?? 'Unbekannt'),
+            default             => 'Unbekannter Kontext',
+        };
+    }
+
     public function getPriorityTextAttribute(): string
     {
         return match ($this->priority) {
             self::PRIORITY_HIGH   => 'Hoch',
             self::PRIORITY_NORMAL => 'Normal',
             self::PRIORITY_LOW    => 'Niedrig',
-            default               => 'Unbekannt',
+            default               => null,
         };
     }
 
