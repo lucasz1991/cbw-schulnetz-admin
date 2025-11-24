@@ -18,7 +18,7 @@ use App\Livewire\Admin\Cms\EditProject;
 use App\Livewire\Admin\Courses\CourseList;
 use App\Livewire\Admin\Courses\CourseShow;
 use App\Livewire\Admin\Assets\ExamAppointmentsManagement;
-
+use App\Livewire\Admin\AdminTasksList;
 
 use App\Http\Controllers\PagebuilderProjectController;
 
@@ -43,9 +43,10 @@ Route::middleware(['auth:sanctum', 'auth.status', config('jetstream.auth_session
         Route::get('/config', AdminConfig::class)->name('admin.config');
         Route::get('/web-content-manager', WebContentManager::class)->name('admin.webcontentmanager');
         Route::get('/adminmessages', AdminMessageBox::class)->name('admin.messages');
-         
-        //Route::get('/exports', Exports::class)->name('admin.exports'); 
-        Route::get('/users', Users::class)->name('admin.users'); 
+
+        Route::get('/tasks', AdminTasksList::class)->name('admin.tasks.index');
+        //Route::get('/exports', Exports::class)->name('admin.exports');
+        Route::get('/users', Users::class)->name('admin.users');
         Route::get('/admin/safety', Safety::class)->name('admin.safety');
         Route::get('/admin/employees', Employees::class)->name('admin.employees');
         Route::get('/admin/mails', MailManagement::class)->name('admin.mails');

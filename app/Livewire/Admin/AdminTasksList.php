@@ -5,72 +5,88 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\AdminTask;
-use App\Models\ShelfRental;
-use App\Models\Payout;
-use App\Models\Sale;
 use Illuminate\Support\Facades\Auth;
-
-
 
 class AdminTasksList extends Component
 {
     use WithPagination;
 
-    public function assignToMe($taskId)
+    // Filter
+    public ?int $filterStatus   = null; // null = alle
+    public ?int $filterPriority = null; // null = alle
+    public bool $onlyMine       = false;
+
+    protected $queryString = [
+        'filterStatus'   => ['except' => null],
+        'filterPriority' => ['except' => null],
+        'onlyMine'       => ['except' => false],
+        'page'           => ['except' => 1],
+    ];
+
+    /*
+     |--------------------------------------------------------------------------
+     | Actions
+     |--------------------------------------------------------------------------
+     */
+
+    public function updatingFilterStatus(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFilterPriority(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedOnlyMine(): void
+    {
+        $this->resetPage();
+    }
+
+    public function assignToMe(int $taskId): void
     {
         $task = AdminTask::findOrFail($taskId);
-        if (!$task->assigned_to) {
-            $task->assigned_to = Auth::id();
-            $task->status = 1;
-            $task->save();
-            $this->resetPage();
-            $this->dispatch('showAlert', 'Aufgabe erfolgreich übernommen.', 'success');
-        }
+        $task->assignTo(Auth::id());
+
+        $this->resetPage();
+        $this->dispatch('showAlert', 'Aufgabe erfolgreich übernommen.', 'success');
     }
 
-    public function markAsCompleted($taskId)
+    public function markAsCompleted(int $taskId): void
     {
         $task = AdminTask::findOrFail($taskId);
-        
-        if ($task->status == 1) {
-            $task->status = 2; 
-            $task->save();
-            
-            if ($task->task_type === 'Auszahlung' && $task->shelf_rental_id) {
-                $this->processPayoutCompletion($task->shelf_rental_id);
-            }
-            
-            $this->resetPage();
-            $this->dispatch('showAlert', 'Aufgabe erfolgreich abgeschlossen.', 'success');
-        }
+        $task->complete();
+
+        $this->resetPage();
+        $this->dispatch('showAlert', 'Aufgabe erfolgreich abgeschlossen.', 'success');
     }
 
-    private function processPayoutCompletion($shelfRentalId)
-    {
-        $shelfRental = ShelfRental::find($shelfRentalId);
-        if ($shelfRental) {
-            $shelfRental->status = 4;
-            $shelfRental->save();
-        }
-
-        $payout = Payout::where('shelf_rental_id', $shelfRentalId)->latest()->first();
-        if ($payout) {
-            $payout->status = true;
-            $payout->save();
-        }
-
-        Sale::where('rental_id', $shelfRentalId)
-            ->where('status', 2)
-            ->update(['status' => 3]);
-    }
+    /*
+     |--------------------------------------------------------------------------
+     | Render
+     |--------------------------------------------------------------------------
+     */
 
     public function render()
     {
-        $tasks = AdminTask::orderBy('status', 'asc')
-        ->orderBy('created_at', 'desc')
-        ->paginate(20);
+        $query = AdminTask::with(['creator', 'assignedAdmin', 'context'])
+            ->withStatus($this->filterStatus)
+            ->withPriority($this->filterPriority)
+            ->orderBy('status')
+            ->orderBy('priority')       // Hoch vor niedrig
+            ->orderByDesc('created_at');
+
+        if ($this->onlyMine) {
+            $query->forAdmin(Auth::id());
+        }
+
+        $tasks     = $query->paginate(20);
+        $openCount = AdminTask::open()->count();
+
         return view('livewire.admin.admin-tasks-list', [
-            'tasks' => $tasks
-        ])->layout('layouts.master');
+            'tasks'     => $tasks,
+            'openCount' => $openCount,
+        ])->layout('layouts.admin'); // Layout ggf. an dein Projekt anpassen
     }
 }
