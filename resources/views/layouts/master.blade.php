@@ -29,6 +29,7 @@
     $excludedUrls = [
         '/',             // Base
         'admin/user/*',  // alle /admin/user/... URLs
+        'admin/courses/*',  
     ];
 
     $useBox = !request()->is($excludedUrls);

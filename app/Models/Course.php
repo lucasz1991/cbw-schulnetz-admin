@@ -525,6 +525,49 @@ protected function sanitizePdfData($value)
 }
 
 
+  public function canExportAttendancePdf(): bool
+    {
+        // Du willst sie bewusst ausnehmen – hier könntest du auch immer true machen,
+        // oder minimal prüfen, ob überhaupt Tage existieren.
+        return $this->days()->exists();
+    }
+
+    public function canExportDokuPdf(): bool
+    {
+        // Doku nur, wenn es mind. einen Unterrichtstag gibt
+        return $this->days()->exists();
+    }
+
+    public function canExportMaterialConfirmationsPdf(): bool
+    {
+        // Sinnvoll: es gibt Teilnehmer UND mind. eine Bestätigung
+        return $this->participants()->exists()
+            && $this->materialAcknowledgements()->exists();
+    }
+
+    public function canExportInvoicePdf(): bool
+    {
+        // Nur wenn eine Rechnungsdatei hinterlegt ist
+        return $this->files()
+            ->where('type', 'invoice')
+            ->exists();
+    }
+
+    public function canExportRedThreadPdf(): bool
+{
+    return $this->files()
+        ->where('type', 'roter_faden')
+        ->exists();
+}
+
+    public function canExportExamResultsPdf(): bool
+    {
+        // Einfach: es gibt Teilnehmer → Examergebnisse sinnvoll
+        // (später ggf. an "es gibt Prüfungsdaten" koppeln)
+        return $this->participants()->exists();
+    }
+
+
 public function exportAttendanceListPdf(): ?StreamedResponse
 {
     // Tage + Dozent + Teilnehmer holen
@@ -747,7 +790,7 @@ public function exportDokuPdf(): ?StreamedResponse
     );
 }
 
-public function exportMaterialConfirmationsPdf(): StreamedResponse|false
+public function exportMaterialConfirmationsPdf(): StreamedResponse
 {
     // Teilnehmer aus Relation
     $participants = $this->participants
@@ -778,11 +821,6 @@ public function exportMaterialConfirmationsPdf(): StreamedResponse|false
         ];
     });
 
-    // keine einzige Bestätigung vorhanden?
-    if ($rows->every(fn ($row) => $row['ack'] === null)) {
-        return false;
-    }
-
     // PDF rendern
     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.courses.material-confirmations', [
         'course' => $this,
@@ -800,7 +838,6 @@ public function exportMaterialConfirmationsPdf(): StreamedResponse|false
     );
 }
 
-
 public function exportInvoicePdf(): ?StreamedResponse
 {
     $file = $this->files()
@@ -808,8 +845,8 @@ public function exportInvoicePdf(): ?StreamedResponse
         ->latest()
         ->first();
 
-    if (!$file || !$file->path) {
-        abort(404, 'Keine Dozentenrechnung für diesen Kurs hinterlegt.');
+    if (! $file) {
+        abort(404, 'Keine Dozentenrechnung vorhanden.');
     }
 
     $downloadName = $file->name ?: sprintf(
@@ -817,9 +854,66 @@ public function exportInvoicePdf(): ?StreamedResponse
         $this->klassen_id ?: $this->id
     );
 
-    return Storage::disk('private')->download($file->path, $downloadName);
+    $downloadUrl = $file->getEphemeralPublicUrl();
+
+    if (! $downloadUrl) {
+        abort(404, 'Die Dozentenrechnung konnte nicht geladen werden.');
+    }
+
+    return response()->streamDownload(function () use ($downloadUrl) {
+        $handle = @fopen($downloadUrl, 'rb');
+
+        if (! $handle) {
+            // hier könntest du auch eine Exception werfen / aborten
+            echo 'Datei konnte nicht geöffnet werden.';
+            return;
+        }
+
+        while (! feof($handle)) {
+            echo fread($handle, 8192);
+        }
+
+        fclose($handle);
+    }, $downloadName);
 }
 
+public function exportRedThreadPdf()
+{
+    $file = $this->files()
+        ->where('type', 'roter_faden')
+        ->latest('id')
+        ->first();
+
+    if (! $file) {
+        abort(404, 'Kein "Roter Faden"-Dokument vorhanden.');
+    }
+
+    $downloadName = $file->name ?: sprintf(
+        'Roter-Faden_%s.pdf',
+        $this->klassen_id ?: $this->id
+    );
+
+    $downloadUrl = $file->getEphemeralPublicUrl();
+
+    if (! $downloadUrl) {
+        abort(404, 'Das "Roter Faden"-Dokument konnte nicht geladen werden.');
+    }
+
+    return response()->streamDownload(function () use ($downloadUrl) {
+        $handle = @fopen($downloadUrl, 'rb');
+
+        if (! $handle) {
+            echo 'Datei konnte nicht geöffnet werden.';
+            return;
+        }
+
+        while (! feof($handle)) {
+            echo fread($handle, 8192);
+        }
+
+        fclose($handle);
+    }, $downloadName);
+}
 
 public function exportExamResultsPdf(): ?StreamedResponse
 {

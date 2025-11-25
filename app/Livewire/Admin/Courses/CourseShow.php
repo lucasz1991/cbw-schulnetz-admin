@@ -41,6 +41,38 @@ class CourseShow extends Component
     /**
      * Export Functions
      */
+
+    public function getCanExportDokuProperty(): bool
+    {
+        return $this->course->canExportDokuPdf();
+    }
+
+    public function getCanExportMaterialConfirmationsProperty(): bool
+    {
+        return $this->course->canExportMaterialConfirmationsPdf();
+    }
+
+    public function getCanExportInvoiceProperty(): bool
+    {
+        return $this->course->canExportInvoicePdf();
+    }
+
+    public function getCanExportRedThreadProperty(): bool
+{
+    return $this->course->canExportRedThreadPdf();
+}
+
+    public function getCanExportExamResultsProperty(): bool
+    {
+        return $this->course->canExportExamResultsPdf();
+    }
+
+    // Attendance könntest du auch machen, falls du was anzeigen willst:
+    public function getCanExportAttendanceProperty(): bool
+    {
+        return $this->course->canExportAttendancePdf();
+    }
+
     public function exportAttendancePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         return $this->course->exportAttendanceListPdf();
@@ -51,26 +83,20 @@ class CourseShow extends Component
         return $this->course->exportDokuPdf();
     }
     
-public function exportMaterialConfirmationsPdf(): ?StreamedResponse
-{
-    $result = $this->course->exportMaterialConfirmationsPdf();
-
-    if ($result === false) {
-        $this->dispatch('toast', [
-            'type'    => 'warning',
-            'title'   => 'Keine Bestätigungen',
-            'message' => 'Es liegen noch keine Materialbestätigungen vor.',
-        ]);
-
-        return null; // <— wichtig
+    public function exportMaterialConfirmationsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return $this->course->exportMaterialConfirmationsPdf();
     }
 
-    return $result;
-}
 
     public function exportInvoicePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
     {
         return $this->course->exportInvoicePdf();
+    }
+
+    public function exportRedThreadPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return $this->course->exportRedThreadPdf();
     }
 
     public function exportExamResultsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
