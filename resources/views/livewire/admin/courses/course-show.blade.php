@@ -191,59 +191,143 @@
             <i class="fal fa-info-circle text-neutral-400" title="Status relevanter Kursunterlagen"></i>
         </div>
 
-        <div class="mt-1 grid grid-cols-2 gap-3 text-xs">
-            {{-- Dokumentation --}}
-            <div class="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                        <i class="fal fa-chalkboard-teacher text-[13px] text-slate-700"></i>
-                    </span>
-                    <span class="text-[11px] leading-snug">Dokumentation</span>
-                </div>
-                <div class="shrink-0">
-                    {!! $course->documentation_icon_html !!}
-                </div>
-            </div>
+<div class="mt-1 grid grid-cols-2 gap-3 text-xs">
 
-            {{-- Roter Faden --}}
-            <div class="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                        <i class="fal fa-file-pdf text-[13px] text-slate-700"></i>
-                    </span>
-                    <span class="text-[11px] leading-snug">Roter Faden</span>
-                </div>
-                <div class="shrink-0">
-                    {!! $course->red_thread_icon_html !!}
-                </div>
-            </div>
-
-            {{-- Teilnahmebestätigungen --}}
-            <div class="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                        <i class="fal fa-file-signature text-[13px] text-slate-700"></i>
-                    </span>
-                    <span class="text-[11px] leading-snug">Materialbestätigungen</span>
-                </div>
-                <div class="shrink-0">
-                    {!! $course->participants_confirmations_icon_html !!}
-                </div>
-            </div>
-
-            {{-- Dozenten-Rechnung --}}
-            <div class="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                        <i class="fal fa-money-check-alt text-[13px] text-slate-700"></i>
-                    </span>
-                    <span class="text-[11px] leading-snug">Dozenten-Rechnung</span>
-                </div>
-                <div class="shrink-0">
-                    {!! $course->invoice_icon_html !!}
-                </div>
-            </div>
+    {{-- Dokumentation --}}
+    <div
+        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
+    >
+        {{-- Icon + Label --}}
+        <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
+                <i class="fal fa-chalkboard-teacher text-[13px] text-slate-700"></i>
+            </span>
+            <span class="text-[11px] leading-snug">Dokumentation</span>
         </div>
+
+        {{-- Status Icon --}}
+        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
+            {!! $course->documentation_icon_html !!}
+        </div>
+
+        {{-- Download Button --}}
+        <button
+            type="button"
+            wire:click="exportDokuPdf"
+            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-primary-100 text-primary-700 
+                   hover:bg-primary-200
+                   cursor-pointer shadow-sm"
+        >
+            <i class="fal fa-download text-[14px]"></i>
+        </button>
+    </div>
+
+
+
+    {{-- Roter Faden --}}
+    <div
+        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
+    >
+        <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
+                <i class="fal fa-file-pdf text-[13px] text-slate-700"></i>
+            </span>
+            <span class="text-[11px] leading-snug">Roter Faden</span>
+        </div>
+
+        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
+            {!! $course->red_thread_icon_html !!}
+        </div>
+
+        <button
+            type="button"
+            wire:click="exportRedThreadPdf"
+            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-primary-100 text-primary-700 
+                   hover:bg-primary-200
+                   cursor-pointer shadow-sm"
+        >
+            <i class="fal fa-download text-[14px]"></i>
+        </button>
+    </div>
+
+
+
+    {{-- Materialbestätigungen --}}
+    <div
+        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
+    >
+        <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
+                <i class="fal fa-file-signature text-[13px] text-slate-700"></i>
+            </span>
+            <span class="text-[11px] leading-snug">Materialbestätigungen</span>
+        </div>
+
+        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
+            {!! $course->participants_confirmations_icon_html !!}
+        </div>
+
+        <button
+            type="button"
+            wire:click="exportMaterialConfirmationsPdf"
+            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-primary-100 text-primary-700 
+                   hover:bg-primary-200
+                   cursor-pointer shadow-sm"
+        >
+            <i class="fal fa-download text-[14px]"></i>
+        </button>
+    </div>
+
+
+
+    {{-- Dozenten-Rechnung --}}
+    <div
+        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
+    >
+        <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
+                <i class="fal fa-money-check-alt text-[13px] text-slate-700"></i>
+            </span>
+            <span class="text-[11px] leading-snug">Dozenten-Rechnung</span>
+        </div>
+
+        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
+            {!! $course->invoice_icon_html !!}
+        </div>
+
+        <button
+            type="button"
+            wire:click="exportInvoicePdf"
+            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-primary-100 text-primary-700 
+                   hover:bg-primary-200
+                   cursor-pointer shadow-sm"
+        >
+            <i class="fal fa-download text-[14px]"></i>
+        </button>
+    </div>
+
+</div>
+
     </div>
 </div>
 
