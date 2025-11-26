@@ -8,6 +8,7 @@ use App\Models\Course;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CourseList extends Component
 {
@@ -532,15 +533,18 @@ public function updated($prop): void
      */
     protected function loadTermOptionsFromCourses()
     {
-        return \App\Models\Course::query()
+        return Course::query()
             ->whereNotNull('termin_id')
             ->groupBy('termin_id')
             ->orderBy('termin_id', 'asc')
-            ->selectRaw('termin_id, COUNT(*) AS cnt')
+            ->selectRaw('termin_id, COUNT(*) AS cnt, MIN(planned_start_date) AS planned_start_date, MAX(planned_end_date) AS planned_end_date')
             ->get()
             ->map(fn($row) => (object)[
                 'id'   => (string) $row->termin_id,
-                'name' => (string) $row->termin_id.' ('.$row->cnt.')',
+                'name' => (string) $row->termin_id,
+                'cnt'  => (int) $row->cnt,
+                'start' => (string) Carbon::parse($row->planned_start_date)->format('d.m.Y'),
+                'end'   => (string) Carbon::parse($row->planned_end_date)->format('d.m.Y'),
             ]);
     }
 
@@ -580,4 +584,47 @@ public function updated($prop): void
         }
     }
 
+
+    public function exportAttendancePdf($courseId): ?StreamedResponse
+    {
+        $this->course = Course::findOrFail($courseId);
+        return $this->course->exportAttendanceListPdf();
+    }
+
+    public function exportDokuPdf($courseId): ?StreamedResponse
+    {
+        $this->course = Course::findOrFail($courseId);
+        return $this->course->exportDokuPdf();
+    }
+
+    public function exportMaterialConfirmationsPdf($courseId): ?StreamedResponse
+    {
+        $this->course = Course::findOrFail($courseId);
+        return $this->course->exportMaterialConfirmationsPdf();
+    }
+
+
+    public function exportInvoicePdf($courseId): ?StreamedResponse
+    {
+        $this->course = Course::findOrFail($courseId);
+        return $this->course->exportInvoicePdf();
+    }
+
+    public function exportRedThreadPdf($courseId): ?StreamedResponse
+    {
+        $this->course = Course::findOrFail($courseId);
+        return $this->course->exportRedThreadPdf();
+    }
+
+    public function exportExamResultsPdf($courseId): ?StreamedResponse
+    {
+        $this->course = Course::findOrFail($courseId);
+        return $this->course->exportExamResultsPdf();
+    }
+
+    public function exportCourse($courseId): ?StreamedResponse
+    {
+        $this->course = Course::findOrFail($courseId);
+        return $this->course->exportAllDocumentsZip();
+    }
 }

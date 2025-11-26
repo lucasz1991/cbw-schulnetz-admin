@@ -1,3 +1,4 @@
+{{-- resources\views\components\tables\rows\courses\course-row.blade.php --}}
 @php
     // Kurzhelfer pro Spaltenindex
     $hc = fn($i) => $hideClass($columnsMeta[$i]['hideOn'] ?? 'none');
@@ -98,49 +99,76 @@
     @endif
 </div>
 
-{{-- 4: Aktivitäten (Teilnehmer & Termine) --}}
+{{-- 4: Aktivitäten (Teilnehmer & Exporte) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
-    <div class="flex  gap-2 items-center  pr-8">
-        <div class=" relative h-max inline-flex items-center gap-1 px-1 py-1 rounded bg-blue-50 text-blue-700 border border-blue-300 mr-2" title="Teilnehmer">
+    <div class="flex gap-2 items-center pr-8">
+        {{-- Teilnehmer-Badge --}}
+        <div
+            class="relative h-max inline-flex items-center gap-1 px-1 py-1 rounded bg-blue-50 text-blue-700 border border-blue-300 mr-2"
+            title="Teilnehmer"
+        >
             <i class="fal fa-users fa-lg"></i>
             <span
-                    class="absolute -top-2 -right-2 flex items-center justify-center
-                        min-w-4 h-4 text-[10px] font-semibold bg-white text-blue-700 border border-blue-200 p-[2px]
-                        rounded-full shadow-sm"
-                >
-                    {{ $item->participants_count ?? 0 }}
-                </span> 
+                class="absolute -top-2 -right-2 flex items-center justify-center
+                    min-w-4 h-4 text-[10px] font-semibold bg-white text-blue-700 border border-blue-200 p-[2px]
+                    rounded-full shadow-sm"
+            >
+                {{ $item->participants_count ?? 0 }}
+            </span>
         </div>
 
+        @php
+            $exportActions = [
+                [
+                    'can'   => $item->canExportDokuPdf(),
+                    'title' => 'Dokumentation',
+                    'icon'  => 'fal fa-chalkboard-teacher fa-lg',
+                    'badge' => $item->documentation_icon_html,
+                    'wire'  => "exportDokuPdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportRedThreadPdf(),
+                    'title' => 'Roter Faden',
+                    'icon'  => 'fal fa-file-pdf fa-lg',
+                    'badge' => $item->red_thread_icon_html,
+                    'wire'  => "exportRedThreadPdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportMaterialConfirmationsPdf(),
+                    'title' => 'Materialbestätigungen',
+                    'icon'  => 'fal fa-file-signature fa-lg',
+                    'badge' => $item->participants_confirmations_icon_html,
+                    'wire'  => "exportMaterialConfirmationsPdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportInvoicePdf(),
+                    'title' => 'Rechnung',
+                    'icon'  => 'fal fa-money-check-alt fa-lg',
+                    'badge' => $item->invoice_icon_html,
+                    'wire'  => "exportInvoicePdf({$item->id})",
+                ],
+            ];
+        @endphp
 
-        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Dokumentation">
-            <i class="fal fa-chalkboard-teacher fa-lg"></i>
-            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square  p-[2px]">
-                {!! $item->documentation_icon_html !!}
+        @foreach($exportActions as $action)
+            <div
+                title="{{ $action['title'] }}"
+                @class([
+                    'relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2',
+                    'cursor-pointer hover:opacity-100  opacity-90' => $action['can'],
+                    'cursor-not-allowed opacity-60' => ! $action['can'],
+                ])
+                @if($action['can'])
+                    wire:click="{{ $action['wire'] }}"
+                @endif
+            >
+                <i class="{{ $action['icon'] }}"></i>
+                <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square p-[2px]">
+                    {!! $action['badge'] !!}
+                </div>
             </div>
-        </div>
-
-        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Roten Faden">
-            <i class="fal fa-file-pdf fa-lg"></i>
-            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square  p-[2px]">
-                {!! $item->red_thread_icon_html !!}
-            </div>
-        </div>
-
-        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Teilnahmebestätigungen">
-            <i class="fal fa-file-signature fa-lg"></i>
-            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square p-[2px]">
-                {!! $item->participants_confirmations_icon_html !!}
-            </div>
-        </div>
-
-        <div class=" relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2" title="Rechnung">
-            <i class="fal fa-money-check-alt fa-lg"></i>
-            <div class="absolute -top-2 -right-2 bg-white/50 rounded-full aspect-square p-[2px]">
-                {!! $item->invoice_icon_html !!}
-            </div>
-        </div>
-
+        @endforeach
     </div>
 </div>
+
 

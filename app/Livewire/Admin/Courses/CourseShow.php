@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Course;
 use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CourseShow extends Component
 {
@@ -73,33 +74,33 @@ class CourseShow extends Component
         return $this->course->canExportAttendancePdf();
     }
 
-    public function exportAttendancePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportAttendancePdf(): ?StreamedResponse
     {
         return $this->course->exportAttendanceListPdf();
     }
 
-    public function exportDokuPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportDokuPdf(): ?StreamedResponse
     {
         return $this->course->exportDokuPdf();
     }
     
-    public function exportMaterialConfirmationsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportMaterialConfirmationsPdf(): ?StreamedResponse
     {
         return $this->course->exportMaterialConfirmationsPdf();
     }
 
 
-    public function exportInvoicePdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportInvoicePdf(): ?StreamedResponse
     {
         return $this->course->exportInvoicePdf();
     }
 
-    public function exportRedThreadPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportRedThreadPdf(): ?StreamedResponse
     {
         return $this->course->exportRedThreadPdf();
     }
 
-    public function exportExamResultsPdf(): ?\Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportExamResultsPdf(): ?StreamedResponse
     {
         return $this->course->exportExamResultsPdf();
     }

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
+use ZipArchive;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -534,8 +534,10 @@ protected function sanitizePdfData($value)
 
     public function canExportDokuPdf(): bool
     {
-        // Doku nur, wenn es mind. einen Unterrichtstag gibt
-        return $this->days()->exists();
+        // Doku nur, wenn es mind. einen Unterrichtstag Note gibt
+        return $this->days()
+            ->whereNotNull('notes')
+            ->exists();
     }
 
     public function canExportMaterialConfirmationsPdf(): bool
@@ -568,9 +570,8 @@ protected function sanitizePdfData($value)
     }
 
 
-public function exportAttendanceListPdf(): ?StreamedResponse
+public function generateAttendanceListPdfFile(): ?string
 {
-    // Tage + Dozent + Teilnehmer holen
     $this->loadMissing(['days', 'participants', 'tutor']);
 
     $days = $this->days()
@@ -578,74 +579,61 @@ public function exportAttendanceListPdf(): ?StreamedResponse
         ->get();
 
     if ($days->isEmpty()) {
-        // Kannst auch null zurückgeben, wenn du es lieber in Livewire abfängst
-        abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+        return null;
     }
 
-    // Teilnehmer-Liste (nur aktive, dank Relation-Filter)
     $participants = $this->participants
         ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? $p->last_name ?? ''))
         ->values();
 
     $personIds = $participants->pluck('id')->all();
 
-    // Attendance-JSON in Matrix [person_id][day_id] => Symbol
-$attendanceMatrix = []; // [person_id][day_id] => 'x x' / 'x f' / 'f x' / 'f f' / 'E E' etc.
+    $attendanceMatrix = [];
 
-foreach ($days as $day) {
-    $att = $day->attendance_data ?? [];
-    $map = Arr::get($att, 'participants', []);
+    foreach ($days as $day) {
+        $att = $day->attendance_data ?? [];
+        $map = Arr::get($att, 'participants', []);
 
-    foreach ($personIds as $pid) {
-        $row = $map[$pid] ?? null;
+        foreach ($personIds as $pid) {
+            $row = $map[$pid] ?? null;
 
-        // Default: kein Eintrag => voll anwesend (morgens & Ende => x x)
-        $morning = 'x';
-        $end     = 'x';
+            $morning = 'x';
+            $end     = 'x';
 
-        if ($row) {
-            $present = (bool)($row['present'] ?? false);
-            $excused = (bool)($row['excused'] ?? false);
-            $leftEarlyMinutes = (int)($row['left_early_minutes'] ?? 0);
+            if ($row) {
+                $present = (bool)($row['present'] ?? false);
+                $excused = (bool)($row['excused'] ?? false);
+                $leftEarlyMinutes = (int)($row['left_early_minutes'] ?? 0);
 
-            if ($excused) {
-                // ganzer Tag entschuldigt
-                $morning = 'E';
-                $end     = 'E';
-            } else {
-                // Morgens: wenn explizit present=false, dann f
-                if ($present === false) {
-                    $morning = 'f';
-                } elseif ($present === true) {
-                    $morning = 'x';
-                }
-
-                // Ende:
-                // - wenn jemand früher gegangen ist -> f
-                // - wenn gar nicht anwesend -> f
-                // - sonst x
-                if ($present === false) {
-                    $end = 'f';
-                } elseif ($leftEarlyMinutes > 0) {
-                    $end = 'f';
+                if ($excused) {
+                    $morning = 'E';
+                    $end     = 'E';
                 } else {
-                    $end = 'x';
+                    if ($present === false) {
+                        $morning = 'f';
+                    } elseif ($present === true) {
+                        $morning = 'x';
+                    }
+
+                    if ($present === false) {
+                        $end = 'f';
+                    } elseif ($leftEarlyMinutes > 0) {
+                        $end = 'f';
+                    } else {
+                        $end = 'x';
+                    }
                 }
             }
+
+            $attendanceMatrix[$pid][$day->id] = $morning.' '.$end;
         }
-
-        // Zwei Zeichen (z.B. "x x", "x f", "f x", "f f", "E E")
-        $attendanceMatrix[$pid][$day->id] = $morning.' '.$end;
     }
-}
 
-
-    // Meta-Daten
     $startDate = $days->first()->date;
     $endDate   = $days->last()->date;
 
     $firstDay  = $days->first();
-    $startTime = $firstDay->start_time ?? null; // 'H:i:s' oder Carbon?
+    $startTime = $firstDay->start_time ?? null;
 
     $meta = [
         'date_from'   => $startDate,
@@ -663,7 +651,6 @@ foreach ($days as $day) {
             ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
     ];
 
-    // Zeilenstruktur
     $rows = $participants->map(function ($person) use ($days, $attendanceMatrix) {
         $cells = $days->map(function ($day) use ($person, $attendanceMatrix) {
             return $attendanceMatrix[$person->id][$day->id] ?? '';
@@ -675,35 +662,45 @@ foreach ($days as $day) {
         ];
     });
 
-    // Blade-View zu HTML rendern
     $html = view('pdf.courses.attendance-list', [
         'days' => $days,
         'rows' => $rows,
         'meta' => $meta,
     ])->render();
 
-    // HTML nach etwas "robusterem" Encoding konvertieren
     $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8, ISO-8859-1, Windows-1252');
 
-    // PDF aus HTML erzeugen
     $pdf = Pdf::loadHTML($html)
         ->setPaper('a4', 'landscape');
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'att_') . '.pdf';
+    $pdf->save($tmpPath);
+
+    return $tmpPath;
+}
+
+public function exportAttendanceListPdf(): ?StreamedResponse
+{
+    $path = $this->generateAttendanceListPdfFile();
+
+    if (! $path || ! file_exists($path)) {
+        abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+    }
 
     $filename = sprintf(
         'Klassen-Anwesenheitsliste_%s.pdf',
         $this->klassen_id ?: $this->id
     );
 
-    // 🔥 WICHTIG: StreamedResponse zurückgeben – exakt wie bei deinen ReportBook-Exports
-    return response()->streamDownload(
-        fn () => print($pdf->output()),
-        $filename
-    );
+    return response()->streamDownload(function () use ($path) {
+        readfile($path);
+        @unlink($path);
+    }, $filename);
 }
 
-public function exportDokuPdf(): ?StreamedResponse
+
+public function generateDokuPdfFile(): ?string
 {
-    // Tage + Dozent holen
     $this->loadMissing(['days', 'tutor']);
 
     $days = $this->days()
@@ -712,10 +709,9 @@ public function exportDokuPdf(): ?StreamedResponse
         ->get();
 
     if ($days->isEmpty()) {
-        abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+        return null;
     }
 
-    // Meta-Daten aus erstem/letztem Tag
     $from = $days->first()->date instanceof Carbon
         ? $days->first()->date
         : Carbon::parse($days->first()->date);
@@ -736,7 +732,6 @@ public function exportDokuPdf(): ?StreamedResponse
             ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
     ];
 
-    // Daten pro Tag vorbereiten
     $rows = $days->map(function ($day, $idx) {
         $date = $day->date instanceof Carbon
             ? $day->date
@@ -750,11 +745,8 @@ public function exportDokuPdf(): ?StreamedResponse
             ? Carbon::parse($day->end_time)->format('H:i')
             : '16:00';
 
-        // Unterrichtseinheiten (UE) – falls du ein Feld hast (z. B. std),
-        // sonst leer lassen.
         $ue = $day->std ?? null;
         if (is_numeric($ue)) {
-            // optional: 9.00 → 9
             $ue = (int) round((float) $ue);
         }
 
@@ -762,52 +754,70 @@ public function exportDokuPdf(): ?StreamedResponse
             'index'      => $idx + 1,
             'date'       => $date,
             'time_range' => $start.'-'.$end,
-            'notes_html' => $day->notes ?? '',   // HTML aus course_days.notes
+            'notes_html' => $day->notes ?? '',
             'ue'         => $ue,
         ];
     });
 
-    // View zu HTML
     $html = view('pdf.courses.documentation', [
         'meta' => $meta,
         'rows' => $rows,
     ])->render();
 
-    // HTML in Encoding, das DomPDF mag
     $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8, ISO-8859-1, Windows-1252');
 
     $pdf = Pdf::loadHTML($html)
         ->setPaper('a4', 'portrait');
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'doku_') . '.pdf';
+    $pdf->save($tmpPath);
+
+    return $tmpPath;
+}
+
+public function exportDokuPdf(): ?StreamedResponse
+{
+    $path = $this->generateDokuPdfFile();
+
+    if (! $path || ! file_exists($path)) {
+        abort(404, 'Für diesen Kurs sind keine Unterrichtstage vorhanden.');
+    }
+
+    $days = $this->days()
+        ->orderBy('date')
+        ->orderBy('start_time')
+        ->get();
+
+    $from = $days->first()->date instanceof Carbon
+        ? $days->first()->date
+        : Carbon::parse($days->first()->date);
 
     $filename = sprintf(
         'Unterrichtsdokumentation_%s.pdf',
         $this->klassen_id ?: $from->format('Y-m-d')
     );
 
-    return response()->streamDownload(
-        fn () => print($pdf->output()),
-        $filename
-    );
+    return response()->streamDownload(function () use ($path) {
+        readfile($path);
+        @unlink($path);
+    }, $filename);
 }
 
-public function exportMaterialConfirmationsPdf(): StreamedResponse
+public function generateMaterialConfirmationsPdfFile(): ?string
 {
-    // Teilnehmer aus Relation
     $participants = $this->participants
         ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? ''))
         ->values();
 
     if ($participants->isEmpty()) {
-        return false; // -> Keine Teilnehmer
+        return null;
     }
 
-    // Acks laden
     $acks = $this->materialAcknowledgements()
         ->with(['person', 'enrollment', 'files'])
         ->get()
         ->groupBy('person_id');
 
-    // Rows bauen
     $rows = $participants->map(function ($person) use ($acks) {
         $list = $acks->get($person->id);
         $ack  = $list?->sortByDesc('acknowledged_at')->first();
@@ -821,24 +831,37 @@ public function exportMaterialConfirmationsPdf(): StreamedResponse
         ];
     });
 
-    // PDF rendern
-    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.courses.material-confirmations', [
+    $pdf = Pdf::loadView('pdf.courses.material-confirmations', [
         'course' => $this,
         'rows'   => $rows,
     ]);
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'mat_') . '.pdf';
+    $pdf->save($tmpPath);
+
+    return $tmpPath;
+}
+
+public function exportMaterialConfirmationsPdf(): ?StreamedResponse
+{
+    $path = $this->generateMaterialConfirmationsPdfFile();
+
+    if (! $path || ! file_exists($path)) {
+        abort(404, 'Keine Teilnehmer / Materialbestätigungen vorhanden.');
+    }
 
     $filename = sprintf(
         'Material-Bestaetigungen_%s.pdf',
         $this->klassen_id ?: $this->id
     );
-
-    return response()->streamDownload(
-        fn () => print($pdf->output()),
-        $filename
-    );
+    return response()->streamDownload(function () use ($path) {
+        readfile($path);
+        @unlink($path);
+    }, $filename);
 }
 
-public function exportInvoicePdf(): ?StreamedResponse
+
+public function generateInvoicePdfFile(): ?string
 {
     $file = $this->files()
         ->where('type', 'invoice')
@@ -846,38 +869,52 @@ public function exportInvoicePdf(): ?StreamedResponse
         ->first();
 
     if (! $file) {
+        return null;
+    }
+
+    $downloadUrl = $file->getEphemeralPublicUrl();
+    if (! $downloadUrl) {
+        return null;
+    }
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'inv_') . '.pdf';
+
+    $in  = @fopen($downloadUrl, 'rb');
+    if (! $in) {
+        return null;
+    }
+
+    $out = fopen($tmpPath, 'wb');
+    while (! feof($in)) {
+        fwrite($out, fread($in, 8192));
+    }
+    fclose($in);
+    fclose($out);
+
+    return $tmpPath;
+}
+
+public function exportInvoicePdf(): ?StreamedResponse
+{
+    $path = $this->generateInvoicePdfFile();
+
+    if (! $path || ! file_exists($path)) {
         abort(404, 'Keine Dozentenrechnung vorhanden.');
     }
 
-    $downloadName = $file->name ?: sprintf(
+    $downloadName = sprintf(
         'Dozenten-Rechnung_%s.pdf',
         $this->klassen_id ?: $this->id
     );
 
-    $downloadUrl = $file->getEphemeralPublicUrl();
-
-    if (! $downloadUrl) {
-        abort(404, 'Die Dozentenrechnung konnte nicht geladen werden.');
-    }
-
-    return response()->streamDownload(function () use ($downloadUrl) {
-        $handle = @fopen($downloadUrl, 'rb');
-
-        if (! $handle) {
-            // hier könntest du auch eine Exception werfen / aborten
-            echo 'Datei konnte nicht geöffnet werden.';
-            return;
-        }
-
-        while (! feof($handle)) {
-            echo fread($handle, 8192);
-        }
-
-        fclose($handle);
+    return response()->streamDownload(function () use ($path) {
+        readfile($path);
+        @unlink($path);
     }, $downloadName);
 }
 
-public function exportRedThreadPdf()
+
+public function generateRedThreadPdfFile(): ?string
 {
     $file = $this->files()
         ->where('type', 'roter_faden')
@@ -885,45 +922,59 @@ public function exportRedThreadPdf()
         ->first();
 
     if (! $file) {
+        return null;
+    }
+
+    $downloadUrl = $file->getEphemeralPublicUrl();
+    if (! $downloadUrl) {
+        return null;
+    }
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'rf_') . '.pdf';
+
+    $in  = @fopen($downloadUrl, 'rb');
+    if (! $in) {
+        return null;
+    }
+
+    $out = fopen($tmpPath, 'wb');
+    while (! feof($in)) {
+        fwrite($out, fread($in, 8192));
+    }
+    fclose($in);
+    fclose($out);
+
+    return $tmpPath;
+}
+
+public function exportRedThreadPdf(): ?StreamedResponse
+{
+    $path = $this->generateRedThreadPdfFile();
+
+    if (! $path || ! file_exists($path)) {
         abort(404, 'Kein "Roter Faden"-Dokument vorhanden.');
     }
 
-    $downloadName = $file->name ?: sprintf(
+    $downloadName = sprintf(
         'Roter-Faden_%s.pdf',
         $this->klassen_id ?: $this->id
     );
 
-    $downloadUrl = $file->getEphemeralPublicUrl();
-
-    if (! $downloadUrl) {
-        abort(404, 'Das "Roter Faden"-Dokument konnte nicht geladen werden.');
-    }
-
-    return response()->streamDownload(function () use ($downloadUrl) {
-        $handle = @fopen($downloadUrl, 'rb');
-
-        if (! $handle) {
-            echo 'Datei konnte nicht geöffnet werden.';
-            return;
-        }
-
-        while (! feof($handle)) {
-            echo fread($handle, 8192);
-        }
-
-        fclose($handle);
+    return response()->streamDownload(function () use ($path) {
+        readfile($path);
+        @unlink($path);
     }, $downloadName);
 }
 
-public function exportExamResultsPdf(): ?StreamedResponse
+
+public function generateExamResultsPdfFile(): ?string
 {
-    // Teilnehmer aus Relation
     $participants = $this->participants
         ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? $p->last_name ?? ''))
         ->values();
 
     if ($participants->isEmpty()) {
-        abort(404, 'Keine Teilnehmer für diesen Kurs gefunden.');
+        return null;
     }
 
     $pdf = Pdf::loadView('pdf.courses.exam-results', [
@@ -931,15 +982,161 @@ public function exportExamResultsPdf(): ?StreamedResponse
         'participants' => $participants,
     ]);
 
+    $tmpPath = tempnam(sys_get_temp_dir(), 'exam_') . '.pdf';
+    $pdf->save($tmpPath);
+
+    return $tmpPath;
+}
+
+public function exportExamResultsPdf(): ?StreamedResponse
+{
+    $path = $this->generateExamResultsPdfFile();
+
+    if (! $path || ! file_exists($path)) {
+        abort(404, 'Keine Teilnehmer für diesen Kurs gefunden.');
+    }
+
     $filename = sprintf(
         'Pruefungsergebnisse_%s.pdf',
         $this->klassen_id ?: $this->id
     );
 
-    return response()->streamDownload(
-        fn () => print($pdf->output()),
-        $filename
-    );
+    return response()->streamDownload(function () use ($path) {
+        readfile($path);
+        @unlink($path);
+    }, $filename);
+}
+
+    public function getExportBaseName(): string
+    {
+        return sprintf(
+            '%s_Baustein_Export_%s',
+            $this->courseShortName.'_'.$this->termin_id,
+            now()->format('d-m-Y')
+        );
+    }
+
+public function generateExportAllZipFile(array $settings = []): ?string
+{
+    $includeDocumentation = $settings['includeDocumentation'] ?? true;
+    $includeRedThread     = $settings['includeRedThread']     ?? true;
+    $includeParticipants  = $settings['includeParticipants']  ?? true;
+    $includeAttendance    = $settings['includeAttendance']    ?? true;
+    $includeExamResults   = $settings['includeExamResults']   ?? true;
+    $includeTutorData     = $settings['includeTutorData']     ?? true;
+
+    // Vorab prüfen, ob überhaupt irgendwas exportierbar ist
+    $hasAny =
+        ($includeAttendance    && $this->canExportAttendancePdf())             ||
+        ($includeDocumentation && $this->canExportDokuPdf())                   ||
+        ($includeParticipants  && $this->canExportMaterialConfirmationsPdf())  ||
+        ($includeTutorData     && $this->canExportInvoicePdf())                ||
+        ($includeRedThread     && $this->canExportRedThreadPdf())              ||
+        ($includeExamResults   && $this->canExportExamResultsPdf());
+
+    if (! $hasAny) {
+        return null;
+    }
+
+    $zipPath   = tempnam(sys_get_temp_dir(), 'course_zip_');
+    $zip       = new ZipArchive();
+    $tempFiles = [];
+    $addedAny  = false;
+
+    if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        throw new \RuntimeException('ZIP-Archiv konnte nicht erstellt werden.');
+    }
+
+    // Anwesenheitsliste
+    if ($includeAttendance && $this->canExportAttendancePdf()) {
+        $path = $this->generateAttendanceListPdfFile();
+        if ($path && file_exists($path)) {
+            $zip->addFile($path, 'Anwesenheitsliste.pdf');
+            $tempFiles[] = $path;
+            $addedAny    = true;
+        }
+    }
+
+    // Unterrichtsdokumentation
+    if ($includeDocumentation && $this->canExportDokuPdf()) {
+        $path = $this->generateDokuPdfFile();
+        if ($path && file_exists($path)) {
+            $zip->addFile($path, 'Unterrichtsdokumentation.pdf');
+            $tempFiles[] = $path;
+            $addedAny    = true;
+        }
+    }
+
+    // Materialbestätigungen
+    if ($includeParticipants && $this->canExportMaterialConfirmationsPdf()) {
+        $path = $this->generateMaterialConfirmationsPdfFile();
+        if ($path && file_exists($path)) {
+            $zip->addFile($path, 'Materialbestaetigungen.pdf');
+            $tempFiles[] = $path;
+            $addedAny    = true;
+        }
+    }
+
+    // Dozentenrechnung
+    if ($includeTutorData && $this->canExportInvoicePdf()) {
+        $path = $this->generateInvoicePdfFile();
+        if ($path && file_exists($path)) {
+            $zip->addFile($path, 'Dozentenrechnung.pdf');
+            $tempFiles[] = $path;
+            $addedAny    = true;
+        }
+    }
+
+    // Roter Faden
+    if ($includeRedThread && $this->canExportRedThreadPdf()) {
+        $path = $this->generateRedThreadPdfFile();
+        if ($path && file_exists($path)) {
+            $zip->addFile($path, 'RoterFaden.pdf');
+            $tempFiles[] = $path;
+            $addedAny    = true;
+        }
+    }
+
+    // Prüfungsergebnisse
+    if ($includeExamResults && $this->canExportExamResultsPdf()) {
+        $path = $this->generateExamResultsPdfFile();
+        if ($path && file_exists($path)) {
+            $zip->addFile($path, 'Pruefungsergebnisse.pdf');
+            $tempFiles[] = $path;
+            $addedAny    = true;
+        }
+    }
+
+    $zip->close();
+
+    // Temp-PDFs nach dem Packen direkt löschen – sie stecken jetzt im ZIP
+    foreach ($tempFiles as $file) {
+        @unlink($file);
+    }
+
+    if (! $addedAny) {
+        @unlink($zipPath);
+        return null;
+    }
+
+    return $zipPath;
+}
+
+public function exportAll(array $settings = []): ?StreamedResponse
+{
+    $exportBaseName = $settings['exportName'] ?? $this->getExportBaseName();
+    $zipFileName    = $exportBaseName . '.zip';
+
+    $zipPath = $this->generateExportAllZipFile($settings);
+
+    if (! $zipPath || ! file_exists($zipPath)) {
+        abort(404, 'Für diesen Baustein gibt es keine exportierbaren Dokumente.');
+    }
+
+    return response()->streamDownload(function () use ($zipPath) {
+        readfile($zipPath);
+        @unlink($zipPath);
+    }, $zipFileName);
 }
 
 

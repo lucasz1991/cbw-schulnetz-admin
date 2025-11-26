@@ -70,7 +70,7 @@
                 <i class="far fa-align-slash mr-2"></i>
                 Auswahl entfernen
             </x-dropdown-link>
-            <x-dropdown-link href="#" wire:click.prevent="exportCourses" class="hover:bg-green-100">
+            <x-dropdown-link href="#" wire:click.prevent="$dispatch('openCourseExportModal', [{{ json_encode($selectedCourses) }}])" class="hover:bg-green-100">
                 <i class="far fa-download mr-2"></i>
                 Exportieren
             </x-dropdown-link>
@@ -94,8 +94,7 @@
                     class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                 >
                     <option value="">Status auswählen</option>
-                    <option value="active">aktive</option>
-                    <option value="inactive">inaktive</option>
+                    <option value="active">laufend</option>
                     <option value="planned">geplante</option>
                     <option value="finished">abgeschlossene</option>
                 </select>
@@ -103,15 +102,98 @@
 
             {{-- Hier ein Select feld für die Termin_id s der Course  --}}
             <div class="relative">
-                <select 
-                    wire:model.live="selectedTerm"
-                    class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                >
-                    <option value="">alle Termine</option>
-                    @foreach($terms as $term)
-                        <option value="{{ $term->id }}">{{ $term->name }}</option>
-                    @endforeach
-                </select>
+            <x-ui.dropdown.anchor-dropdown
+                align="right"
+                width="56"
+                dropdownClasses="mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+                contentClasses="bg-white"
+                :overlay="false"
+                :trap="false"
+                :scrollOnOpen="false"
+                :offset="6"
+            >
+                {{-- Trigger --}}
+                <x-slot name="trigger">
+                    <x-ui.buttons.button-basic
+                        type="button"
+                        :size="'sm'"
+                        class="px-2"
+                    >
+                        <i class="fal fa-calendar-alt text-[16px]"></i>
+
+                        <span class="hidden md:inline-block ml-2">
+                            @php
+                                $currentTerm = $terms->firstWhere('id', $selectedTerm ?? null);
+                            @endphp
+
+                            @if($currentTerm)
+                                {{ $currentTerm->name }}
+                            @else
+                                alle Termine
+                            @endif
+                        </span>
+
+                        <i class="fal fa-angle-down ml-1 text-xs"></i>
+                    </x-ui.buttons.button-basic>
+                </x-slot>
+
+                {{-- Inhalt --}}
+                <x-slot name="content">
+                    <div class="py-1 text-sm text-gray-700 max-h-80 overflow-y-auto">
+
+                        {{-- Option: alle Termine --}}
+                        <button
+                            type="button"
+                            wire:click="$set('selectedTerm', '')"
+                            @class([
+                                'flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-gray-50 cursor-pointer',
+                                'bg-sky-50 text-sky-700' => empty($selectedTerm),
+                            ])
+                        >
+                            <div class="flex flex-col">
+                                <span class="font-medium">alle Termine</span>
+                                <span class="text-xs text-gray-500">Keine Einschränkung</span>
+                            </div>
+                        </button>
+                        <div class="border-t border-gray-100 my-1"></div>
+                        
+                        {{-- Termine-Loop --}}
+                        @foreach($terms as $term)
+                            <button
+                                type="button"
+                                wire:click="$set('selectedTerm', '{{ $term->id }}')"
+                                @class([
+                                    'group/termselectoption flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-gray-50 cursor-pointer',
+                                    'bg-sky-50 text-sky-700' =>  $selectedTerm === $term->id,
+                                ])
+                            >
+                                <div class="flex flex-col w-full py-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-medium">
+                                            {{ $term->name }}
+                                        </span>
+
+                                        <div class="hidden group-hover/termselectoption:inline-flex">
+                                            <x-ui.badge.badge
+                                                :color="'blue'"
+                                                :size="'sm'">
+                                                {{ $term->cnt }} Baustein{{ $term->cnt !== 1 ? 'e' : '' }}
+                                            </x-ui.badge.badge>
+                                        </div>
+                                    </div>
+
+                                    <span class="text-xs text-gray-500">
+                                        {{ $term->start }}
+                                        &ndash;
+                                        {{ $term->end }}
+                                    </span>
+                                </div>
+                            </button>
+                        @endforeach
+                    </div>
+                </x-slot>
+            </x-ui.dropdown.anchor-dropdown>
+
             </div>
             
             {{-- Inhalts-Status Filter --}}
@@ -195,4 +277,6 @@
         </div>
 
     </div>
+
+    <livewire:admin.courses.course-export-modal />
 </div>
