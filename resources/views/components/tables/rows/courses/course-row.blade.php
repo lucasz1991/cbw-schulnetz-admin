@@ -135,7 +135,7 @@
                 ],
                 [
                     'can'   => $item->canExportMaterialConfirmationsPdf(),
-                    'title' => 'Materialbestätigungen',
+                    'title' => 'Bildungsmittel-Bestätigungen',
                     'icon'  => 'fal fa-file-signature fa-lg',
                     'badge' => $item->participants_confirmations_icon_html,
                     'wire'  => "exportMaterialConfirmationsPdf({$item->id})",

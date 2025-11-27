@@ -55,7 +55,7 @@
                                 {{ $this->canExportMaterialConfirmations ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
                         >
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
-                            <span>Bildungsmittel-Bestätigungen</span>
+                            <span>Bildungsmittel-Bestät.</span>
                         </button>
 
                         <button
