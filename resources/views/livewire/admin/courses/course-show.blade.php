@@ -55,7 +55,7 @@
                                 {{ $this->canExportMaterialConfirmations ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
                         >
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
-                            <span>Material-Bestätigungen</span>
+                            <span>Bildungsmittel-Bestätigungen</span>
                         </button>
 
                         <button
@@ -270,7 +270,7 @@
             <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
                 <i class="fal fa-file-signature text-[13px] text-slate-700"></i>
             </span>
-            <span class="text-[11px] leading-snug">Materialbestätigungen</span>
+            <span class="text-[11px] leading-snug">Bildungsmittel Bestätigungen</span>
         </div>
 
         <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">

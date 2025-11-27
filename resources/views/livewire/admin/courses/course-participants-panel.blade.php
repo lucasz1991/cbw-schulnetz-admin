@@ -4,7 +4,7 @@
 
     @else
         <div class="text-xs text-neutral-500 mb-1">
-            Teilnehmer – Materialbestätigung & Prüfungsergebnis
+            Teilnehmer – Bildungsmittel Bestätigungen & Prüfungsergebnisse
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
@@ -12,8 +12,8 @@
                 <thead class="bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
                     <tr>
                         <th class="px-3 py-2 text-left font-semibold">Teilnehmer</th>
-                        <th class="px-3 py-2 text-left font-semibold w-40">Material</th>
-                        <th class="px-3 py-2 text-left font-semibold w-56">Prüfung</th>
+                        <th class="px-3 py-2 text-left font-semibold w-40">Bildungsmittel Bestätigungen</th>
+                        <th class="px-3 py-2 text-left font-semibold w-56">Prüfungs Ergebnisse</th>
                     </tr>
                 </thead>
 
