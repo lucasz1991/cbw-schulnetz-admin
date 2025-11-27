@@ -9,6 +9,7 @@
                     </a>
                 </li>
                 @if(Auth::user()->current_team_id <= 2 )
+                    @if(Auth::user()->role == "admin" )
                     <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">System-Verwaltung</li>
                         <li>
                             <a href="{{ route('admin.config') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
@@ -16,21 +17,18 @@
                                 <span data-key="t-config"> Einstellungen</span>
                             </a>
                         </li>
-                    @if(Auth::user()->role == "admin" )
                         <li>
                             <a href="{{ route('admin.webcontentmanager') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                 <i data-feather="grid" fill="#545a6d33"></i>
                                 <span data-key="t-webcontentmanager">Web Inhalte</span>
                             </a>
                         </li>
-                    @endif
                         <li>
                             <a href="{{ route('admin.employees') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                 <i data-feather="users" fill="#545a6d33"></i>
                                 <span data-key="t-employees">Mitarbeiter</span>
                             </a>
                         </li>
-                    @if(Auth::user()->role == "admin" )
                         <li>
                             <a href="{{ route('admin.safety') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                 <i data-feather="activity" fill="#545a6d33"></i>
