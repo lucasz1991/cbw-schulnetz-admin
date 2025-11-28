@@ -99,6 +99,11 @@
                             Mail senden
                         </button>
                     </li>
+                    <li>
+                        <button wire:click="apiUpdateUsers" class="text-left w-full block px-4 py-2 text-gray-700 hover:bg-red-100">
+                            UVS Api Update
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>

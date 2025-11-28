@@ -6,6 +6,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithoutUrlPagination;
 use App\Models\User;
+use App\Models\Person;
+
 use App\Models\Mail;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
@@ -49,7 +51,23 @@ class Users extends Component
             $this->sortDirection = 'asc';
         }
     }
+    public function apiUpdateUsers()
+    {
+        $this->validate([
+            'selectedUsers' => 'required|array',
+            'selectedUsers.*' => 'exists:users,id',
+        ]);
 
+        foreach ($this->selectedUsers as $userId) {
+            $user = User::find($userId);
+            if ($user) {
+                foreach ($user->persons as $person) {
+                    $person->apiUpdate();
+                }
+            }
+        }
+        $this->dispatch('toast', 'Benutzer werden nun über die UVS API aktualisiert. Dies kann einige Zeit in Anspruch nehmen.', 'success');
+    }
     public function activateUsers()
     {
         $totalUsers = count($this->selectedUsers);

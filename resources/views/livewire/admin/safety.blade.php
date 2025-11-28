@@ -5,6 +5,8 @@
             <option value="all">Alle</option>
             <option value="user">Benutzer</option>
             <option value="guest">Gäste</option>
+            <option value="staff">Mitarbeiter</option>
+
         </select>
     </div>
     <div class="flex justify-between mb-4">

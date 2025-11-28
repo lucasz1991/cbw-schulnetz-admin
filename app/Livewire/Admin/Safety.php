@@ -33,6 +33,10 @@ class Safety extends Component
             ->when($this->filterMode === 'guest', function ($query) {
                 $query->whereNull('activity_log.causer_id');
             })
+            ->when($this->filterMode === 'staff', function ($query) {
+                $query->whereNotNull('activity_log.causer_id')
+                      ->whereIn('users.role', ['staff', 'admin']);
+            })
             ->when($this->search, function ($query) {
                 $query->where('activity_log.description', 'like', '%' . $this->search . '%')
                 ->orWhere('activity_log.causer_type', 'like', '%' . $this->search . '%')
