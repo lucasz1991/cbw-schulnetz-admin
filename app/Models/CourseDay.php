@@ -23,6 +23,9 @@ class CourseDay extends Model
         'attendance_data',
         'topic',
         'notes',
+        'note_status',
+        'settings',
+        'type',
     ];
 
     protected $casts = [
@@ -31,9 +34,15 @@ class CourseDay extends Model
         'end_time'        => 'datetime:H:i',
         'day_sessions'    => 'array', // wichtig für JSON
         'attendance_data' => 'array', // wichtig für JSON
+                'attendance_updated_at' => 'datetime',
+        'attendance_last_synced_at' => 'datetime',
+        'note_status'     => 'integer',
+        'settings'       => 'array',
     ];
 
-
+    public const NOTE_STATUS_MISSING   = 0;
+    public const NOTE_STATUS_DRAFT     = 1;
+    public const NOTE_STATUS_COMPLETED = 2;
     /**
      * Beim Erstellen Defaults für Sessions & Attendance setzen.
      */
@@ -263,5 +272,21 @@ class CourseDay extends Model
     public function course()
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function files()
+    {
+        return $this->morphMany(File::class, 'fileable');
+    }
+
+    /** Tutor-Signaturen für diesen Tag (Typ z. B. sign_courseday_tutor) */
+    public function tutorSignatures()
+    {
+        return $this->files()->where('type', 'sign_courseday_doku_tutor');
+    }
+
+    public function latestTutorSignature(): ?File
+    {
+        return $this->tutorSignatures()->latest()->first();
     }
 }

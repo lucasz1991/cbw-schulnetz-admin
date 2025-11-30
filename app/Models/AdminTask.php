@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Course;
 use App\Models\ReportBook;
+use App\Models\UserRequest;
 
 class AdminTask extends Model
 {
@@ -89,11 +90,12 @@ class AdminTask extends Model
             default                  => '❓',
         };
     }
-
+ 
     public function getTaskTypeTextAttribute(): string
     {
         return match ($this->task_type) {
             'reportbook_review'   => 'Berichtsheft prüfen',
+            'user_request_review' => 'Benutzeranfrage prüfen',
             default               => 'Unbekannte Aufgabe',
         };
     }
@@ -104,6 +106,7 @@ class AdminTask extends Model
             Course::class       => 'Kurs: ' . ($this->context->title ?? 'Unbekannt'),
             User::class         => 'User: ' . ($this->context->name ?? 'Unbekannt'),
             ReportBook::class   => 'Berichtsheft: ' . ($this->context->course->title ?? 'Unbekannt'),
+            UserRequest::class  => 'Benutzeranfrage: ' . ($this->context->type ?? 'Unbekannt'),
             default             => 'Unbekannter Kontext',
         };
     }

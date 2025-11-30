@@ -15,6 +15,9 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\CourseMaterialAcknowledgement;
+use App\Models\File;
+use App\Models\CourseDay;
+
 
 class Course extends Model
 {
@@ -777,7 +780,7 @@ public function generateDokuPdfFile(): ?string
     $meta = [
         'date_from'   => $from,
         'date_to'     => $to,
-        'num_days'    => $days->count(),
+        'num_days'    => $days->count(), // alle Tage, egal note_status
         'class_label' => $this->klassen_id,
         'module'      => $this->settings['kurzbez_ba'] ?? $this->title,
         'location'    => $this->room ?? '—',
@@ -804,12 +807,40 @@ public function generateDokuPdfFile(): ?string
             $ue = (int) round((float) $ue);
         }
 
+        // note_status auswerten
+        $noteStatus = (int) ($day->note_status ?? 0);
+
+        // Default: nur aufzählen, keine Inhalte / keine Signatur
+        $notesHtml    = '';
+        $ueValue      = null;
+        $signatureSrc = null; // Base64 für <img src="...">
+
+        // Nur bei note_status = 2 Inhalte + Signatur ausgeben
+        if ($noteStatus === 2) {
+            $notesHtml = $day->notes ?? '';
+            $ueValue   = $ue;
+
+            $signatureFile = $day->latestTutorSignature();
+            $path          = $signatureFile?->getEphemeralPublicUrl();
+
+            if ($signatureFile && $path) {
+                $mime = $signatureFile->mime_type ?? 'image/png';
+
+                $data = @file_get_contents($path);
+                if ($data !== false) {
+                    $signatureSrc = 'data:' . $mime . ';base64,' . base64_encode($data);
+                }
+            }
+        }
+
         return [
-            'index'      => $idx + 1,
-            'date'       => $date,
-            'time_range' => $start.'-'.$end,
-            'notes_html' => $day->notes ?? '',
-            'ue'         => $ue,
+            'index'               => $idx + 1,
+            'date'                => $date,
+            'time_range'          => $start.'-'.$end,
+            'notes_html'          => $notesHtml,
+            'ue'                  => $ueValue,
+            'tutor_signature_src' => $signatureSrc,
+            'note_status'         => $noteStatus,
         ];
     });
 
@@ -828,6 +859,7 @@ public function generateDokuPdfFile(): ?string
 
     return $tmpPath;
 }
+
 
 public function exportDokuPdf(): ?StreamedResponse
 {

@@ -116,6 +116,10 @@
             text-align: center;
             font-size: 7px;
         }
+        .sign-cell img {
+            max-height: 45px;
+            max-width: 100%;
+        }
 
         .sign-cell-inner {
             min-height: 55px;
@@ -230,13 +234,22 @@
                 {{ $row['ue'] ?? '' }}
             </td>
 
-            {{-- 5. Spalte: Unterschrift-Feld (leer lassen) --}}
-            <td class="col-sign sign-cell">
-                <div class="sign-cell-inner">
-                    <span class="sign-label-top">Unterschrift<br>Instruktor/-in</span>
-                    <span class="sign-label-bottom">{{ $meta['tutor_name'] }}</span>
-                </div>
-            </td>
+{{-- 5. Spalte: Unterschrift-Feld mit Bild (falls vorhanden) --}}
+<td class="col-sign sign-cell">
+    <div class="sign-cell-inner">
+@if(!empty($row['tutor_signature_src']))
+    <img src="{{ $row['tutor_signature_src'] }}" alt="Tutor-Signatur">
+@else
+    <span class="sign-label-top">
+        Unterschrift<br>Instruktor/-in
+    </span>
+@endif
+
+        <span class="sign-label-bottom">
+            {{ $meta['tutor_name'] }}
+        </span>
+    </div>
+</td>
         </tr>
     @endforeach
 </table>
