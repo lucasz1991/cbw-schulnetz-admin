@@ -211,10 +211,10 @@
         </div>
 
         {{-- Download Button --}}
+        @if($this->canExportDoku)
         <button
             type="button"
             wire:click="exportDokuPdf"
-            @if(! $this->canExportDoku) disabled @endif
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
@@ -226,6 +226,18 @@
         >
             <i class="fal fa-download text-[14px]"></i>
         </button>
+        @else
+            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-red-100 text-red-700 
+                   hover:bg-red-200
+                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
+                    <i class="fal fa-circle-exclamation text-[14px]"></i>
+            </div>
+        @endif
     </div>
 
 
@@ -244,11 +256,10 @@
         <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
             {!! $course->red_thread_icon_html !!}
         </div>
-
+        @if($this->canExportRedThread)
         <button
             type="button"
             wire:click="exportRedThreadPdf"
-            @if(! $this->canExportRedThread) disabled @endif
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
@@ -260,6 +271,18 @@
         >
             <i class="fal fa-download text-[14px]"></i>
         </button>
+                @else
+            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-red-100 text-red-700 
+                   hover:bg-red-200
+                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
+                    <i class="fal fa-circle-exclamation text-[14px]"></i>
+            </div>
+        @endif
     </div>
 
 
@@ -278,12 +301,10 @@
         <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
             {!! $course->participants_confirmations_icon_html !!}
         </div>
-
+        @if($this->canExportMaterialConfirmations)
         <button
             type="button"
             wire:click="exportMaterialConfirmationsPdf"
-                            @if(! $this->canExportMaterialConfirmations) disabled @endif
-
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
@@ -295,6 +316,18 @@
         >
             <i class="fal fa-download text-[14px]"></i>
         </button>
+                @else
+            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-red-100 text-red-700 
+                   hover:bg-red-200
+                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
+                    <i class="fal fa-circle-exclamation text-[14px]"></i>
+            </div>
+        @endif
     </div>
 
 
@@ -313,11 +346,10 @@
         <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
             {!! $course->invoice_icon_html !!}
         </div>
-
+        @if($this->canExportInvoice)
         <button
             type="button"
             wire:click="exportInvoicePdf"
-            @if(! $this->canExportInvoice) disabled @endif
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
@@ -329,6 +361,18 @@
         >
             <i class="fal fa-download text-[14px]"></i>
         </button>
+                @else
+            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
+                   opacity-0 group-hover/box:opacity-100
+                   transition-opacity duration-150 
+                   flex items-center justify-center
+                   h-7 w-7 rounded-full
+                   bg-red-100 text-red-700 
+                   hover:bg-red-200
+                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
+                    <i class="fal fa-circle-exclamation text-[14px]"></i>
+            </div>
+        @endif
     </div>
 
 </div>
