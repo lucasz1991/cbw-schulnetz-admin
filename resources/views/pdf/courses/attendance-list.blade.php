@@ -144,7 +144,7 @@
     </style>
 </head>
 <body>
-    @if($logoSrc)
+    @if($logoSrc) 
         <img src="{{ $logoSrc }}" class="logo">
     @endif
 <table class="header-table">
