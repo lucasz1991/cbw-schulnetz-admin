@@ -93,7 +93,7 @@
             </td>
 
             <td>
-                {{ optional($person->geburtsdatum)->format('d.m.Y') ?? '—' }}
+                {{ optional($person->geburt_datum)->format('d.m.Y') ?? '—' }}
             </td>
 
             <td>
