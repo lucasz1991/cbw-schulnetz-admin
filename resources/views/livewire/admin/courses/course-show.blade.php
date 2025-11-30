@@ -214,6 +214,7 @@
         <button
             type="button"
             wire:click="exportDokuPdf"
+            @if(! $this->canExportDoku) disabled @endif
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
@@ -247,6 +248,7 @@
         <button
             type="button"
             wire:click="exportRedThreadPdf"
+            @if(! $this->canExportRedThread) disabled @endif
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
@@ -280,6 +282,8 @@
         <button
             type="button"
             wire:click="exportMaterialConfirmationsPdf"
+                            @if(! $this->canExportMaterialConfirmations) disabled @endif
+
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
@@ -313,6 +317,7 @@
         <button
             type="button"
             wire:click="exportInvoicePdf"
+            @if(! $this->canExportInvoice) disabled @endif
             class="absolute right-2 top-1/2 -translate-y-1/2 
                    opacity-0 group-hover/box:opacity-100
                    transition-opacity duration-150 
