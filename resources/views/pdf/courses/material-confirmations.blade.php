@@ -1,6 +1,12 @@
 {{-- resources/views/pdf/courses/material-confirmations.blade.php --}}
 @php
     $course = $course ?? null;
+
+    // Logo laden
+    $logoPath = public_path('site-images/logo.png');
+    $logoSrc = file_exists($logoPath)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+        : null;
 @endphp
 <!DOCTYPE html>
 <html lang="de">
@@ -20,6 +26,12 @@
             padding: 2px 4px;
             vertical-align: top;
         }
+
+        .logo {
+            width: 120px;
+            margin-bottom: 6px;
+        }
+
         .title-center {
             text-align: center;
             font-weight: bold;
@@ -48,9 +60,14 @@
     </style>
 </head>
 <body>
+
 <table class="header-table">
     <tr>
-        <td>
+        <td style="width: 140px;">
+            @if($logoSrc)
+                <img src="{{ $logoSrc }}" class="logo">
+            @endif
+
             Kurs: {{ $course->title ?? '—' }}<br>
             Klasse: {{ $course->klassen_id ?? '—' }}<br>
             Zeitraum:
@@ -58,9 +75,11 @@
             –
             {{ optional($course->planned_end_date)->format('d.m.Y') ?? '—' }}
         </td>
+
         <td class="title-center">
             Material-Bestätigungen
         </td>
+
         <td style="text-align: right">
             Dozent:
             {{ $course->tutor->full_name

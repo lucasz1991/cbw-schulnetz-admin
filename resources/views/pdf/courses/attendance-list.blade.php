@@ -14,6 +14,12 @@
         'Sat' => 'SA',
         'Sun' => 'SO',
     ];
+
+    // Logo laden
+    $logoPath = public_path('site-images/logo.png');
+    $logoSrc = file_exists($logoPath)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+        : null;
 @endphp
 <!DOCTYPE html>
 <html lang="de">
@@ -54,6 +60,11 @@
             width: 35%;
             text-align: right;
             font-size: 8.5px;
+        }
+
+        .logo {
+            width: 110px;
+            margin-bottom: 6px;
         }
 
         /* ---------- Tabelle ---------- */
@@ -136,6 +147,10 @@
 <table class="header-table">
     <tr>
         <td class="header-left">
+            @if($logoSrc)
+                <img src="{{ $logoSrc }}" class="logo">
+            @endif
+
             Datum:
             {{ optional($from)->format('d.m.Y') }}-{{ optional($to)->format('d.m.Y') }}
             ({{ $meta['num_days'] }})<br>

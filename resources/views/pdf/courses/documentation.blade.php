@@ -4,6 +4,12 @@
     /** @var \Carbon\Carbon $to */
     $from = $meta['date_from'];
     $to   = $meta['date_to'];
+
+    // Logo laden
+    $logoPath = public_path('site-images/logo.png');
+    $logoSrc = file_exists($logoPath)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+        : null;
 @endphp
 <!DOCTYPE html>
 <html lang="de">
@@ -149,6 +155,11 @@
         .footer-sign .spacer {
             border: none;
         }
+
+        .logo {
+            max-width: 110px;
+            max-height: 40px;
+        }
     </style>
 </head>
 <body>
@@ -165,7 +176,11 @@
         </td>
         <td class="right">
             {{-- Platz für Logo / Text --}}
-            CBW GmbH
+            @if($logoSrc)
+                <img src="{{ $logoSrc }}" alt="Logo" class="logo">
+            @else
+                CBW GmbH
+            @endif
         </td>
     </tr>
 </table>
@@ -234,22 +249,22 @@
                 {{ $row['ue'] ?? '' }}
             </td>
 
-{{-- 5. Spalte: Unterschrift-Feld mit Bild (falls vorhanden) --}}
-<td class="col-sign sign-cell">
-    <div class="sign-cell-inner">
-@if(!empty($row['tutor_signature_src']))
-    <img src="{{ $row['tutor_signature_src'] }}" alt="Tutor-Signatur">
-@else
-    <span class="sign-label-top">
-        Unterschrift<br>Instruktor/-in
-    </span>
-@endif
+            {{-- 5. Spalte: Unterschrift-Feld mit Bild (falls vorhanden) --}}
+            <td class="col-sign sign-cell">
+                <div class="sign-cell-inner">
+                    @if(!empty($row['tutor_signature_src']))
+                        <img src="{{ $row['tutor_signature_src'] }}" alt="Tutor-Signatur">
+                    @else
+                        <span class="sign-label-top">
+                            Unterschrift<br>Instruktor/-in
+                        </span>
+                    @endif
 
-        <span class="sign-label-bottom">
-            {{ $meta['tutor_name'] }}
-        </span>
-    </div>
-</td>
+                    <span class="sign-label-bottom">
+                        {{ $meta['tutor_name'] }}
+                    </span>
+                </div>
+            </td>
         </tr>
     @endforeach
 </table>
