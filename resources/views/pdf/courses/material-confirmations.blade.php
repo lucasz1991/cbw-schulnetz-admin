@@ -10,15 +10,41 @@
     <style>
         @page { margin: 20px 20px 30px 20px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; }
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .header-table td { padding: 2px 4px; vertical-align: top; }
-        .title-center { text-align: center; font-weight: bold; font-size: 12px; }
-        table.list { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        table.list th, table.list td {
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        .header-table td {
+            padding: 2px 4px;
+            vertical-align: top;
+        }
+        .title-center {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        table.list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        table.list th,
+        table.list td {
             border: 0.4px solid #000;
             padding: 3px 4px;
         }
-        table.list th { text-align: left; background: #f5f5f5; }
+        table.list th {
+            text-align: left;
+            background: #f5f5f5;
+        }
+
+        .signature-img {
+            max-height: 40px;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -36,7 +62,10 @@
             Material-Bestätigungen
         </td>
         <td style="text-align: right">
-            Dozent: {{ $course->tutor->full_name ?? trim(($course->tutor->vorname ?? '').' '.($course->tutor->nachname ?? '')) ?? '—' }}
+            Dozent:
+            {{ $course->tutor->full_name
+                ?? trim(($course->tutor->vorname ?? '').' '.($course->tutor->nachname ?? ''))
+                ?? '—' }}
         </td>
     </tr>
 </table>
@@ -51,24 +80,37 @@
     </tr>
     </thead>
     <tbody>
-@foreach($rows as $row)
-    @php
-        /** @var \App\Models\Person $person */
-        $person = $row['person'];
-        $ack    = $row['ack'];
-    @endphp
+    @foreach($rows as $row)
+        @php
+            /** @var \App\Models\Person $person */
+            $person = $row['person'];
+            $ack    = $row['ack'] ?? null;
+        @endphp
 
-    <tr>
-        <td>{{ $person->nachname }}</td>
-        <td>{{ $person->vorname }}</td>
-        <td>{{ optional($person->geburtsdatum)->format('d.m.Y') }}</td>
-        <td>
-            {{ $ack?->acknowledged_at?->format('d.m.Y H:i') ?? '—' }}
-        </td>
-        {{-- Optional: Signatur-Hinweis --}}
-        {{-- <td>{{ $row['signature'] ? 'Signiert' : '—' }}</td> --}}
-    </tr>
-@endforeach
+        <tr>
+            <td>
+                {{ $person->nachname }}, {{ $person->vorname }}
+            </td>
+
+            <td>
+                {{ optional($person->geburtsdatum)->format('d.m.Y') ?? '—' }}
+            </td>
+
+            <td>
+                {{ $ack?->acknowledged_at?->format('d.m.Y H:i') ?? '—' }}
+            </td>
+
+            <td style="text-align: center;">
+                @if(!empty($row['signature_src']))
+                    <img src="{{ $row['signature_src'] }}"
+                         alt="Unterschrift Teilnehmer"
+                         class="signature-img">
+                @else
+                    —
+                @endif
+            </td>
+        </tr>
+    @endforeach
     </tbody>
 </table>
 

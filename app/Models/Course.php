@@ -907,13 +907,28 @@ public function generateMaterialConfirmationsPdfFile(): ?string
     $rows = $participants->map(function ($person) use ($acks) {
         $list = $acks->get($person->id);
         $ack  = $list?->sortByDesc('acknowledged_at')->first();
+
         $signatureFile = $ack?->latestParticipantSignature();
+        $signatureSrc  = null;
+
+        if ($signatureFile) {
+            $path = $signatureFile->getEphemeralPublicUrl();
+
+            if ($path) {
+                $mime = $signatureFile->mime_type ?? 'image/png';
+                $data = @file_get_contents($path);
+
+                if ($data !== false) {
+                    $signatureSrc = 'data:' . $mime . ';base64,' . base64_encode($data);
+                }
+            }
+        }
 
         return [
-            'person'         => $person,
-            'ack'            => $ack,
-            'acknowledged_at'=> $ack?->acknowledged_at,
-            'signature'      => $signatureFile,
+            'person'          => $person,
+            'ack'             => $ack,
+            'acknowledged_at' => $ack?->acknowledged_at,
+            'signature_src'   => $signatureSrc,
         ];
     });
 
