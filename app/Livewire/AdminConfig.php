@@ -23,9 +23,9 @@ class AdminConfig extends Component
             'description' => 'Sie werden benachrichtigt, sobald sich ein neuer Teilnehmer oder Dozent im Schulnetz registriert hat.',
             'default' => true,
         ],
-        'new_course_created' => [
-            'label' => 'Neuer Kurs angelegt',
-            'description' => 'Sie erhalten eine Nachricht, wenn ein neuer Kurs oder ein neuer Bildungsgang im System erstellt wurde.',
+        'new_user_request' => [
+            'label' => 'Neuer Antrag eines Teilnehmers angelegt',
+            'description' => 'Benachrichtigt Sie, sobald ein Teilnehmer einen neuen Antrag eingereicht hat – z. B. Fehlzeitmeldung, Nachklausur-Anmeldung oder Anmeldung zur externen Prüfung.',
             'default' => false,
         ],
         'daily_error_report' => [
@@ -48,7 +48,7 @@ class AdminConfig extends Component
     // Admin-Notifications: Werte (nur bools; werden geladen/gespeichert)
     public $adminEmailNotifications = [
         'new_user' => true,
-        'new_course_created' => false,
+        'new_user_request' => false,
         'daily_error_report' => false,
         'pending_approval' => true,
         'user_feedback_received' => false,
