@@ -68,7 +68,7 @@
                         <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Personen</h3>
 
                         <p class="text-sm">
-                            <strong>Ersteller:</strong>
+                            <strong>Verursacher:</strong>
                             {{ $task->creator?->name ?? 'Unbekannt' }}
                         </p>
 

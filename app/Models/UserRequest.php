@@ -134,7 +134,18 @@ class UserRequest extends Model
             default                => 'Eingereicht',
         };
     }
-
+    
+    /** Kurze Typ-Beschreibung */
+    public function getTypeLabelAttribute(): string
+    {
+        return match ($this->type) {
+            self::TYPE_ABSENCE         => 'Fehlzeit Meldung',
+            self::TYPE_MAKEUP          => 'Nachholtermin Anfrage',
+            self::TYPE_EXTERNAL_MAKEUP => 'Externer Nachholtermin',
+            self::TYPE_GENERAL         => 'Allgemeine Anfrage',
+            default                    => 'Sonstiger Antrag',
+        };
+    }
     /**
      * -------------------------------------------------------------------------
      *  Scopes / Query Helpers

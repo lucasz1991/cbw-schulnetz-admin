@@ -76,13 +76,12 @@
             font-weight: normal;
         }
         table.attendance tbody{ 
-            border-top: 0.4px solid #000; 
+            border-bottom: 0.4px solid #000; 
         }
         table.attendance tbody tr{
-            border-bottom: 0.4px solid #333;
+            border-top: 0.4px solid #333;
         }
         table.attendance tbody tr:last-of-type {
-            border-bottom: 0.4px solid #000;
         }
         table.attendance tbody tr:nth-child(odd) {
             background-color: #f9f9f9;

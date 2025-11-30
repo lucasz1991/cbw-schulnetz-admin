@@ -95,7 +95,7 @@ class AdminTask extends Model
     {
         return match ($this->task_type) {
             'reportbook_review'   => 'Berichtsheft prüfen',
-            'user_request_review' => 'Benutzeranfrage prüfen',
+            'user_request_review' => 'Teilnehmer Antrag',
             default               => 'Unbekannte Aufgabe',
         };
     }
@@ -106,7 +106,7 @@ class AdminTask extends Model
             Course::class       => 'Kurs: ' . ($this->context->title ?? 'Unbekannt'),
             User::class         => 'User: ' . ($this->context->name ?? 'Unbekannt'),
             ReportBook::class   => 'Berichtsheft: ' . ($this->context->course->title ?? 'Unbekannt'),
-            UserRequest::class  => 'Benutzeranfrage: ' . ($this->context->type ?? 'Unbekannt'),
+            UserRequest::class  => $this->context->type_label ?? 'Unbekannt',
             default             => 'Unbekannter Kontext',
         };
     }
