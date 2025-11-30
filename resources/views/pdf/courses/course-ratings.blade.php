@@ -20,6 +20,11 @@
         h3 { font-size: 12px; margin-top: 6px; }
         p  { margin: 0 0 4px 0; }
 
+        .logo {
+            width: 120px;
+            margin-bottom: 12px;
+        }
+
         .meta-table {
             width: 100%;
             border-collapse: collapse;
@@ -96,6 +101,17 @@
 </head>
 <body>
 
+@php
+    $logoPath = public_path('site-images/logo.png');
+    $logoSrc = file_exists($logoPath)
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+        : null;
+@endphp
+
+@if($logoSrc)
+    <img src="{{ $logoSrc }}" class="logo">
+@endif
+
     {{-- Kopfbereich --}}
     <h1>Baustein-Bewertung</h1>
 
@@ -170,10 +186,7 @@
             @if(!empty($rating->message))
 
                 @php
-                    // Standardwert
                     $teilnehmerNr = 'anonym';
-
-                    // Wenn nicht anonym → versuche echte Teilnehmernummer
                     if (! $rating->is_anonymous) {
                         $teilnehmerNr = $rating->user?->person?->teilnehmer_nr
                             ?: $rating->participant_id
