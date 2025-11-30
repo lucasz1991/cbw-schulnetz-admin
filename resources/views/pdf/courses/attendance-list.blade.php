@@ -144,12 +144,12 @@
     </style>
 </head>
 <body>
+    @if($logoSrc)
+        <img src="{{ $logoSrc }}" class="logo">
+    @endif
 <table class="header-table">
     <tr>
         <td class="header-left">
-            @if($logoSrc)
-                <img src="{{ $logoSrc }}" class="logo">
-            @endif
 
             Datum:
             {{ optional($from)->format('d.m.Y') }}-{{ optional($to)->format('d.m.Y') }}
