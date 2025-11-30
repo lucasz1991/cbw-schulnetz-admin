@@ -577,12 +577,11 @@ protected function sanitizePdfData($value)
         ->exists();
 }
 
-    public function canExportExamResultsPdf(): bool
-    {
-        // Einfach: es gibt Teilnehmer → Examergebnisse sinnvoll
-        // (später ggf. an "es gibt Prüfungsdaten" koppeln)
-        return $this->participants()->exists();
-    }
+public function canExportExamResultsPdf(): bool
+{
+    // Export nur sinnvoll, wenn es überhaupt Ergebnisse gibt
+    return $this->results()->exists();
+}
 
 
 public function generateAttendanceListPdfFile(): ?string
@@ -1082,6 +1081,10 @@ public function exportRedThreadPdf(): ?StreamedResponse
 
 public function generateExamResultsPdfFile(): ?string
 {
+    // Relevante Relationen laden
+    $this->loadMissing(['participants', 'results', 'tutor', 'days']);
+
+    // Teilnehmer sortiert
     $participants = $this->participants
         ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? $p->last_name ?? ''))
         ->values();
@@ -1090,10 +1093,43 @@ public function generateExamResultsPdfFile(): ?string
         return null;
     }
 
+    /** @var \Illuminate\Support\Collection<int,\App\Models\CourseResult> $results */
+    $results = $this->results()
+        ->orderBy('updated_at', 'desc')
+        ->get();
+
+    // Resultate nach person_id mappen (latest per Person)
+    $resultsByPerson = $results
+        ->groupBy('person_id')
+        ->map(fn ($group) => $group->first());
+
+    // Zeitraum / Meta
+    $days = $this->days()
+        ->orderBy('date')
+        ->get();
+
+    $from = $this->planned_start_date
+        ?? ($days->first()?->date ?? null);
+
+    $to = $this->planned_end_date
+        ?? ($days->last()?->date ?? null);
+
+    // Rows für das PDF: pro Teilnehmer + ggf. zugehöriges CourseResult
+    $rows = $participants->map(function ($person) use ($resultsByPerson) {
+        $result = $resultsByPerson->get($person->id); // CourseResult|null
+
+        return [
+            'person' => $person,
+            'result' => $result,
+        ];
+    });
+
     $pdf = Pdf::loadView('pdf.courses.exam-results', [
-        'course'       => $this,
-        'participants' => $participants,
-    ]);
+        'course' => $this,
+        'rows'   => $rows,
+        'from'   => $from,
+        'to'     => $to,
+    ])->setPaper('a4', 'portrait');
 
     $tmpPath = tempnam(sys_get_temp_dir(), 'exam_') . '.pdf';
     $pdf->save($tmpPath);
@@ -1101,12 +1137,13 @@ public function generateExamResultsPdfFile(): ?string
     return $tmpPath;
 }
 
+
 public function exportExamResultsPdf(): ?StreamedResponse
 {
     $path = $this->generateExamResultsPdfFile();
 
     if (! $path || ! file_exists($path)) {
-        abort(404, 'Keine Teilnehmer für diesen Kurs gefunden.');
+        abort(404, 'Keine Prüfungsergebnisse für diesen Kurs gefunden.');
     }
 
     $filename = sprintf(
@@ -1119,6 +1156,7 @@ public function exportExamResultsPdf(): ?StreamedResponse
         @unlink($path);
     }, $filename);
 }
+
 
 
     /**
