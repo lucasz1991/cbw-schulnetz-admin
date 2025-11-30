@@ -12,10 +12,10 @@ class CourseShow extends Component
 {
     public Course $course;
     
-    public string $search = '';
-    public string $sortBy = 'name';
+    public string $search  = '';
+    public string $sortBy  = 'name';
     public string $sortDir = 'asc';
-    public int $perPage = 10;
+    public int $perPage    = 10;
 
     public function mount(Course $course): void
     {
@@ -27,21 +27,30 @@ class CourseShow extends Component
     public function getStatusProperty(): string
     {
         $now = Carbon::now();
-        $s = $this->course->planned_start_date;
-        $e = $this->course->planned_end_date;
+        $s   = $this->course->planned_start_date;
+        $e   = $this->course->planned_end_date;
 
         if ($s && $e) {
-            return $now->lt($s) ? 'planned' : ($now->between($s, $e) ? 'active' : 'finished');
+            return $now->lt($s)
+                ? 'planned'
+                : ($now->between($s, $e) ? 'active' : 'finished');
         }
-        if ($s && !$e) {
+
+        if ($s && ! $e) {
             return $now->lt($s) ? 'planned' : 'active';
         }
+
         return 'unknown';
     }
 
     /**
-     * Export Functions
+     * Export-Feasibility Properties
      */
+
+    public function getCanExportAttendanceProperty(): bool
+    {
+        return $this->course->canExportAttendancePdf();
+    }
 
     public function getCanExportDokuProperty(): bool
     {
@@ -59,20 +68,23 @@ class CourseShow extends Component
     }
 
     public function getCanExportRedThreadProperty(): bool
-{
-    return $this->course->canExportRedThreadPdf();
-}
+    {
+        return $this->course->canExportRedThreadPdf();
+    }
 
     public function getCanExportExamResultsProperty(): bool
     {
         return $this->course->canExportExamResultsPdf();
     }
 
-    // Attendance könntest du auch machen, falls du was anzeigen willst:
-    public function getCanExportAttendanceProperty(): bool
+    public function getCanExportCourseRatingsProperty(): bool
     {
-        return $this->course->canExportAttendancePdf();
+        return $this->course->canExportCourseRatingsPdf();
     }
+
+    /**
+     * Export Actions
+     */
 
     public function exportAttendancePdf(): ?StreamedResponse
     {
@@ -89,7 +101,6 @@ class CourseShow extends Component
         return $this->course->exportMaterialConfirmationsPdf();
     }
 
-
     public function exportInvoicePdf(): ?StreamedResponse
     {
         return $this->course->exportInvoicePdf();
@@ -105,6 +116,11 @@ class CourseShow extends Component
         return $this->course->exportExamResultsPdf();
     }
 
+    public function exportCourseRatingsPdf(): ?StreamedResponse
+    {
+        return $this->course->exportCourseRatingsPdf();
+    }
+
     public function render()
     {
         $this->course
@@ -113,7 +129,7 @@ class CourseShow extends Component
                 'participants as participants_count',
             ]);
 
-        return view('livewire.admin.courses.course-show')->layout('layouts.master');
+        return view('livewire.admin.courses.course-show')
+            ->layout('layouts.master');
     }
-
 }

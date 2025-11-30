@@ -4,80 +4,126 @@ namespace App\Livewire\Admin\Courses;
 
 use Livewire\Component;
 use App\Models\Course;
+use App\Models\CourseResult;
+use App\Models\CourseRating;
 use Illuminate\Support\Collection;
 
 class CourseParticipantsPanel extends Component
 {
     public Course $course;
+
+    /** @var \Illuminate\Support\Collection<int, array> */
     public Collection $rows;
 
     public function mount(Course $course): void
     {
         $this->course = $course;
+        $this->rows   = collect();
+
         $this->buildRows();
     }
 
+    /**
+     * Baut die Datenstruktur für das Teilnehmer-Panel:
+     * - Materialbestätigung
+     * - Prüfungsergebnis
+     * - Kursbewertung (genau 1 Rating pro User & Kurs)
+     */
     protected function buildRows(): void
     {
         $this->course->loadMissing([
             'participants',
             'materialAcknowledgements',
+            'results',
+            'ratings',
         ]);
 
+        // Materialbestätigungen pro Person
         $acks = $this->course->materialAcknowledgements
             ->sortByDesc('acknowledged_at')
             ->groupBy('person_id');
 
+        // Prüfungsresultate pro Person
+        $resultsByPerson = $this->course->results
+            ->sortByDesc('updated_at')
+            ->keyBy('person_id');
+
+        // EIN Rating pro User -> direkt keyBy('user_id')
+        /** @var Collection<int,CourseRating> $ratingsByUser */
+        $ratingsByUser = $this->course->ratings
+            ->sortByDesc('created_at')
+            ->keyBy('user_id');
+
         $this->rows = $this->course->participants
-            ->sortBy(fn($p) => mb_strtoupper($p->nachname ?? $p->last_name ?? ''))
+            ->sortBy(fn ($p) => mb_strtoupper($p->nachname ?? $p->last_name ?? ''))
             ->values()
-            ->map(function ($person) use ($acks) {
+            ->map(function ($person) use ($acks, $resultsByPerson, $ratingsByUser) {
 
                 // Materialbestätigung
-                $ackList = $acks->get($person->id);
-                $latestAck = $ackList?->first();
+                $ackList         = $acks->get($person->id);
+                $latestAck       = $ackList?->first();
                 $hasConfirmation = (bool) $latestAck;
-                $confirmedAt = $latestAck?->acknowledged_at;
+                $confirmedAt     = $latestAck?->acknowledged_at;
 
-                // Prüfungsdaten aus enrollment->results
-                $enrollment = $person->enrollment ?? null;
-                $results = $enrollment?->results ?? null;
+                // Prüfungsresultat (CourseResult)
+                /** @var CourseResult|null $courseResult */
+                $courseResult = $resultsByPerson->get($person->id);
+                [$examLabel, $examState] = $this->examMetaFromCourseResult($courseResult);
 
-                [$examLabel, $examState] = $this->examMeta($results);
+                // Kurs-Rating über user_id
+                $userId = $person->user_id ?? null;
+
+                /** @var CourseRating|null $rating */
+                $rating    = $userId ? $ratingsByUser->get($userId) : null;
+                $ratingAvg = $rating?->average_score;
+                $ratingAt  = $rating?->created_at;
 
                 return [
-                    'person' => $person,
-                    'has_confirmation' => $hasConfirmation,
-                    'confirmation_at'  => $confirmedAt,
-                    'exam_label'       => $examLabel,
-                    'exam_state'       => $examState,
+                    'person'            => $person,
+
+                    'has_confirmation'  => $hasConfirmation,
+                    'confirmation_at'   => $confirmedAt,
+
+                    'exam_label'        => $examLabel,
+                    'exam_state'        => $examState,
+
+                    'rating'            => $rating,
+                    'rating_avg'        => $ratingAvg,
+                    'rating_at'         => $ratingAt,
                 ];
             });
     }
 
-    protected function examMeta($results): array
+    /**
+     * Leitet aus einem CourseResult Label + Status ab.
+     */
+    protected function examMetaFromCourseResult(?CourseResult $result): array
     {
-        if (!is_array($results) && !($results instanceof \ArrayAccess)) {
+        if (!$result) {
             return [null, null];
         }
 
-        $result = data_get($results, 'exam.result')
-            ?? data_get($results, 'result')
-            ?? data_get($results, 'exam_result');
+        $label = $result->result ?? null;
 
-        $grade = data_get($results, 'exam.grade')
-            ?? data_get($results, 'grade');
+        if (!$label) {
+            return [null, null];
+        }
 
-        if (!$result && !$grade) return [null, null];
+        // Status-Text mit in die Heuristik packen
+        $lower = mb_strtolower(trim(
+            ($result->result ?? '') . ' ' . ($result->status ?? '')
+        ));
 
-        $label = trim(($result ?: '') . ($grade ? ' · Note '.$grade : ''));
+        $state = match (true) {
+            str_contains($lower, 'bestanden'),
+            str_contains($lower, 'passed')          => 'passed',
 
-        $lower = mb_strtolower($result ?? '');
+            str_contains($lower, 'nicht bestanden'),
+            str_contains($lower, 'nicht'),
+            str_contains($lower, 'fail'),
+            str_contains($lower, 'failed')          => 'failed',
 
-        $state = match(true) {
-            str_contains($lower, 'bestanden'), str_contains($lower, 'passed') => 'passed',
-            str_contains($lower, 'nicht'), str_contains($lower, 'fail')       => 'failed',
-            default => 'neutral',
+            default                                 => 'neutral',
         };
 
         return [$label, $state];

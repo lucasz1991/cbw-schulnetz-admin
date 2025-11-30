@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Services\ApiUvs\ApiUvsService;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\ApiUpdates\PersonApiUpdate;
-
+use App\Models\CourseResult;
+use App\Models\CourseRating;
 
 class Person extends Model
 {
@@ -101,6 +102,16 @@ class Person extends Model
     public function enrollments()
     {
         return $this->hasMany(CourseParticipantEnrollment::class);
+    }
+
+    public function courseResults()
+    {
+        return $this->hasMany(CourseResult::class, 'person_id');
+    }
+
+    public function courseRatings()
+    {
+        return $this->hasMany(CourseRating::class, 'participant_id');
     }
 
     public function courses()

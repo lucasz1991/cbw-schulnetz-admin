@@ -17,6 +17,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\CourseMaterialAcknowledgement;
 use App\Models\File;
 use App\Models\CourseDay;
+use App\Models\CourseResult;
+use App\Models\CourseRating;
 
 
 class Course extends Model
@@ -90,6 +92,11 @@ class Course extends Model
         return data_get($this->source_snapshot, 'course.kurzbez', '');
     }
 
+    public function getCourseClassNameAttribute(): string
+    {
+        return data_get($this->source_snapshot, 'course.klassen_co_ks', '');
+    }
+
 
     public function getParticipantsCountAttribute(): int
     {
@@ -152,11 +159,16 @@ class Course extends Model
     }
 
 
-    // Falls du Kursbewertungen behalten willst
-    public function ratings()
-    {
-        return $this->hasMany(CourseRating::class);
-    }
+
+        public function results()
+        {
+            return $this->hasMany(CourseResult::class);
+        }
+
+        public function ratings()
+        {
+            return $this->hasMany(CourseRating::class);
+        }
 
     // FilePool (morphable) – lässt du wie gehabt
     public function filePool()
@@ -1107,6 +1119,198 @@ public function exportExamResultsPdf(): ?StreamedResponse
         @unlink($path);
     }, $filename);
 }
+
+
+    /**
+     * Gibt es Bewertungen für diesen Kurs?
+     */
+    public function canExportCourseRatingsPdf(): bool
+    {
+        return $this->ratings()->exists();
+    }
+
+    /**
+     * Erzeugt eine temporäre PDF-Datei mit den Baustein-Bewertungen.
+     * Rückgabewert ist der Pfad zur temporären Datei oder null.
+     */
+    public function generateCourseRatingsPdfFile(): ?string
+    {
+        $this->loadMissing(['ratings', 'tutor', 'days']);
+
+        /** @var \Illuminate\Support\Collection<int, \App\Models\CourseRating> $ratings */
+        $ratings = $this->ratings()
+            ->orderBy('created_at')
+            ->get();
+
+        if ($ratings->isEmpty()) {
+            return null;
+        }
+
+        // Zeitraum / Termin-Label
+        $days = $this->days()
+            ->orderBy('date')
+            ->get();
+
+        $from = $this->planned_start_date
+            ?? ($days->first()?->date ?? null);
+
+        $to = $this->planned_end_date
+            ?? ($days->last()?->date ?? null);
+
+        $fromLabel = $from ? \Carbon\Carbon::parse($from)->format('d.m.Y') : '—';
+        $toLabel   = $to   ? \Carbon\Carbon::parse($to)->format('d.m.Y')   : '—';
+
+        $terminLabel = trim(($this->termin_id ?: '') . ' - ' . $fromLabel . ' bis ' . $toLabel);
+
+        // Kleine Helper für Durchschnittswerte
+        $avgField = function (string $field) use ($ratings): ?float {
+            $values = $ratings
+                ->pluck($field)
+                ->filter(fn ($v) => $v !== null && $v !== '' && is_numeric($v))
+                ->map(fn ($v) => (float) $v);
+
+            if ($values->isEmpty()) {
+                return null;
+            }
+
+            return round($values->avg(), 2);
+        };
+
+        $avgCategory = function (array $fields) use ($avgField): ?float {
+            $vals = collect($fields)
+                ->map(fn ($f) => $avgField($f))
+                ->filter(fn ($v) => $v !== null)
+                ->values();
+
+            if ($vals->isEmpty()) {
+                return null;
+            }
+
+            return round($vals->avg(), 2);
+        };
+
+        // Sektionen im Stil deines PDFs
+        $sections = [
+            'kb' => [
+                'label' => 'Kundenbetreuung',
+                'avg'   => $avgCategory(['kb_1', 'kb_2', 'kb_3']),
+                'questions' => [
+                    [
+                        'label' => 'Wie kompetent sind die Mitarbeiter/-innen der Kundenbetreuung?',
+                        'avg'   => $avgField('kb_1'),
+                    ],
+                    [
+                        'label' => 'Werden Ihre Probleme ernst genommen und zeitnah erledigt?',
+                        'avg'   => $avgField('kb_2'),
+                    ],
+                    [
+                        'label' => 'Sind die Mitarbeiter/-innen freundlich und höflich?',
+                        'avg'   => $avgField('kb_3'),
+                    ],
+                ],
+            ],
+            'sa' => [
+                'label' => 'Systemadministration',
+                'avg'   => $avgCategory(['sa_1', 'sa_2', 'sa_3']),
+                'questions' => [
+                    [
+                        'label' => 'Wie kompetent sind die Mitarbeiter/-innen der Systemadministration?',
+                        'avg'   => $avgField('sa_1'),
+                    ],
+                    [
+                        'label' => 'Werden Ihre Probleme ernst genommen und zeitnah erledigt?',
+                        'avg'   => $avgField('sa_2'),
+                    ],
+                    [
+                        'label' => 'Sind die Mitarbeiter/-innen freundlich und höflich?',
+                        'avg'   => $avgField('sa_3'),
+                    ],
+                ],
+            ],
+            'il' => [
+                'label' => 'Institutsleitung',
+                'avg'   => $avgCategory(['il_1', 'il_2', 'il_3']),
+                'questions' => [
+                    [
+                        'label' => 'Wie beurteilen Sie die Organisation im Institut?',
+                        'avg'   => $avgField('il_1'),
+                    ],
+                    [
+                        'label' => 'Werden Ihre Probleme ernst genommen und zeitnah erledigt?',
+                        'avg'   => $avgField('il_2'),
+                    ],
+                    [
+                        'label' => 'Sind die Mitarbeiter/-innen freundlich und höflich?',
+                        'avg'   => $avgField('il_3'),
+                    ],
+                ],
+            ],
+            'do' => [
+                'label' => 'Dozent/-in',
+                'avg'   => $avgCategory(['do_1', 'do_2', 'do_3']),
+                'questions' => [
+                    [
+                        'label' => 'War der Dozent / die Dozentin Ihnen gegenüber freundlich und höflich?',
+                        'avg'   => $avgField('do_1'),
+                    ],
+                    [
+                        'label' => 'Wie beurteilen Sie die Fachkompetenz der/s Dozenten/-in?',
+                        'avg'   => $avgField('do_2'),
+                    ],
+                    [
+                        'label' => 'Wie beurteilen Sie ihre/seine methodischen und didaktischen Fähigkeiten?',
+                        'avg'   => $avgField('do_3'),
+                    ],
+                ],
+            ],
+        ];
+
+        // Meta-Infos für Kopfbereich
+        $meta = [
+            'class_label'   => $this->courseClassName,
+            'module_label' => $this->courseShortName,
+            'tutor_name'    => optional($this->tutor)->full_name
+                ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
+            'termin_label'  => $terminLabel,
+            'ratings_count' => $ratings->count(),
+        ];
+
+        // View rendern
+        $pdf = Pdf::loadView('pdf.courses.course-ratings', [
+            'course'   => $this,
+            'meta'     => $meta,
+            'sections' => $sections,
+            'ratings'  => $ratings,
+        ])->setPaper('a4', 'portrait');
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'rating_') . '.pdf';
+        $pdf->save($tmpPath);
+
+        return $tmpPath;
+    }
+
+    /**
+     * Stream-Download für die Baustein-Bewertung.
+     */
+    public function exportCourseRatingsPdf(): ?StreamedResponse
+    {
+        $path = $this->generateCourseRatingsPdfFile();
+
+        if (! $path || ! file_exists($path)) {
+            abort(404, 'Für diesen Kurs sind keine Bewertungen vorhanden.');
+        }
+
+        $filename = sprintf(
+            'Baustein-Bewertung_%s.pdf',
+            $this->klassen_id ?: $this->id
+        );
+
+        return response()->streamDownload(function () use ($path) {
+            readfile($path);
+            @unlink($path);
+        }, $filename);
+    }
+
 
     public function getExportBaseName(): string
     {
