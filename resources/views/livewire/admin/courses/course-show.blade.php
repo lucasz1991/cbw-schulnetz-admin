@@ -61,16 +61,7 @@
                             <span>Bildungsmittel-Bestät.</span>
                         </button>
 
-                        <button
-                            type="button"
-                            wire:click="exportInvoicePdf"
-                            @if(! $this->canExportInvoice) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportInvoice ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
-                            <span>Dozenten-Rechnung</span>
-                        </button>
+
                         <button
                             type="button"
                             wire:click="exportRedThreadPdf"
@@ -100,6 +91,16 @@
                         >
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
                             <span>Baustein-Bewertung</span>
+                        </button>
+                                                <button
+                            type="button"
+                            wire:click="exportInvoicePdf"
+                            @if(! $this->canExportInvoice) disabled @endif
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
+                                {{ $this->canExportInvoice ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>Dozenten-Rechnung</span>
                         </button>
                     </div>
                 </x-slot>
