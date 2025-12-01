@@ -153,7 +153,7 @@
     {{-- Kasten 1: Tutor + Teilnehmer + Termine --}}
     <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
         <div class="flex items-center justify-between text-xs text-neutral-500 mb-2">
-            <span class="font-semibold text-neutral-700">Kursüberblick</span>
+            <span class="font-semibold text-neutral-700">Baustein Überblick</span>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200">
                 <i class="fal fa-hashtag text-[11px]"></i>
                 <span class="text-[11px]">ID {{ $course->id }}</span>
