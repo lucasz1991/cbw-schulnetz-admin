@@ -29,10 +29,7 @@ class AdminTasksList extends Component
 
     public function mount(): void
     {
-        // Default: offene Tasks
-        if ($this->filterStatus === null) {
-            $this->filterStatus = AdminTask::STATUS_OPEN; // int ist ok bei ungetypter Property
-        }
+
     }
 
     /*
