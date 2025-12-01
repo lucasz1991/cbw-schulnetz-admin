@@ -34,7 +34,7 @@
 
             {{-- Status-Filter --}}
             <select wire:model.live="filterStatus"
-                    class="border-gray-300 rounded-md text-sm">
+                    class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 <option value="">Status: Alle</option>
                 <option value="{{ \App\Models\AdminTask::STATUS_OPEN }}">Offen</option>
                 <option value="{{ \App\Models\AdminTask::STATUS_IN_PROGRESS }}">In Bearbeitung</option>
@@ -43,7 +43,7 @@
 
             {{-- Priority-Filter --}}
             <select wire:model.live="filterPriority"
-                    class="border-gray-300 rounded-md text-sm">
+                    class="text-base border border-gray-300 rounded-lg px-2 py-1.5 bg-white shadow-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 <option value="">Prio: Alle</option>
                 <option value="{{ \App\Models\AdminTask::PRIORITY_HIGH }}">Hoch</option>
                 <option value="{{ \App\Models\AdminTask::PRIORITY_NORMAL }}">Normal</option>
@@ -52,8 +52,11 @@
 
             {{-- Nur meine Aufgaben --}}
             <label class="inline-flex items-center gap-1">
-                <input type="checkbox" wire:model.live="onlyMine" class="rounded border-gray-300">
-                <span>Nur meine</span>
+
+                <x-ui.forms.toggle-button 
+                    model="onlyMine"
+                    label="Nur meine"
+                />
             </label>
         </div>
     </div>
