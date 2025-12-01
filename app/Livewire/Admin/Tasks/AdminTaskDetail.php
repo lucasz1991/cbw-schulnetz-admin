@@ -132,6 +132,58 @@ class AdminTaskDetail extends Component
         ]);
     }
 
+    /**
+     *  ReportBook-Kontext Funktionen 
+     */
+
+
+    /**
+     * Alle Berichtsheft-Einträge des verknüpften ReportBooks auf Status 2 setzen
+     */
+    public function approveReportBook(): void
+    {
+        if (!$this->taskId || !$this->task) {
+            return;
+        }
+
+        // Nur für ReportBook-Review Aufgaben
+        if ($this->task->task_type !== 'reportbook_review') {
+            return;
+        }
+
+        // Nur der zugewiesene Mitarbeiter darf freigeben
+        if ((int) $this->task->assigned_to !== (int) Auth::id()) {
+            return;
+        }
+
+        $reportBook = $this->task->context;
+
+        if (!$reportBook) {
+            return;
+        }
+
+        // Alle Einträge auf Status 2 setzen (du kannst 2 natürlich an ein CONST hängen)
+        $reportBook->entries()
+            ->where('status', '!=', 2)
+            ->update(['status' => 2]);
+
+        // Optional: Gesamtstatus des Berichtshefts setzen, falls du ein Feld hast
+        if ($reportBook->isFillable('status')) {
+            $reportBook->status = 'approved';
+            $reportBook->save();
+        }
+
+        // Task + Kontext neu laden, damit die Ansicht aktualisiert ist
+        $this->task = $this->task->fresh(['creator', 'assignedAdmin', 'context']);
+
+
+        // direkt im Kontext bleiben
+        $this->viewMode = 'context';
+
+        $this->markAsCompleted();
+
+    }
+
     public function render()
     {
         return view('livewire.admin.tasks.admin-task-detail');

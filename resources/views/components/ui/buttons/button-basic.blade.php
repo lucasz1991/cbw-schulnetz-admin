@@ -8,10 +8,10 @@ $modeClasses = match ($mode) {
     'success' => ' text-white bg-green-600 hover:bg-green-700 focus:ring-green-300 border-green-600',
     'warning' => ' text-white bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-300 border-yellow-600',
     'info' => ' text-white bg-teal-600 hover:bg-teal-700 focus:ring-teal-300 border-teal-600',
-    'light' => ' text-gray-600 bg-gray-100 hover:bg-gray-200 focus:ring-gray-300 border-gray-100',
+    'light' => ' text-gray-900 bg-gray-100 hover:bg-gray-200 focus:ring-gray-300 border-gray-100',
     'dark' => ' text-white bg-gray-800 hover:bg-gray-900 focus:ring-gray-700 border-gray-800',
     'link' => ' text-blue-600 bg-transparent hover:bg-blue-100 focus:ring-blue-200 border-transparent',
-    'basic' => ' text-gray-600 bg-white hover:bg-gray-200 focus:ring-gray-100 border-gray-300',
+    'basic' => ' text-gray-900 bg-white hover:bg-gray-200 focus:ring-gray-100 border-gray-300',
 };
 
 $sizeClasses = match ($size) {

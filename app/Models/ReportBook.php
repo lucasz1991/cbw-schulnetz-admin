@@ -56,7 +56,15 @@ class ReportBook extends Model
     public function participantSignatureFile(): ?File
     {
         return $this->files()
-            ->where('type', 'participant_signature')
+            ->where('type', 'sign_reportbook_participant')
+            ->latest('id')
+            ->first();
+    }
+
+    public function getParticipantSignatureFileAttribute(): ?File
+    {
+        return $this->files()
+            ->where('type', 'sign_reportbook_participant')
             ->latest('id')
             ->first();
     }
