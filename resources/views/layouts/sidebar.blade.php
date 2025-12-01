@@ -75,9 +75,11 @@
                 <li>
                     <a href="{{ route('admin.tasks.index') }}"   class=" block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                         <i data-feather="list" fill="#545a6d33"></i>
-                        <span data-key="t-users" class="inline-flex items-center">
-                            Job's
-                            <x-navigation.open-tasks-counter />
+                        <span data-key="t-users">
+                            <div class="inline-flex items-center">
+                                Job's
+                                <x-navigation.open-tasks-counter />
+                            </div>
                         </span>
                     </a>
                 </li>
