@@ -28,7 +28,7 @@
         <thead class="bg-gray-50 text-gray-600">
             <tr>
                 <th class="px-4 py-2 w-10"></th>
-                <th class="px-4 py-2 text-left font-semibold">Kurs</th>
+                <th class="px-4 py-2 text-left font-semibold">Baustein</th>
                 <th class="px-4 py-2 text-left font-semibold">Status</th>
                 <th class="px-4 py-2 text-left font-semibold">Zeitraum</th>
                 <th class="px-4 py-2 w-12"></th>

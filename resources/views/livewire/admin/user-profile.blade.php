@@ -83,7 +83,7 @@
     <x-ui.accordion.tabs
         :tabs="[
             'userDetails' => ['label' => 'Details',   'icon' => 'fad fa-id-card'],
-            'userCourses'     => ['label' => 'Kurse', 'icon' => 'fad fa-book-open'],
+            'userCourses'     => ['label' => 'Bausteine', 'icon' => 'fad fa-book-open'],
             'userMessages'     => ['label' => 'Nachrichten', 'icon' => 'fad fa-envelope'],
             'userRequests'     => ['label' => 'Anträge', 'icon' => 'fad fa-paper-plane'],
         ]"
