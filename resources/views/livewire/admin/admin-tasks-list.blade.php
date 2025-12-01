@@ -33,7 +33,7 @@
         <div class="flex flex-wrap items-center gap-3 text-sm">
 
             {{-- Status-Filter --}}
-            <select wire:model="filterStatus"
+            <select wire:model.live="filterStatus"
                     class="border-gray-300 rounded-md text-sm">
                 <option value="">Status: Alle</option>
                 <option value="{{ \App\Models\AdminTask::STATUS_OPEN }}">Offen</option>
@@ -42,7 +42,7 @@
             </select>
 
             {{-- Priority-Filter --}}
-            <select wire:model="filterPriority"
+            <select wire:model.live="filterPriority"
                     class="border-gray-300 rounded-md text-sm">
                 <option value="">Prio: Alle</option>
                 <option value="{{ \App\Models\AdminTask::PRIORITY_HIGH }}">Hoch</option>
@@ -52,7 +52,7 @@
 
             {{-- Nur meine Aufgaben --}}
             <label class="inline-flex items-center gap-1">
-                <input type="checkbox" wire:model="onlyMine" class="rounded border-gray-300">
+                <input type="checkbox" wire:model.live="onlyMine" class="rounded border-gray-300">
                 <span>Nur meine</span>
             </label>
         </div>

@@ -11,10 +11,10 @@ class AdminTasksList extends Component
 {
     use WithPagination;
 
-    // Filter
-    public ?int $filterStatus   = null; // null = alle
-    public ?int $filterPriority = null; // null = alle
-    public bool $onlyMine       = false;
+    // Filter OHNE strikte Typen, damit Livewire Strings aus Query/Request setzen darf
+    public $filterStatus   = null; // null = alle, Default setzen wir in mount()
+    public $filterPriority = null; // null = alle
+    public bool $onlyMine  = false;
 
     protected $queryString = [
         'filterStatus'   => ['except' => null],
@@ -23,11 +23,23 @@ class AdminTasksList extends Component
         'page'           => ['except' => 1],
     ];
 
+    protected $listeners = [
+        'taskCompleted' => '$refresh',
+    ];
+
+    public function mount(): void
+    {
+        // Default: offene Tasks
+        if ($this->filterStatus === null) {
+            $this->filterStatus = AdminTask::STATUS_OPEN; // int ist ok bei ungetypter Property
+        }
+    }
+
     /*
-     |--------------------------------------------------------------------------
-     | Actions
-     |--------------------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | Actions
+    |--------------------------------------------------------------------------
+    */
 
     public function updatingFilterStatus(): void
     {
@@ -44,37 +56,23 @@ class AdminTasksList extends Component
         $this->resetPage();
     }
 
-    public function assignToMe(int $taskId): void
-    {
-        $task = AdminTask::findOrFail($taskId);
-        $task->assignTo(Auth::id());
-
-        $this->resetPage();
-        $this->dispatch('showAlert', 'Aufgabe erfolgreich übernommen.', 'success');
-    }
-
-    public function markAsCompleted(int $taskId): void
-    {
-        $task = AdminTask::findOrFail($taskId);
-        $task->complete();
-
-        $this->resetPage();
-        $this->dispatch('showAlert', 'Aufgabe erfolgreich abgeschlossen.', 'success');
-    }
-
     /*
-     |--------------------------------------------------------------------------
-     | Render
-     |--------------------------------------------------------------------------
-     */
+    |--------------------------------------------------------------------------
+    | Render
+    |--------------------------------------------------------------------------
+    */
 
     public function render()
     {
+        // Falls Livewire einen String gesetzt hat, hier „weich“ in int wandeln
+        $status   = is_numeric($this->filterStatus)   ? (int) $this->filterStatus   : null;
+        $priority = is_numeric($this->filterPriority) ? (int) $this->filterPriority : null;
+
         $query = AdminTask::with(['creator', 'assignedAdmin', 'context'])
-            ->withStatus($this->filterStatus)
-            ->withPriority($this->filterPriority)
+            ->withStatus($status)           // Scope nimmt ?int, PHP castet sauber
+            ->withPriority($priority)
             ->orderBy('status')
-            ->orderBy('priority')       // Hoch vor niedrig
+            ->orderBy('priority')           // Hoch vor niedrig
             ->orderByDesc('created_at');
 
         if ($this->onlyMine) {

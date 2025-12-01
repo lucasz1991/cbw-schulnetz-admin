@@ -116,9 +116,7 @@
     wire:click="$dispatch('openAdminTaskDetail',[ { taskId: {{ $task->id }}  }])"
 >
     <div class="flex flex-col gap-0.5">
-        <span class="text-[12px] text-slate-700 truncate">
-            {{ $creatorName }}
-        </span>
+        <x-user.public-info :person="$task->creator->person" />
         @if($createdAtLbl)
             <span class="text-[11px] text-slate-400">
                 {{ $createdAtLbl }}
