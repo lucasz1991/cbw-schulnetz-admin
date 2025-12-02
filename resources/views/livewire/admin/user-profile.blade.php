@@ -35,7 +35,7 @@
                                 wire:click="openMailModal({{ $user->id }})" 
                                 class="block w-full px-4 py-2 text-gray-700 hover:bg-blue-100 text-left"
                             >
-                                Mail senden
+                                Nachricht senden
                             </button>
                         </li>
                     </ul>

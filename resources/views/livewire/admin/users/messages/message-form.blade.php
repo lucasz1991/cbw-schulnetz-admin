@@ -2,7 +2,7 @@
     <!-- Modal für Mail-Verfassen -->
     <x-dialog-modal wire:model="showMailModal" >
         <x-slot name="title">
-            Mail verfassen
+            Nachricht verfassen
             @if ($mailUserId)
                 <!-- Wenn es eine einzelne Mail ist -->
                 <span class="text-sm text-gray-500 block mt-1">
@@ -19,7 +19,7 @@
             <!-- Alert Hinweis -->
             <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
                 <p class="font-bold">Wichtiger Hinweis</p>
-                <p>Bitte stelle sicher, dass die E-Mail sorgfältig und überlegt verfasst ist. Überprüfe insbesondere den Betreff, die Überschrift und die Nachricht auf Rechtschreibung und Relevanz, da sie direkt an die ausgewählten Benutzer gesendet wird.</p>
+                <p>Bitte stelle sicher, dass die Nachricht sorgfältig und überlegt verfasst ist. Überprüfe insbesondere den Betreff, die Überschrift und die Nachricht auf Rechtschreibung und Relevanz, da sie direkt an die ausgewählten Benutzer gesendet wird.</p>
             </div>
             <div class="mt-4">
                 <label class="inline-flex items-center cursor-pointer">

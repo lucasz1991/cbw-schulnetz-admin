@@ -96,7 +96,7 @@
                     </li>
                     <li>
                         <button wire:click="openMailModal" class="text-left w-full h-full block px-4 py-2 text-gray-700 hover:bg-blue-100">
-                            Mail senden
+                            Nachricht senden
                         </button>
                     </li>
                     <li>
