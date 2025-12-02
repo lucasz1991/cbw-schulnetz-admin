@@ -12,6 +12,9 @@ $modeClasses = match ($mode) {
     'dark' => ' text-white bg-gray-800 hover:bg-gray-900 focus:ring-gray-700 border-gray-800',
     'link' => ' text-blue-600 bg-transparent hover:bg-blue-100 focus:ring-blue-200 border-transparent',
     'basic' => ' text-gray-900 bg-white hover:bg-gray-200 focus:ring-gray-100 border-gray-300',
+
+    'blue' => ' text-white bg-blue-600 hover:bg-blue-700  border-blue-700',
+    'white' => ' text-gray-700 bg-white hover:bg-gray-50 focus:ring-gray-400 border-gray-300',
 };
 
 $sizeClasses = match ($size) {
@@ -23,7 +26,7 @@ $sizeClasses = match ($size) {
 };
 
  $classes = $modeClasses . ' ' . $sizeClasses;
- $classes .=  ' transition-all duration-100 inline-flex items-center justify-center text-center border rounded-lg  ';
+ $classes .=  ' transition-all duration-100 inline-flex items-center justify-center text-center border rounded-lg shadow  ';
 
 @endphp
 

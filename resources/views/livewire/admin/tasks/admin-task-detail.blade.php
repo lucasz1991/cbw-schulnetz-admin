@@ -136,7 +136,7 @@
                 {{-- Kontext einsehen / zurück --}}
                 @if($task->context && (int) $task->assigned_to === (int) $currentUserId)
                     <x-ui.buttons.button-basic
-                        :mode="'secondary'"
+                        :mode="'blue'"
                         :size="'sm'"
                         wire:click="switchTo{{ $viewMode === 'task' ? 'Context' : 'Task' }}"
                         class="flex items-center gap-1"
@@ -184,10 +184,12 @@
             {{-- Rechte Button-Gruppe --}}
             <div class="flex gap-2">
                 <x-ui.buttons.button-basic
-                   :mode="'secondary'"
+                   :mode="'white'"
                      :size="'sm'"
                     wire:click="close"
+                    class="flex items-center gap-1"
                 >
+                    <i class="fal fa-xmark-circle text-sm"></i>
                     Schließen
                 </x-ui.buttons.button-basic>
             </div>

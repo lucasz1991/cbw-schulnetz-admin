@@ -11,7 +11,6 @@ class ExamAppointmentsManagement extends Component
 {
     use WithPagination;
 
-    // eigene Page-Namen für zwei Paginatoren
     protected string $paginationTheme = 'tailwind';
 
     public string $search = '';
@@ -21,42 +20,69 @@ class ExamAppointmentsManagement extends Component
     public ?int $editingId = null;
 
     // Form-Felder
-    public string $type = 'intern';            // intern | extern
+    public string $type = 'intern'; // intern | extern
     public ?string $name = null;
     public ?string $preis = null;
-    public ?string $date = null;               // YYYY-MM-DD
-    public ?string $time = null;               // HH:MM
     public ?string $room = null;
-    public ?int $course_id = null;             // optional, aktuell ohne FK
     public bool $pflicht_6w_anmeldung = false;
 
+    // Mehrere Termine
+    public array $dates = [
+        ['date' => null, 'time' => null],
+    ];
+
+    // ------------------------------
+    // Regeln
+    // ------------------------------
     protected function rules(): array
     {
         return [
-            'type'                  => 'required|in:intern,extern',
-            'name'                  => 'required|string|max:255',
-            'preis'                 => 'nullable|numeric|min:0',
-            'date'                  => 'required|date',
-            'time'                  => 'required|date_format:H:i',
-            'room'                  => 'nullable|string|max:100',
-            'course_id'             => 'nullable|integer',
-            'pflicht_6w_anmeldung'  => 'boolean',
+            'type'  => 'required|in:intern,extern',
+
+            // Name nur bei extern required
+            'name'  => 'required_if:type,extern|nullable|string|max:255',
+
+            'preis' => 'nullable|numeric|min:0',
+
+            'dates'            => 'required|array|min:1',
+            'dates.*.date'     => 'required|date',
+            'dates.*.time'     => 'required|date_format:H:i',
+
+            'room'             => 'nullable|string|max:100',
+
+            'pflicht_6w_anmeldung' => 'boolean',
         ];
     }
 
+    // ------------------------------
+    // Livewire Hooks
+    // ------------------------------
     public function updatingSearch(): void
     {
-        // bei Suche beide Paginatoren zurücksetzen
         $this->resetPage('internPage');
         $this->resetPage('externPage');
     }
 
+    // ------------------------------
+    // UI-Methoden
+    // ------------------------------
     public function create(): void
     {
         $this->reset([
-            'editingId','type','name','preis','date','time','room','course_id','pflicht_6w_anmeldung'
+            'editingId',
+            'type',
+            'name',
+            'preis',
+            'room',
+            'pflicht_6w_anmeldung',
+            'dates',
         ]);
+
         $this->type = 'intern';
+        $this->dates = [
+            ['date' => null, 'time' => null],
+        ];
+
         $this->showModal = true;
     }
 
@@ -64,35 +90,77 @@ class ExamAppointmentsManagement extends Component
     {
         $ap = ExamAppointment::findOrFail($id);
 
-        $this->editingId = $ap->id;
-        $this->type = $ap->type;
-        $this->name = $ap->name;
-        $this->preis = $ap->preis !== null ? (string)$ap->preis : null;
-        $this->room = $ap->room ?? null; // falls du das Feld später ergänzt
-        $this->course_id = $ap->course_id ?? null; // falls du das Feld später ergänzt
-        $this->pflicht_6w_anmeldung = (bool)$ap->pflicht_6w_anmeldung;
+        $this->editingId            = $ap->id;
+        $this->type                 = $ap->type;
+        $this->name                 = $ap->name;
+        $this->preis                = $ap->preis !== null ? (string) $ap->preis : null;
+        $this->room                 = $ap->room ?? null;
+        $this->pflicht_6w_anmeldung = (bool) $ap->pflicht_6w_anmeldung;
 
-        $termin = Carbon::parse($ap->termin);
-        $this->date = $termin->toDateString();     // YYYY-MM-DD
-        $this->time = $termin->format('H:i');      // HH:MM
+        // JSON -> Form-Array
+        $this->dates = [];
+
+        if (is_array($ap->dates) && count($ap->dates)) {
+            foreach ($ap->dates as $entry) {
+                $dt = $entry['datetime'] ?? $entry['from'] ?? null;
+                if (! $dt) {
+                    continue;
+                }
+
+                $c = Carbon::parse($dt);
+                $this->dates[] = [
+                    'date' => $c->toDateString(), // YYYY-MM-DD
+                    'time' => $c->format('H:i'),   // HH:MM
+                ];
+            }
+        }
+
+        if (empty($this->dates)) {
+            $this->dates = [
+                ['date' => null, 'time' => null],
+            ];
+        }
 
         $this->showModal = true;
+    }
+
+    public function addDate(): void
+    {
+        $this->dates[] = ['date' => null, 'time' => null];
+    }
+
+    public function removeDate(int $index): void
+    {
+        unset($this->dates[$index]);
+        $this->dates = array_values($this->dates);
     }
 
     public function save(): void
     {
         $data = $this->validate();
 
-        // Termin zusammensetzen
-        $termin = Carbon::parse("{$data['date']} {$data['time']}:00");
+        // Name für interne Prüfungen setzen
+        if ($data['type'] === 'intern') {
+            $data['name'] = 'Nachklausur';
+        }
+
+        // dates[] -> JSON-Array
+        $datesPayload = collect($data['dates'])
+            ->map(function ($row) {
+                $dt = Carbon::parse($row['date'].' '.$row['time'].':00');
+                return [
+                    'datetime' => $dt->toDateTimeString(),
+                ];
+            })
+            ->values()
+            ->all();
 
         $payload = [
             'type'                 => $data['type'],
             'name'                 => $data['name'],
             'preis'                => $data['preis'],
-            'termin'               => $termin,
-            'room'                 => $this->room,        // falls du Spalte ergänzt
-            'course_id'            => $this->course_id,   // falls du Spalte ergänzt
+            'dates'                => $datesPayload,
+            'room'                 => $this->room,
             'pflicht_6w_anmeldung' => $this->pflicht_6w_anmeldung,
         ];
 
@@ -105,7 +173,6 @@ class ExamAppointmentsManagement extends Component
         $this->showModal = false;
         $this->dispatch('toast', 'Prüfung gespeichert', 'success');
 
-        // nach Speichern auf Seite 1 zurück, damit man den neuen Eintrag sicher sieht
         $this->resetPage('internPage');
         $this->resetPage('externPage');
     }
@@ -114,10 +181,14 @@ class ExamAppointmentsManagement extends Component
     {
         ExamAppointment::findOrFail($id)->delete();
         $this->dispatch('toast', 'Prüfung gelöscht', 'success');
+
         $this->resetPage('internPage');
         $this->resetPage('externPage');
     }
 
+    // ------------------------------
+    // Render
+    // ------------------------------
     public function render()
     {
         $base = ExamAppointment::query()
@@ -129,7 +200,8 @@ class ExamAppointmentsManagement extends Component
                        ->orWhere('room', 'like', "%{$s}%");
                 });
             })
-            ->orderByDesc('termin');
+            // nach erstem Termin sortieren (JSON -> dates[0].datetime)
+            ->orderBy('dates->0->datetime', 'desc');
 
         $internAppointments = (clone $base)
             ->where('type', 'intern')
@@ -142,6 +214,8 @@ class ExamAppointmentsManagement extends Component
         return view('livewire.admin.assets.exam-appointments-management', [
             'internAppointments' => $internAppointments,
             'externAppointments' => $externAppointments,
-        ])->title('Prüfungsverwaltung')->layout('layouts.master');
+        ])
+            ->title('Prüfungsverwaltung')
+            ->layout('layouts.master');
     }
 }

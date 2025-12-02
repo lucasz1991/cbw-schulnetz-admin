@@ -38,7 +38,9 @@
     </p>
     <p>
         <strong>Teilnehmer:</strong>
-        {{ $fullName }}
+        <div>
+            <x-user.public-info :person="$person" />
+        </div>
     </p>
     <p>
         <strong>Klasse:</strong>
