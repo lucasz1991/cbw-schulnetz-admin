@@ -24,8 +24,13 @@ class AdminConfig extends Component
             'default' => true,
         ],
         'new_user_request' => [
-            'label' => 'Neuer Antrag eines Teilnehmers angelegt',
-            'description' => 'Benachrichtigt Sie, sobald ein Teilnehmer einen neuen Antrag eingereicht hat – z. B. Fehlzeitmeldung, Nachklausur-Anmeldung oder Anmeldung zur externen Prüfung.',
+            'label' => 'Neuer Antrag eines Teilnehmers angelegt ( Admin Mail Adresse )',
+            'description' => 'Benachrichtigt Sie, sobald ein Teilnehmer einen neuen Antrag eingereicht hat – z. B. Fehlzeitmeldung, Nachklausur-Anmeldung oder Anmeldung zur externen Prüfung. Mails an Admin Mail Adresse.',
+            'default' => false,
+        ],
+        'new_user_request_to_inst' => [
+            'label' => 'Neuer Antrag eines Teilnehmers angelegt ( Institut Adressen )',
+            'description' => 'Benachrichtigt Sie, sobald ein Teilnehmer einen neuen Antrag eingereicht hat – z. B. Fehlzeitmeldung, Nachklausur-Anmeldung oder Anmeldung zur externen Prüfung. Diese Mails werden an das Jeweilige Institut gesendet. Mail Adressen werden aus Uvs geladen.',
             'default' => false,
         ],
         'daily_error_report' => [
@@ -49,6 +54,7 @@ class AdminConfig extends Component
     public $adminEmailNotifications = [
         'new_user' => true,
         'new_user_request' => false,
+        'new_user_request_to_inst' => false,
         'daily_error_report' => false,
         'pending_approval' => true,
         'user_feedback_received' => false,
