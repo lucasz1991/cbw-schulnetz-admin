@@ -17,7 +17,7 @@
 
   {{-- Interne Termine --}}
   <section class="space-y-3">
-    <h2 class="font-semibold">Interne Termine</h2>
+    <h2 class="font-semibold">Interne Nachprüfungen</h2>
     <div class="overflow-x-auto border rounded">
       <table class="min-w-full text-sm">
         <thead class="bg-gray-50">
@@ -75,7 +75,7 @@
 
   {{-- Externe Termine --}}
   <section class="space-y-3">
-    <h2 class="font-semibold">Externe Termine</h2>
+    <h2 class="font-semibold">Externe Zertifizierungen</h2>
     <div class="overflow-x-auto border rounded">
       <table class="min-w-full text-sm">
         <thead class="bg-gray-50">
