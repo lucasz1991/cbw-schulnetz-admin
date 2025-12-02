@@ -150,15 +150,25 @@
       <div x-data="{ type: @entangle('type') }" class="space-y-4">
         <form wire:submit.prevent="save" class="space-y-4">
           <div class="grid md:grid-cols-2 gap-4">
-            {{-- Typ --}}
-            <div>
-              <label class="block text-sm mb-1">Typ</label>
-              <select class="w-full border rounded px-3 py-2" wire:model="type">
-                <option value="intern">intern</option>
-                <option value="extern">extern</option>
-              </select>
-              @error('type') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-            </div>
+{{-- Typ --}}
+<div>
+  <label class="block text-sm mb-1">Typ</label>
+
+  @if($editingId)
+    <div class="w-full border rounded px-3 py-2 bg-gray-100 text-gray-700">
+      {{ $type === 'extern' ? 'extern' : 'intern' }}
+    </div>
+    <input type="hidden" wire:model="type">
+  @else
+    <select class="w-full border rounded px-3 py-2" wire:model="type">
+      <option value="intern">intern</option>
+      <option value="extern">extern</option>
+    </select>
+  @endif
+
+  @error('type') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+</div>
+
 
             {{-- Raum --}}
             <div>
