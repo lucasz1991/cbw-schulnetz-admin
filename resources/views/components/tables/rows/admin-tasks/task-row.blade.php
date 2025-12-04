@@ -50,65 +50,18 @@
     <div class="flex flex-col min-w-0 space-y-1" title="{{ $typeText }}">
         <div class="flex items-center gap-2 min-w-0">
             <div class="flex-1 min-w-0">
-                <div class="font-semibold text-[13px] text-slate-800 truncate">
+                <div class="font-semibold text-[12px] text-gray-500 truncate">
                     {{ $typeText }}
                 </div>
+                  <div class="font-semibold text-[13px] text-slate-800 truncate">
+                    {{ $contextText }}
+                </div>
             </div>
-
-            @if($task->priority_text === 'Hoch')
-                <span class="inline-flex items-center rounded-full bg-red-50 text-red-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                    <i class="fas fa-bolt mr-1 text-[9px]"></i> Prio hoch
-                </span>
-            @elseif($task->priority_text === 'Niedrig')
-                <span class="inline-flex items-center rounded-full bg-slate-50 text-slate-500 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-                    <i class="fal fa-feather mr-1 text-[9px]"></i> Niedrig
-                </span>
-            @endif
-        </div>
-
-        <p class="text-[11px] text-slate-500 truncate">
-            {{ \Illuminate\Support\Str::limit($description, 110) }}
-        </p>
-
-        <div class="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-400 md:hidden">
-            <span class="inline-flex items-center gap-1">
-                <i class="fal fa-user text-[10px]"></i>
-                {{ $creatorName }}
-            </span>
-            <span class="inline-flex items-center gap-1">
-                <i class="fal fa-user-cog text-[10px]"></i>
-                {{ $assignedName }}
-            </span>
-            @if($task->due_at)
-                <span class="inline-flex items-center gap-1">
-                    <i class="fal fa-clock text-[10px]"></i>
-                    {{ $task->due_at->format('d.m. H:i') }}
-                </span>
-            @endif
         </div>
     </div>
 </div>
 
-{{-- 2: Kontext --}}
-<div
-    class="px-2 py-2 {{ $hc(2) }} cursor-pointer"
-    wire:click="$dispatch('openAdminTaskDetail',[ { taskId: {{ $task->id }}  }])"
->
-    @if($task->context)
-        <div class="flex flex-col gap-0.5 min-w-0">
-            <span class="text-[12px] font-medium text-slate-700 truncate">
-                {{ $contextText }}
-            </span>
-            @if($contextDesc)
-                <span class="text-[11px] text-slate-400 truncate">
-                    {{ $contextDesc }}
-                </span>
-            @endif
-        </div>
-    @else
-        <span class="text-[11px] text-slate-400 italic">Kein Kontext</span>
-    @endif
-</div>
+
 
 {{-- 3: Ersteller --}}
 <div
@@ -125,49 +78,9 @@
     </div>
 </div>
 
-{{-- 4: Zugewiesen --}}
-<div
-    class="px-2 py-2 {{ $hc(4) }} cursor-pointer"
-    wire:click="$dispatch('openAdminTaskDetail',[ { taskId: {{ $task->id }}  }])"
->
-    <div class="flex flex-col gap-1">
-        <span class="text-[12px] text-slate-700 truncate">
-            {{ $assignedName }}
-        </span>
 
-        @if(!$task->assigned_to)
-            <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-[10px] text-slate-500">
-                <i class="fal fa-user-plus mr-1 text-[9px]"></i> Frei verfügbar
-            </span>
-        @elseif($task->assigned_to === auth()->id())
-            <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-600">
-                <i class="fal fa-user-check mr-1 text-[9px]"></i> Dir zugewiesen
-            </span>
-        @endif
-    </div>
-</div>
 
-{{-- 5: Fällig bis --}}
-<div
-    class="px-2 py-2 {{ $hc(5) }} cursor-pointer"
-    wire:click="$dispatch('openAdminTaskDetail',[ { taskId: {{ $task->id }}  }])"
->
-    <div class="flex flex-col items-start gap-0.5">
-        @if($task->due_at)
-            <span class="text-[12px] text-slate-700">
-                {{ $dueAtLbl }}
-            </span>
-            @if($task->is_overdue)
-                <span class="inline-flex items-center rounded-full bg-red-50 text-red-700 px-2 py-0.5 text-[10px] font-semibold">
-                    <i class="fal fa-exclamation-circle mr-1 text-[10px]"></i>
-                    Überfällig
-                </span>
-            @endif
-        @else
-            <span class="text-[11px] text-slate-400">Kein Fälligkeitsdatum</span>
-        @endif
-    </div>
-</div>
+
 
 {{-- 6: Status --}}
 <div

@@ -76,13 +76,10 @@
     {{-- Aufgaben-Tabelle --}}
     <x-tables.table
         :columns="[
-            ['label' => 'ID',          'key' => 'id',               'width' => '6%',  'sortable' => false,  'hideOn' => 'md'],
-            ['label' => 'Typ',         'key' => 'task_type_text',   'width' => '16%', 'sortable' => false,  'hideOn' => 'none'],
-            ['label' => 'Kontext',     'key' => 'context_text',     'width' => '20%', 'sortable' => false, 'hideOn' => 'sm'],
-            ['label' => 'Ersteller',   'key' => 'creator_name',     'width' => '14%', 'sortable' => false,  'hideOn' => 'lg'],
-            ['label' => 'Zugewiesen',  'key' => 'assigned_name',    'width' => '14%', 'sortable' => false,  'hideOn' => 'md'],
-            ['label' => 'Fällig bis',  'key' => 'due_at',           'width' => '12%', 'sortable' => false,  'hideOn' => 'sm'],
-            ['label' => 'Status',      'key' => 'status',           'width' => '18%', 'sortable' => false,  'hideOn' => 'none'],
+            ['label' => 'ID',          'key' => 'id',               'width' => '5%',  'sortable' => false,  'hideOn' => 'md'],
+            ['label' => 'Art',         'key' => 'task_type_text',   'width' => '40%', 'sortable' => false,  'hideOn' => 'none'],
+            ['label' => 'Ersteller',   'key' => 'creator_name',     'width' => '40%', 'sortable' => false,  'hideOn' => 'lg'],
+            ['label' => 'Status',      'key' => 'status',           'width' => '15%', 'sortable' => false,  'hideOn' => 'none'],
         ]"
         :items="$tasks"
         :sort-by="$sortBy ?? null"
