@@ -13,16 +13,13 @@ class UserAuthProvider extends EloquentUserProvider
     {
         // Standardverhalten: User anhand der Credentials laden
         $user = parent::retrieveByCredentials($credentials);
-
         if (!$user) {
             return null;
         }
-
         // Admin/Staff komplett aus der Auth ausschließen
         if (!in_array($user->role, ['admin', 'staff'])) {
             return null;
         }
-
         return $user;
     }
 }
