@@ -1,5 +1,5 @@
 @php
-    $count = \App\Models\AdminTask::open()->count();
+    $count = \App\Models\AdminTask::open()->where('task_type', 'reportbook_review')->count();
 @endphp
 
 @if($count > 0)

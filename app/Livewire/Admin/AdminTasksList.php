@@ -66,6 +66,7 @@ class AdminTasksList extends Component
         $priority = is_numeric($this->filterPriority) ? (int) $this->filterPriority : null;
 
         $query = AdminTask::with(['creator', 'assignedAdmin', 'context'])
+            ->where('task_type', 'reportbook_review')
             ->withStatus($status)           // Scope nimmt ?int, PHP castet sauber
             ->withPriority($priority)
             ->orderBy('status')
