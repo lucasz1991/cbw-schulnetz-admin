@@ -5,6 +5,8 @@
     $course      = $reportBook->course ?? null;
     $user        = $reportBook->user ?? null;
     $signature   = $reportBook->participant_signature_file ?? null;
+    $trainerSignature = $reportBook->trainer_signature_file ?? null;
+
 
     $entries = $reportBook->entries()->get();
 @endphp
@@ -53,7 +55,7 @@
             @endif
         </div>
     </div>
-
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-max">
     {{-- Signatur des Teilnehmers --}}
     @if($signature)
         @php
@@ -83,7 +85,36 @@
             </div>
         @endif
     @endif
+    {{-- Signatur des Ausbilders --}}
+    @if($trainerSignature)
+        @php
+            $trainerSigUrl = $trainerSignature->getEphemeralPublicUrl(60) ?? null;
+        @endphp
 
+        @if($trainerSigUrl)
+            <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm w-max">
+                <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                    Unterschrift Ausbilder/in
+                </h4>
+
+                <img
+                    src="{{ $trainerSigUrl }}"
+                    alt="Unterschrift"
+                    class="h-24 object-contain"
+                >
+
+                <a
+                    href="{{ $trainerSigUrl }}"
+                    target="_blank"
+                    class="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                >
+                    <i class="fal fa-download text-xs"></i>
+                    herunterladen
+                </a>
+            </div>
+        @endif
+    @endif
+</div>
     {{-- Einträge aus dem Berichtsheft --}}
     <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div class="flex items-center justify-between mb-2">
@@ -157,4 +188,6 @@
                 Berichtsheft freigeben
             </x-secondary-button>
         </div>
+
+        <livewire:tools.signatures.signature-form lazy />
 </div>

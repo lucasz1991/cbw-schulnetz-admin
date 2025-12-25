@@ -21,6 +21,7 @@ class File extends Model
         'name',
         'path',
         'mime_type',
+        'type',
         'size',
         'expires_at',
         'created_at',

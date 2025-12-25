@@ -69,6 +69,15 @@ class ReportBook extends Model
             ->first();
     }
 
+
+    public function getTrainerSignatureFileAttribute(): ?File
+    {
+        return $this->files()
+            ->where('type', 'sign_reportbook_trainer')
+            ->latest('id')
+            ->first();
+    }
+
         /* ---------- Nützliche Helper/Scopes ---------- */
 
     public function scopeForCourse($q, int $courseId)
