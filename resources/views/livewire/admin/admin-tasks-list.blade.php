@@ -10,27 +10,38 @@
         </div>
 
         <div class="ml-3 text-sm">
-            <h2 class="text-lg font-semibold mb-1">Hinweis zur Aufgabenverwaltung</h2>
+            <h2 class="text-lg font-semibold mb-1">
+                Hinweis zur Berichtsheft-Prüfung
+            </h2>
 
             <p>
-                In dieser Übersicht siehst du alle offenen, in Bearbeitung befindlichen und abgeschlossenen Aufgaben.
-                Damit nicht mehrere Mitarbeitende gleichzeitig an derselben Aufgabe arbeiten, musst du eine Aufgabe
-                zuerst <strong>übernehmen</strong>. Erst danach gilt sie als „deine“ Aufgabe.
+                In dieser Übersicht siehst du alle
+                <strong>Berichtshefte</strong>, die geprüft werden müssen –
+                aufgeteilt in offen, in Bearbeitung und abgeschlossen.
             </p>
 
             <p class="mt-2">
-                Nach dem Übernehmen kannst du im Detail-Dialog den zugehörigen
-                <strong>Kontext einsehen</strong> (z.&nbsp;B. Antrag oder Berichtsheft), die Inhalte prüfen und
-                die notwendigen Schritte durchführen. Sobald alles erledigt ist, markiere die Aufgabe als
+                Um Doppelprüfungen zu vermeiden, musst du ein Berichtsheft
+                zunächst <strong>übernehmen</strong>. Erst danach ist es dir
+                exklusiv zugeordnet.
+            </p>
+
+            <p class="mt-2">
+                Im Detail-Dialog kannst du das
+                <strong>Berichtsheft vollständig einsehen</strong>,
+                die Einträge prüfen und die Kontrolle abschließen.
+                Nach erfolgreicher Prüfung markierst du das Berichtsheft als
                 <strong>abgeschlossen</strong>.
             </p>
 
             <p class="mt-2 text-sm">
-                Aktuell offene Aufgaben: <strong>{{ $openCount }}</strong>
+                Aktuell offene Berichtshefte:
+                <strong>{{ $openCount }}</strong>
             </p>
         </div>
     </div>
 </div>
+
 
 
     {{-- Kopfzeile + Filter --}}

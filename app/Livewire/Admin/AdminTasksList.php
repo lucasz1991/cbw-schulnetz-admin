@@ -78,7 +78,7 @@ class AdminTasksList extends Component
         }
 
         $tasks     = $query->paginate(20);
-        $openCount = AdminTask::open()->count();
+        $openCount = AdminTask::open()->where('task_type', 'reportbook_review')->count();
 
         return view('livewire.admin.admin-tasks-list', [
             'tasks'     => $tasks,
