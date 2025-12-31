@@ -83,6 +83,8 @@ class AdminTaskDetail extends Component
 
         $this->task = $task->fresh(['creator', 'assignedAdmin', 'context']);
 
+        $this->dispatch('taskAssigned');
+
         $this->dispatch('showAlert', [
             'type'  => 'success',
             'title' => 'Übernommen',

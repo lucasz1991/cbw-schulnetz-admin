@@ -25,6 +25,7 @@ class AdminTasksList extends Component
 
     protected $listeners = [
         'taskCompleted' => '$refresh',
+        'taskAssigned'  => '$refresh',
     ];
 
     public function mount(): void
