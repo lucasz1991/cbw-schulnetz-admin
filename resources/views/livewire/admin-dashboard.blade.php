@@ -1,151 +1,209 @@
-<div class="" wire:loading.class="cursor-wait"
-     @if($autoRefresh) wire:poll.60s="refreshAll" @endif>
-    <div class="">
-        <div class="mt-2">
-            {{-- State Cards --}}
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4 mb-4">
-                {{-- Gesamte Benutzer --}}
-                <div class="flex items-center justify-between p-4 bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div>
-                        <h6 class="text-xs font-medium leading-none tracking-wider text-gray-500 uppercase mb-2">
-                            Gesamte Benutzer
-                        </h6>
-                        <span class="text-2xl font-semibold">{{ number_format($totalUsers) }}</span>
+<div class="space-y-5" wire:loading.class="cursor-wait"
+     @if($autoRefresh) wire:poll.60s="$refresh" @endif>
+
+    {{-- Header (funktional, ohne Titel/Text) --}}
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        {{-- Soft background --}}
+        <div class="absolute inset-0 bg-gradient-to-r from-slate-50 via-white to-indigo-50"></div>
+        <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-indigo-100/60 blur-2xl"></div>
+        <div class="absolute -bottom-20 -left-16 w-64 h-64 rounded-full bg-sky-100/70 blur-2xl"></div>
+
+        <div class="relative p-3 md:p-4">
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+
+                {{-- LEFT: KPI-Chips (Platzhalter bis Widget fertig) --}}
+                <div class="min-w-0">
+                    {{-- <livewire:admin.dashboard.header-kpis :autoRefresh="$autoRefresh" /> --}}
+                    <div class="flex flex-wrap items-center gap-2">
+
+                        {{-- Chip --}}
+                        <div class="group inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-gray-200 bg-white/80 shadow-sm hover:bg-white transition">
+                            <span class="w-9 h-9 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center">
+                                <i class="fal fa-user-plus text-teal-600"></i>
+                            </span>
+                            <div class="leading-tight">
+                                <div class="text-[10px] uppercase tracking-wide text-gray-500">Neue (Monat)</div>
+                                <div class="text-sm font-semibold text-gray-900">—</div>
+                            </div>
+                        </div>
+
+                        {{-- Chip --}}
+                        <div class="group inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-gray-200 bg-white/80 shadow-sm hover:bg-white transition">
+                            <span class="w-9 h-9 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center">
+                                <i class="fal fa-user-clock text-rose-600"></i>
+                            </span>
+                            <div class="leading-tight">
+                                <div class="text-[10px] uppercase tracking-wide text-gray-500">Fehlzeiten heute</div>
+                                <div class="text-sm font-semibold text-gray-900">—</div>
+                            </div>
+                        </div>
+
+                        {{-- (wenn du später 2 weitere brauchst: Offene Anfragen / Kurse heute) --}}
                     </div>
-                    <svg class="w-10 h-10 text-indigo-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m8-4a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
                 </div>
 
-                {{-- Neue Benutzer (Monat) --}}
-                <div class="flex items-center justify-between p-4 bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div>
-                        <h6 class="text-xs font-medium leading-none tracking-wider text-gray-500 uppercase mb-2">
-                            Neue Benutzer (Monat)
-                        </h6>
-                        <span class="text-2xl font-semibold">{{ number_format($newUsersMonth) }}</span>
-                    </div>
-                    <svg class="w-10 h-10 text-teal-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 4v16m8-8H4"/>
-                    </svg>
+                {{-- RIGHT: Actions --}}
+                <div class="flex flex-wrap items-center gap-2 md:justify-end">
+
+                    <a href="{{ route('courses.index') ?? '#' }}"
+                       class="group inline-flex items-center gap-2.5 px-3 py-2 text-sm rounded-full border border-gray-200 bg-white/80 hover:bg-white shadow-sm transition">
+                        <span class="w-9 h-9 rounded-full bg-sky-50 border border-sky-100 flex items-center justify-center">
+                            <i class="fal fa-chalkboard-teacher text-sky-600"></i>
+                        </span>
+                        <span class="font-medium text-gray-800">Bausteine</span>
+                    </a>
+
+                    {{-- Auto refresh toggle --}}
+                    <button wire:click="toggleAutoRefresh"
+                            class="group inline-flex items-center gap-2.5 px-3 py-2 text-sm rounded-full border border-gray-200 bg-white/80 hover:bg-white shadow-sm transition">
+                        <span class="w-9 h-9 rounded-full {{ $autoRefresh ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100' }} border flex items-center justify-center">
+                            <i class="fal {{ $autoRefresh ? 'fa-sync fa-spin text-emerald-600' : 'fa-sync text-gray-500' }}"></i>
+                        </span>
+                        <span class="font-medium text-gray-800">Refresh</span>
+                        <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border
+                            {{ $autoRefresh ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-600 border-gray-200' }}">
+                            {{ $autoRefresh ? 'an' : 'aus' }}
+                        </span>
+                    </button>
+
+                    {{-- Settings (/config) --}}
+                    <a href="{{ url('/config') }}"
+                       class="group inline-flex items-center gap-2.5 px-3 py-2 text-sm rounded-full border border-gray-200 bg-white/80 hover:bg-white shadow-sm transition">
+                        <span class="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                            <i class="fal fa-cog text-gray-600"></i>
+                        </span>
+                        <span class="font-medium text-gray-800">Einstellungen</span>
+                    </a>
                 </div>
 
-                {{-- Kurse heute --}}
-                <div class="flex items-center justify-between p-4 bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div>
-                        <h6 class="text-xs font-medium leading-none tracking-wider text-gray-500 uppercase mb-2">
-                            Kurse heute
-                        </h6>
-                        <span class="text-2xl font-semibold">{{ number_format($coursesToday) }}</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Main Grid --}}
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+        {{-- LEFT: Hauptarbeit (2 Spalten) --}}
+        <div class="xl:col-span-2 space-y-4">
+
+            {{-- Kurse-Fokus --}}
+            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="p-4 md:p-5 flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center">
+                                <i class="fal fa-calendar-alt text-sky-700"></i>
+                            </span>
+                            <p class="font-semibold text-gray-900">Kurse</p>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-sky-50 text-sky-700 border border-sky-100">
+                                laufend & kommende
+                            </span>
+                        </div>
                     </div>
-                    <svg class="w-10 h-10 text-blue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 7h18M3 12h18M3 17h18"/>
-                    </svg>
                 </div>
 
-                {{-- Offene Anfragen --}}
-                <div class="flex items-center justify-between p-4 bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div>
-                        <h6 class="text-xs font-medium leading-none tracking-wider text-gray-500 uppercase mb-2">
-                            Offene Anfragen
-                        </h6>
-                        <span class="text-2xl font-semibold">{{ number_format($openUserRequests) }}</span>
+                <div class="px-4 md:px-5 pb-4 md:pb-5">
+                    {{-- <livewire:admin.dashboard.courses-focus :autoRefresh="$autoRefresh" /> --}}
+                    <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <i class="fal fa-layer-group text-gray-400"></i>
+                                <span>Modul folgt: <span class="font-semibold">admin.dashboard.courses-focus</span></span>
+                            </div>
+                            <span class="text-xs text-gray-500">Platzhalter</span>
+                        </div>
                     </div>
-                    <svg class="w-10 h-10 text-orange-300" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
                 </div>
             </div>
 
-            {{-- Sektionen --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {{-- Aktive Nutzer (bestehend) --}}
-                <div class="bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div class="p-4">
+            {{-- Offene Jobs --}}
+            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="p-4 md:p-5 flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                                <i class="fal fa-list-check text-emerald-700"></i>
+                            </span>
+                            <p class="font-semibold text-gray-900">Offene Jobs</p>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                Arbeits-Inbox
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-4 md:px-5 pb-4 md:pb-5">
+                    {{-- <livewire:admin.dashboard.open-jobs :autoRefresh="$autoRefresh" /> --}}
+                    <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <i class="fal fa-layer-group text-gray-400"></i>
+                                <span>Modul folgt: <span class="font-semibold">admin.dashboard.open-jobs</span></span>
+                            </div>
+                            <span class="text-xs text-gray-500">Platzhalter</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- RIGHT: Nebeninfos / Analytics --}}
+        <div class="space-y-4">
+
+            {{-- Warnungen / Hinweise --}}
+            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="p-4 md:p-5 flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
+                                <i class="fal fa-exclamation-triangle text-orange-700"></i>
+                            </span>
+                            <p class="font-semibold text-gray-900">Hinweise & Warnungen</p>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-orange-50 text-orange-700 border border-orange-100">
+                                handlungsrelevant
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-4 md:px-5 pb-4 md:pb-5">
+                    {{-- <livewire:admin.dashboard.alerts :autoRefresh="$autoRefresh" /> --}}
+                    <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <i class="fal fa-layer-group text-gray-400"></i>
+                                <span>Modul folgt: <span class="font-semibold">admin.dashboard.alerts</span></span>
+                            </div>
+                            <span class="text-xs text-gray-500">Platzhalter</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Aktive Nutzer --}}
+            @if($canSeeAnalytics)
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="p-4 md:p-5">
                         <div class="flex items-center justify-between">
-                            <p class="font-semibold text-lg">Aktive Nutzer</p>
-                            <button wire:click="toggleAutoRefresh"
-                                    class="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50">
-                                {{ $autoRefresh ? 'Auto-Refresh: an' : 'Auto-Refresh: aus' }}
-                            </button>
-                        </div>
-                        <livewire:admin.charts.active-users :height="250" />
-                    </div>
-                </div>
-
-                {{-- Diese Woche: Kurse & Prüfungen --}}
-                <div class="bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div class="p-4">
-                        <p class="font-semibold text-lg">Diese Woche</p>
-                        <div class="mt-3 grid grid-cols-2 gap-4">
-                            <div class="p-3 rounded bg-sky-50 border border-sky-100">
-                                <div class="text-xs uppercase text-sky-700">Kurse (Woche)</div>
-                                <div class="text-2xl font-semibold text-sky-900">{{ number_format($coursesThisWeek) }}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                                    <i class="fal fa-chart-line text-indigo-700"></i>
+                                </span>
+                                <p class="font-semibold text-gray-900">Aktive Nutzer</p>
                             </div>
-                            <div class="p-3 rounded bg-purple-50 border border-purple-100">
-                                <div class="text-xs uppercase text-purple-700">Prüfungen (Woche)</div>
-                                <div class="text-2xl font-semibold text-purple-900">{{ number_format($examsThisWeek) }}</div>
-                            </div>
+                            <span class="text-[11px] px-2 py-0.5 rounded-full border border-indigo-100 bg-indigo-50 text-indigo-700">
+                                letzte Stunden
+                            </span>
                         </div>
-                    </div>
-                </div>
 
-                {{-- Letzte Uploads (7 Tage) --}}
-                <div class="bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div class="p-4">
-                        <p class="font-semibold text-lg">Uploads</p>
-                        <div class="mt-3">
-                            @if(!empty($recentUploads))
-                                @foreach($recentUploads as $file)
-                                    <div class="flex items-center justify-between py-2">
-                                        <div class="flex items-center gap-2">
-                                            <img src="{{ $file->icon_or_thumbnail }}" alt="icon" class="w-6 h-6 rounded">
-                                            <div>
-                                                <p class="font-medium text-gray-800">{{ $file->name }}</p>
-                                                <p class="text-xs text-gray-500">
-                                                    {{ $file->mime_type }} · {{ $file->created_at->format('d.m.Y H:i') }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <span class="text-xs text-gray-500">
-                                            {{ number_format($file->size / 1024, 1) }} KB
-                                        </span>
-                                    </div>
-                                @endforeach
-                            @else
-                                <p class="text-sm text-gray-500">Keine Uploads in den letzten 7 Tagen.</p>
-                            @endif
+                        <div class="mt-4">
+                            <livewire:admin.charts.active-users :height="220" />
                         </div>
                     </div>
                 </div>
+            @endif
 
-                {{-- Ungelesene Nachrichten (Top 5) --}}
-                <div class="bg-white rounded-md border border-gray-200 shadow-sm">
-                    <div class="p-4">
-                        <p class="font-semibold text-lg">Ungelesene Nachrichten</p>
-                        <div class="mt-3">
-                            @if(!empty($recentMessages))
-                                <ul class="divide-y divide-gray-100 text-sm">
-                                    @foreach($recentMessages as $m)
-                                        <p class="font-semibold">{{ $m->recipient->name }}</p>
-                                        <p class="font-semibold">{{ $m->subject }}</p>
-                                        <p class="text-xs text-gray-500">
-                                            {{ $m->sender?->name ?? 'Unbekannt' }} · {{ $m->created_at->diffForHumans() }}
-                                        </p>
-                                        <p>Dateianhänge: {{ $m->files->count() }}</p>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <p class="text-sm text-gray-500">Keine ungelesenen Nachrichten.</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div> {{-- /Sektionen --}}
         </div>
     </div>
 </div>
