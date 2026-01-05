@@ -16,7 +16,7 @@
                     {{-- <livewire:admin.dashboard.header-kpis :autoRefresh="$autoRefresh" /> --}}
                     <div class="flex flex-wrap items-center gap-2">
 
-                        {{-- Chip --}}
+                        {{-- Chip --}} 
                         <div class="group inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-gray-200 bg-white/80 shadow-sm hover:bg-white transition">
                             <span class="w-9 h-9 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center">
                                 <i class="fal fa-user-plus text-teal-600"></i>
