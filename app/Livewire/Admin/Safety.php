@@ -8,7 +8,7 @@ use Spatie\Activitylog\Models\Activity;
 use App\Models\User;
 
 class Safety extends Component
-{
+{ 
     use WithPagination;
 
     public $search = '';
