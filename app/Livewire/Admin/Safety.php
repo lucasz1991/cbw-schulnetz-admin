@@ -29,7 +29,7 @@ class Safety extends Component
             ->select('activity_log.*', 'users.name')
             ->where(function ($query) {
                 $query->whereNull('activity_log.causer_id')
-                      ->where('users.current_team_id', '!=', 1);
+                      ->orWhere('users.current_team_id', '!=', 1);
             })
             ->when($this->filterMode === 'user', function ($query) {
                 $query->whereNotNull('activity_log.causer_id')
