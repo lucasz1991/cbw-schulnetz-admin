@@ -29,10 +29,11 @@ class Safety extends Component
             ->select('activity_log.*', 'users.name')
             ->where(function ($query) {
                 $query->whereNull('activity_log.causer_id')
-                      ->orWhere('users.current_team_id', '!=', 1);
+                      ->andWhere('users.current_team_id', '!=', 1);
             })
             ->when($this->filterMode === 'user', function ($query) {
-                $query->whereNotNull('activity_log.causer_id');
+                $query->whereNotNull('activity_log.causer_id')
+                      ->whereIn('users.role', ['guest', 'tutor']);
             })
             ->when($this->filterMode === 'guest', function ($query) {
                 $query->whereNull('activity_log.causer_id');
