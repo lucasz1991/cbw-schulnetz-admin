@@ -27,7 +27,10 @@ class Safety extends Component
         $activities = Activity::query()
             ->leftJoin('users', 'users.id', '=', 'activity_log.causer_id')
             ->select('activity_log.*', 'users.name')
-            
+            ->where(function ($query) {
+                $query->whereNull('activity_log.causer_id')
+                      ->orWhere('activity_log.causer_id', '!=', 1);
+            })
             ->when($this->filterMode === 'user', function ($query) {
                 $query->whereNotNull('activity_log.causer_id')
                       ->whereIn('users.role', ['guest', 'tutor']);
