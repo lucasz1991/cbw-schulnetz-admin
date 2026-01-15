@@ -215,7 +215,7 @@
                 cleanup();
             }
         },
-    }"
+    }" 
     x-init="init()"
     x-on:onboarding:meta-reset.window="resetUi()"
     wire:key="onboarding-management-root"
