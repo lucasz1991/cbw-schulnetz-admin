@@ -18,6 +18,8 @@ use App\Livewire\Admin\Cms\EditProject;
 use App\Livewire\Admin\Courses\CourseList;
 use App\Livewire\Admin\Courses\CourseShow;
 use App\Livewire\Admin\Assets\ExamAppointmentsManagement;
+use App\Livewire\Admin\Assets\OnboardingManagement;
+
 use App\Livewire\Admin\AdminTasksList;
 
 use App\Http\Controllers\PagebuilderProjectController;
@@ -58,6 +60,7 @@ Route::middleware(['auth:sanctum', 'auth.status', config('jetstream.auth_session
 
         Route::get('/admin/courses/{course}', CourseShow::class)->name('admin.courses.show');
         Route::get('/admin/assets/exam-appointments', ExamAppointmentsManagement::class)->name('admin.assets.exam-appointments');
+        Route::get('/admin/assets/onboarding', OnboardingManagement::class)->name('admin.assets.onboarding');
 
         Route::post('/admin/pagebuilder/save', [PagebuilderProjectController::class, 'save']);
         Route::get('/admin/pagebuilder/load/{name}', [PagebuilderProjectController::class, 'load']);

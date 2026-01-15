@@ -171,6 +171,7 @@ class ExamAppointmentsManagement extends Component
         }
 
         $this->showModal = false;
+        
         $this->dispatch('toast', 'Prüfung gespeichert', 'success');
 
         $this->resetPage('internPage');

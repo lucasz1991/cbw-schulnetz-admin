@@ -14,11 +14,8 @@
     dz: null,
 
     init() {
-      // Event vom Server hören: nur reagieren, wenn das model übereinstimmt
-      window.addEventListener('filepool:saved', (e) => {
-        if (e?.detail?.model === @js($model)) {
+      window.addEventListener('filepool:saved', () => {
           this.resetDZ();
-        }
       });
 
       this.$nextTick(() => this.mountDZ());
