@@ -77,7 +77,7 @@ class ExamAppointmentsManagement extends Component
         return [
             'type'  => 'required|in:intern,extern',
             'name'  => 'required_if:type,extern|nullable|string|max:255',
-            'preis' => 'required_if:type,extern|nullable|numeric|min:0',
+            'preis' => 'required_if:type,extern|nullable|numeric|min:0|max:10000',
             'dates' => 'array',
             'dates.0.date' => 'required_if:type,intern|nullable|date',
             'dates.0.time' => 'required_if:type,intern|nullable|date_format:H:i',
@@ -92,6 +92,8 @@ class ExamAppointmentsManagement extends Component
             'type.required' => 'Bitte wählen Sie einen Typ aus.',
             'name.required_if' => 'Bitte geben Sie einen Namen ein.',
             'preis.required_if' => 'Bitte geben Sie einen Preis ein.',
+            'preis.min' => 'Der Preis muss mindestens 0 sein.',
+            'preis.max' => 'Der Preis darf maximal 10000 sein.',
             'dates.0.date.required_if' => 'Bitte wählen Sie ein Datum aus.',
             'dates.0.time.required_if' => 'Bitte wählen Sie eine Uhrzeit aus.',
             'room.max' => 'Der Raumname darf maximal 100 Zeichen lang sein.',

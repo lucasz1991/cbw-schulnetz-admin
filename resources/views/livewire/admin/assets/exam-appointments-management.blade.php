@@ -294,7 +294,7 @@
                             <button
                                 type="button"
                                 class="flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all"
-                                :class="tab === 'extern' ? 'bg-gray-900 text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                                :class="tab === 'extern' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-100'"
                                 @click="tab = 'extern'"
                             >
                                 Zertifizierung
