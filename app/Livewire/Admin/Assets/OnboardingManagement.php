@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Assets;
 
 use App\Models\OnboardingVideo;
+use App\Models\WebPage;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -22,6 +23,9 @@ class OnboardingManagement extends Component
     /** Form */
     public string $title = '';
     public ?string $description = null;
+    public ?string $category = null;
+    public ?string $type = null; // settings[type]
+    public array $assigned_pages = []; // settings[pages]
 
     public bool $is_active = true;
 
@@ -31,6 +35,10 @@ class OnboardingManagement extends Component
     /** Browser computed meta */
     public ?int $duration_seconds = null;
     public ?string $thumbnailDataUrl = null; // data:image/jpeg;base64,...
+
+    /** Preview of existing file (Edit) */
+    public ?array $existingVideo = null;
+    public bool $showUploadField = true;
 
     /**
      * Uploads als Array (Drop-Zone), logisch aber max 1 Datei.
@@ -45,11 +53,16 @@ class OnboardingManagement extends Component
             $this->fileUploads = [end($this->fileUploads)];
         }
 
-        // Meta wird im Browser gesetzt -> hier nur optional resetten, falls Upload geleert wird
         if (empty($this->fileUploads)) {
             $this->duration_seconds = null;
             $this->thumbnailDataUrl = null;
+            $this->showUploadField = true;
+            return;
         }
+
+        // nach Upload Dropzone ausblenden, Preview Гјbernehmen
+        $this->showUploadField = false;
+        $this->existingVideo = null;
     }
 
     public function create(): void
@@ -69,6 +82,11 @@ class OnboardingManagement extends Component
 
         $this->title = (string) $video->title;
         $this->description = $video->description;
+        $this->category = $video->category;
+
+        $settings = $video->settings ?? [];
+        $this->type = $settings['type'] ?? null;
+        $this->assigned_pages = is_array($settings['pages'] ?? null) ? $settings['pages'] : [];
 
         $this->is_active = (bool) $video->is_active;
 
@@ -80,8 +98,18 @@ class OnboardingManagement extends Component
         $this->thumbnailDataUrl = null;
 
         // im Edit: neuer Upload optional
-        
         $this->fileUploads = [];
+
+        $videoFile = $video->videoFile;
+        $this->existingVideo = $videoFile ? [
+            'name' => $videoFile->name,
+            'mime' => $videoFile->mime_type,
+            'size_mb' => $videoFile->size ? round($videoFile->size / (1024 * 1024), 2) : null,
+            'url' => $videoFile->getEphemeralPublicUrl(3600) ?? ($videoFile->path ? Storage::disk('public')->url($videoFile->path) : null),
+            'is_pdf' => $videoFile->mime_type ? str_contains(strtolower($videoFile->mime_type), 'pdf') : false,
+        ] : null;
+
+        $this->showUploadField = $this->existingVideo === null;
 
         $this->showModal = true;
     }
@@ -93,6 +121,9 @@ class OnboardingManagement extends Component
 
         $this->title = '';
         $this->description = null;
+        $this->category = null;
+        $this->type = null;
+        $this->assigned_pages = [];
 
         $this->is_active = true;
 
@@ -103,6 +134,8 @@ class OnboardingManagement extends Component
         $this->thumbnailDataUrl = null;
 
         $this->fileUploads = [];
+        $this->existingVideo = null;
+        $this->showUploadField = true;
         $this->dispatch('onboarding:meta-reset');
 
     }
@@ -119,6 +152,9 @@ class OnboardingManagement extends Component
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'category' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'in:weiterbildung_ihk,fortbildungs_kurs'],
+            'assigned_pages' => ['array'],
 
             'is_active' => ['boolean'],
 
@@ -157,9 +193,15 @@ class OnboardingManagement extends Component
 
         $this->validate();
 
+        $settingsData = [
+            'type' => $this->type,
+            'pages' => array_values(array_filter($this->assigned_pages, fn ($v) => $v !== null && $v !== '')),
+        ];
+
         $payload = [
             'title' => $this->title,
             'description' => $this->description,
+            'category' => $this->category,
 
             'is_active' => $this->is_active,
 
@@ -168,6 +210,7 @@ class OnboardingManagement extends Component
 
             // Dauer kommt vom Browser (für mp4/wav), bei pdf = null
             'duration_seconds' => $this->duration_seconds,
+            'settings' => $settingsData,
         ];
 
         // Create + sort_order = nächster Wert
@@ -180,6 +223,7 @@ class OnboardingManagement extends Component
             $this->editingId = $video->id;
         } else {
             $video = OnboardingVideo::withTrashed()->findOrFail($this->editingId);
+            $payload['settings'] = array_merge($video->settings ?? [], $settingsData);
             $video->fill($payload)->save();
         }
 
@@ -238,6 +282,18 @@ class OnboardingManagement extends Component
         $this->closeModal();
         $this->dispatch('showAlert', 'Onboarding-Asset gespeichert.', 'success');
         $this->resetPage();
+    }
+
+    public function startReplacingVideo(): void
+    {
+        $this->existingVideo = null;
+        $this->fileUploads = [];
+        $this->duration_seconds = null;
+        $this->thumbnailDataUrl = null;
+        $this->showUploadField = true;
+
+        $this->dispatch('onboarding:meta-reset');
+        $this->dispatch('filepool:saved');
     }
 
     #[On('orderOnboardingVideo')]
@@ -326,6 +382,7 @@ class OnboardingManagement extends Component
 
         return view('livewire.admin.assets.onboarding-management', [
             'videos' => $videos,
+            'webpages' => WebPage::select('id', 'title', 'slug')->orderBy('title')->get(),
         ])->layout('layouts.master');
     }
 }

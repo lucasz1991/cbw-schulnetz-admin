@@ -1,0 +1,6 @@
+{
+    "workbench.editor.languageDetection": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "openai.chatgpt",
+    "editor.formatOnPaste": true
+}
