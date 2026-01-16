@@ -376,7 +376,7 @@
     {{-- Modal (Form + Drop-Zone) --}}
     <x-dialog-modal wire:model="showModal" maxWidth="3xl">
         <x-slot name="title">
-            {{ $editingId ? 'Onboarding-Video bearbeiten' : 'Onboarding-Video anlegen' }}
+            {{ $editingId ? 'Onboarding-Content bearbeiten' : 'Onboarding-Content anlegen' }}
         </x-slot>
 
         <x-slot name="content">
