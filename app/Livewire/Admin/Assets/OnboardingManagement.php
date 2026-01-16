@@ -153,7 +153,7 @@ class OnboardingManagement extends Component
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'category' => ['nullable', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'in:weiterbildung_ihk,fortbildungs_kurs'],
+            'type' => ['nullable', 'string', 'in:weiterbildung,fortbildung'],
             'assigned_pages' => ['array'],
 
             'is_active' => ['boolean'],
