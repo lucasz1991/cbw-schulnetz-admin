@@ -1,276 +1,389 @@
-<div class="space-y-6">
-  {{-- Header --}}
-  <div class="flex items-center justify-between gap-3">
-    <h1 class="text-xl font-semibold">Prüfungsverwaltung</h1>
-    <div class="flex items-center gap-2">
-      <input
-        type="text"
-        wire:model.debounce.300ms="search"
-        placeholder="Suchen (Name, Typ, Raum)…"
-        class="border rounded px-3 py-2"
-      />
-      <button wire:click="create" class="px-3 py-2 rounded bg-blue-600 text-white">
-        Neuer Termin
-      </button>
+{{-- exam-appointments-management.blade.php --}}
+<div
+    class="space-y-6"
+    x-data="{
+        tab: (() => {
+            const params = new URLSearchParams(window.location.search);
+            const t = (params.get('tab') || '').toLowerCase();
+            return (t === 'extern' || t === 'zert' || t === 'cert') ? 'extern' : 'intern';
+        })(),
+        setTab(next) {
+            this.tab = next;
+
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', next);
+            // optional: wenn du moechtest, dass beim Tab-Wechsel immer auf Seite 1 gesprungen wird:
+            url.searchParams.delete('page_intern');
+            url.searchParams.delete('page_extern');
+
+            window.history.replaceState({}, '', url);
+        }
+    }"
+>
+    {{-- Header (im Stil vom Onboarding) --}}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-secondary text-white grid place-items-center">
+                    <i class="fas fa-calendar-check text-sm"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-lg font-semibold text-gray-900 truncate">Pruefungsverwaltung</div>
+                    <div class="text-xs text-gray-500">Termine & Zertifizierungen</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 w-full sm:w-auto">
+            <div class="relative w-full sm:w-72">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                    <i class="fas fa-search text-xs"></i>
+                </div>
+                <input
+                    type="text"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Suchen (Raum, Datum, Name)"
+                    class="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                />
+            </div>
+
+            <button
+                type="button"
+                wire:click="create"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white hover:bg-secondary-dark focus:outline-none focus:ring-2 focus:ring-gray-900/30"
+            >
+                <i class="fas fa-plus text-xs"></i>
+                Neu
+            </button>
+        </div>
     </div>
-  </div>
 
-  {{-- Interne Termine --}}
-  <section class="space-y-3">
-    <h2 class="font-semibold">Interne Nachprüfungen</h2>
-    <div class="overflow-x-auto border rounded">
-      <table class="min-w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left">
-            <th class="p-2">Termin(e)</th>
-            <th class="p-2">Raum</th>
-            <th class="p-2 w-32">Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-        @forelse($internAppointments as $a)
-          @php
-            $first = $a->first_date ?? null;
-            $count = is_array($a->dates) ? count($a->dates) : 0;
-          @endphp
-          <tr class="border-t">
-            <td class="p-2">
-              @if($first)
-                {{ $first->format('d.m.Y H:i') }}
-                @if($count > 1)
-                  <span class="ml-1 text-xs text-gray-500">
-                    (+{{ $count - 1 }} weitere)
-                  </span>
-                @endif
-              @else
-                —
-              @endif
-            </td>
-            <td class="p-2">{{ $a->room ?? '' }}</td>
-            <td class="p-2">
-              <div class="flex items-center gap-2">
-                <button class="px-2 py-1 rounded bg-gray-200"
-                        wire:click="edit({{ $a->id }})">
-                  Bearbeiten
-                </button>
-                <button class="px-2 py-1 rounded bg-red-600 text-white"
-                        wire:click="delete({{ $a->id }})">
-                  Löschen
-                </button>
-              </div>
-            </td>
-          </tr>
-        @empty
-          <tr>
-            <td class="p-3 text-gray-500" colspan="3">Keine Einträge.</td>
-          </tr>
-        @endforelse
-        </tbody>
-      </table>
+    {{-- Tabs: Interne Termine / Zertifizierungen (URL persist) --}}
+    <div class="bg-gray-50 rounded-2xl p-1 ring-1 ring-gray-200">
+        <div class="flex w-full">
+            <button
+                type="button"
+                class="flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all"
+                :class="tab === 'intern' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                @click="setTab('intern')"
+            >
+                Interne Termine
+            </button>
+
+            <button
+                type="button"
+                class="flex-1 px-4 py-2 text-sm font-semibold rounded-xl transition-all"
+                :class="tab === 'extern' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                @click="setTab('extern')"
+            >
+                Zertifizierungen
+            </button>
+        </div>
     </div>
-    <div>
-      {{ $internAppointments->links() }}
-    </div>
-  </section>
 
-  {{-- Externe Termine --}}
-  <section class="space-y-3">
-    <h2 class="font-semibold">Externe Zertifizierungen</h2>
-    <div class="overflow-x-auto border rounded">
-      <table class="min-w-full text-sm">
-        <thead class="bg-gray-50">
-          <tr class="text-left">
-            <th class="p-2">Name</th>
-            <th class="p-2">Termin(e)</th>
-            <th class="p-2">Preis</th>
-            <th class="p-2">Pflicht 6W</th>
-            <th class="p-2">Raum</th>
-            <th class="p-2 w-32">Aktionen</th>
-          </tr>
-        </thead>
-        <tbody>
-        @forelse($externAppointments as $a)
-          @php
-            $first = $a->first_date ?? null;
-            $count = is_array($a->dates) ? count($a->dates) : 0;
-          @endphp
-          <tr class="border-t">
-            <td class="p-2">{{ $a->name }}</td>
-            <td class="p-2">
-              @if($first)
-                {{ $first->format('d.m.Y H:i') }}
-                @if($count > 1)
-                  <span class="ml-1 text-xs text-gray-500">
-                    (+{{ $count - 1 }} weitere)
-                  </span>
-                @endif
-              @else
-                —
-              @endif
-            </td>
-            <td class="p-2">
-              @if(!is_null($a->preis))
-                {{ number_format((float)$a->preis, 2, ',', '.') }} €
-              @endif
-            </td>
-            <td class="p-2">
-              {{ $a->pflicht_6w_anmeldung ? 'Ja' : 'Nein' }}
-            </td>
-            <td class="p-2">{{ $a->room ?? '—' }}</td>
-            <td class="p-2">
-              <div class="flex items-center gap-2">
-                <button class="px-2 py-1 rounded bg-gray-200"
-                        wire:click="edit({{ $a->id }})">
-                  Bearbeiten
-                </button>
-                <button class="px-2 py-1 rounded bg-red-600 text-white"
-                        wire:click="delete({{ $a->id }})">
-                  Löschen
-                </button>
-              </div>
-            </td>
-          </tr>
-        @empty
-          <tr>
-            <td class="p-3 text-gray-500" colspan="6">Keine Einträge.</td>
-          </tr>
-        @endforelse
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  {{-- Modal --}}
-  <x-dialog-modal wire:model="showModal" maxWidth="2xl">
-    <x-slot name="title">
-      {{ $editingId ? 'Prüfung bearbeiten' : 'Neue Prüfung' }}
-    </x-slot>
-
-    <x-slot name="content">
-      <div x-data="{ type: @entangle('type') }" class="space-y-4">
-        <form wire:submit.prevent="save" class="space-y-4">
-          <div class="grid md:grid-cols-2 gap-4">
-{{-- Typ --}}
-<div>
-  <label class="block text-sm mb-1">Typ</label>
-
-  @if($editingId)
-    <div class="w-full border rounded px-3 py-2 bg-gray-100 text-gray-700">
-      {{ $type === 'extern' ? 'extern' : 'intern' }}
-    </div>
-    <input type="hidden" wire:model="type">
-  @else
-    <select class="w-full border rounded px-3 py-2" wire:model="type">
-      <option value="intern">intern</option>
-      <option value="extern">extern</option>
-    </select>
-  @endif
-
-  @error('type') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-</div>
-
-
-            {{-- Raum --}}
+    {{-- Interne Termine (Tab) --}}
+    <section class="space-y-3" x-show="tab === 'intern'" x-cloak x-transition.opacity>
+        <div class="flex items-end justify-between gap-3">
             <div>
-              <label class="block text-sm mb-1">Raum</label>
-              <input type="text"
-                     class="w-full border rounded px-3 py-2"
-                     wire:model.defer="room">
-              @error('room') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                <div class="text-sm font-semibold text-gray-900">Interne Termine</div>
+                <div class="text-xs text-gray-500">Mit Datum/Uhrzeit</div>
             </div>
-          </div>
+        </div>
 
-          {{-- Mehrere Termine --}}
-          <div class="space-y-3">
-            @foreach($dates as $index => $dt)
-              <div class="grid md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <label class="block text-sm mb-1">Datum</label>
-                  <input type="date"
-                         class="w-full border rounded px-3 py-2"
-                         wire:model="dates.{{ $index }}.date">
-                  @error("dates.$index.date") <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                </div>
+        <div class="rounded-2xl ring-1 ring-gray-200">
+            <div class="bg-white">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left text-xs font-semibold text-gray-600">
+                            <th class="px-4 py-3">Termin</th>
+                            <th class="px-4 py-3">Raum</th>
+                            <th class="px-4 py-3 text-right">Aktionen</th>
+                        </tr>
+                    </thead>
 
-                <div>
-                  <label class="block text-sm mb-1">Uhrzeit</label>
-                  <input type="time"
-                         class="w-full border rounded px-3 py-2"
-                         wire:model="dates.{{ $index }}.time">
-                  @error("dates.$index.time") <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                </div>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($internAppointments as $appointment)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">
+                                    @if($appointment->first_date)
+                                        <div class="flex items-center gap-3">
+                                            <div class="h-9 w-9 rounded-xl bg-gray-100 grid place-items-center text-gray-600">
+                                                <i class="fas fa-clock text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-semibold text-gray-900">{{ $appointment->first_date->format('d.m.Y') }}</div>
+                                                <div class="text-xs text-gray-600">{{ $appointment->first_date->format('H:i') }} Uhr</div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">Kein Termin</span>
+                                    @endif
+                                </td>
 
-                <div class="flex items-center gap-2">
-                  @if($loop->first)
-                    <button type="button"
-                            class="px-3 py-2 rounded border"
-                            wire:click="addDate">
-                      + weiterer Termin
-                    </button>
-                  @else
-                    <button type="button"
-                            class="px-3 py-2 rounded bg-red-600 text-white"
-                            wire:click="removeDate({{ $index }})">
-                      Entfernen
-                    </button>
-                  @endif
-                </div>
-              </div>
-            @endforeach
-          </div>
+                                <td class="px-4 py-3">
+                                    <div class="inline-flex items-center gap-2">
+                                        <i class="fas fa-door-open text-xs text-gray-400"></i>
+                                        <span class="text-sm text-gray-800">{{ $appointment->room ?? '—' }}</span>
+                                    </div>
+                                </td>
 
-          {{-- Nur bei EXTERNEN Terminen: Name, Preis, Pflicht 6 Wochen --}}
-          <div x-cloak x-collapse x-show="type === 'extern'">
-            <div class="grid md:grid-cols-2 gap-4 mt-4">
-              {{-- Name (nur extern) --}}
-              <div>
-                <label class="block text-sm mb-1">Name</label>
-                <input type="text"
-                       class="w-full border rounded px-3 py-2"
-                       wire:model.defer="name">
-                @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-              </div>
+                                <td class="px-4 py-3 text-right">
+                                    <x-dropdown align="right" width="48">
+                                        <x-slot name="trigger">
+                                            <button
+                                                type="button"
+                                                class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                                                title="Aktionen"
+                                            >
+                                                &#x22EE;
+                                            </button>
+                                        </x-slot>
 
-              {{-- Preis (nur extern) --}}
-              <div>
-                <label class="block text-sm mb-1">Preis</label>
-                <input type="number"
-                       step="0.01"
-                       min="0"
-                       class="w-full border rounded px-3 py-2"
-                       wire:model.defer="preis">
-                @error('preis') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-              </div>
+                                        <x-slot name="content">
+                                            <x-dropdown-link href="#" wire:click.prevent="edit({{ $appointment->id }})">
+                                                <i class="far fa-pen mr-2"></i>
+                                                Bearbeiten
+                                            </x-dropdown-link>
 
-              {{-- Pflicht 6 Wochen (nur extern) --}}
-              <div class="md:col-span-2">
-                <label class="inline-flex items-center gap-2">
-                  <input type="checkbox"
-                         wire:model="pflicht_6w_anmeldung"
-                         class="border rounded">
-                  <span>Pflicht: 6 Wochen vorher anmelden</span>
-                </label>
-                @error('pflicht_6w_anmeldung') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-              </div>
+                                            <x-dropdown-link href="#" wire:click.prevent="delete({{ $appointment->id }})" class="hover:bg-red-50">
+                                                <i class="far fa-trash-alt mr-2 text-red-600"></i>
+                                                Loeschen
+                                            </x-dropdown-link>
+                                        </x-slot>
+                                    </x-dropdown>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td class="px-4 py-8 text-center text-sm text-gray-500" colspan="3">Keine Termine vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-          </div>
-        </form>
-      </div>
-    </x-slot>
 
-    <x-slot name="footer">
-      <div class="flex justify-end gap-2">
-        <button type="button"
-                class="px-3 py-2 rounded border"
-                wire:click="$set('showModal', false)">
-          Abbrechen
-        </button>
-        <button type="button" wire:click="save"
-                class="px-3 py-2 rounded bg-blue-600 text-white"
-                >
-          Speichern
-        </button>
-      </div>
-    </x-slot>
-  </x-dialog-modal>
+            {{-- Separate Pagination: intern --}}
+            <div class="border-t border-gray-200 bg-gray-50 px-4 py-3">
+                {{ $internAppointments->appends(['tab' => 'intern', 'page_extern' => request('page_extern')])->links() }}
+            </div>
+        </div>
+    </section>
+
+    {{-- Externe Termine (Tab) --}}
+    <section class="space-y-3" x-show="tab === 'extern'" x-cloak x-transition.opacity>
+        <div>
+            <div class="text-sm font-semibold text-gray-900">Zertifizierungen</div>
+            <div class="text-xs text-gray-500">Externe Termine (optional ohne Datum)</div>
+        </div>
+
+        <div class="rounded-2xl ring-1 ring-gray-200">
+            <div class="bg-white">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left text-xs font-semibold text-gray-600">
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Preis</th>
+                            <th class="px-4 py-3">Pflicht 6W</th>
+                            <th class="px-4 py-3">Raum</th>
+                            <th class="px-4 py-3 text-right">Aktionen</th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($externAppointments as $appointment)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-9 w-9 rounded-xl bg-gray-100 grid place-items-center text-gray-600">
+                                            <i class="fas fa-certificate text-xs"></i>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-semibold text-gray-900 truncate">{{ $appointment->name ?? '—' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    @if(!is_null($appointment->preis))
+                                        <span class="text-sm text-gray-800">{{ number_format((float)$appointment->preis, 2, ',', '.') }} €</span>
+                                    @else
+                                        <span class="text-sm text-gray-400">—</span>
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    @if($appointment->pflicht_6w_anmeldung)
+                                        <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">Ja</span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">Nein</span>
+                                    @endif
+                                </td>
+
+                                <td class="px-4 py-3">
+                                    <div class="inline-flex items-center gap-2">
+                                        <i class="fas fa-door-open text-xs text-gray-400"></i>
+                                        <span class="text-sm text-gray-800">{{ $appointment->room ?? '—' }}</span>
+                                    </div>
+                                </td>
+
+                                <td class="px-4 py-3 text-right">
+                                    <x-dropdown align="right" width="48">
+                                        <x-slot name="trigger">
+                                            <button
+                                                type="button"
+                                                class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                                                title="Aktionen"
+                                            >
+                                                &#x22EE;
+                                            </button>
+                                        </x-slot>
+
+                                        <x-slot name="content">
+                                            <x-dropdown-link href="#" wire:click.prevent="edit({{ $appointment->id }})">
+                                                <i class="far fa-pen mr-2"></i>
+                                                Bearbeiten
+                                            </x-dropdown-link>
+
+                                            <x-dropdown-link href="#" wire:click.prevent="delete({{ $appointment->id }})" class="hover:bg-red-50">
+                                                <i class="far fa-trash-alt mr-2 text-red-600"></i>
+                                                Loeschen
+                                            </x-dropdown-link>
+                                        </x-slot>
+                                    </x-dropdown>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td class="px-4 py-8 text-center text-sm text-gray-500" colspan="5">Keine externen Termine vorhanden.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Separate Pagination: extern --}}
+            <div class="border-t border-gray-200 bg-gray-50 px-4 py-3">
+                {{ $externAppointments->appends(['tab' => 'extern', 'page_intern' => request('page_intern')])->links() }}
+            </div>
+        </div>
+    </section>
+
+    {{-- Modal (unveraendert) --}}
+    <x-dialog-modal wire:model="showModal" maxWidth="2xl">
+        @php
+            $typename = $type === 'intern' ? 'Termin' : 'Zertifizierung';
+        @endphp
+
+        <x-slot name="title">
+            {{ $editingId ? $typename.' bearbeiten' : 'Neu anlegen' }}
+        </x-slot>
+
+        <x-slot name="content">
+            <div class="space-y-5" x-data="{ tab: @entangle('type') }">
+                @if(!$editingId)
+                    <div class="bg-gray-50 rounded-xl p-1 ring-1 ring-gray-200">
+                        <div class="flex w-full">
+                            <button
+                                type="button"
+                                class="flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all"
+                                :class="tab === 'intern' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                                @click="tab = 'intern'"
+                            >
+                                Termin
+                            </button>
+                            <button
+                                type="button"
+                                class="flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all"
+                                :class="tab === 'extern' ? 'bg-gray-900 text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                                @click="tab = 'extern'"
+                            >
+                                Zertifizierung
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2" x-show="tab === 'extern'" x-collapse>
+                        <label class="block text-sm font-medium text-gray-800">Name</label>
+                        <input
+                            type="text"
+                            class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                            wire:model.defer="name"
+                        >
+                        @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-800">Raum</label>
+                        <input
+                            type="text"
+                            class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                            wire:model.defer="room"
+                        >
+                        @error('room') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div x-show="tab === 'intern'" x-collapse>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-800">Datum</label>
+                            <input
+                                type="date"
+                                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                                wire:model="dates.0.date"
+                            >
+                            @error('dates.0.date') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-800">Uhrzeit</label>
+                            <input
+                                type="time"
+                                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                                wire:model="dates.0.time"
+                            >
+                            @error('dates.0.time') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="tab === 'extern'" x-collapse class="space-y-3">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-800">Preis</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                class="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                                wire:model.defer="preis"
+                            >
+                            @error('preis') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="flex items-center md:items-end">
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-800">
+                                <input type="checkbox" wire:model="pflicht_6w_anmeldung" class="border rounded">
+                                Pflicht: 6 Wochen vorher anmelden
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </x-slot>
+
+        <x-slot name="footer">
+            <div class="flex justify-end gap-2">
+                <x-ui.buttons.button-basic wire:click="$set('showModal', false)" :size="'sm'" :mode="'secondary'" wire:loading.attr="disabled">
+                    <i class="fas fa-times mr-2"></i>
+                    Abbrechen
+                </x-ui.buttons.button-basic>
+
+                <x-ui.buttons.button-basic wire:click="save" :size="'sm'" :mode="'primary'" wire:loading.attr="disabled">
+                    <i class="fas fa-check mr-2"></i>
+                    Speichern
+                </x-ui.buttons.button-basic>
+            </div>
+        </x-slot>
+    </x-dialog-modal>
 </div>

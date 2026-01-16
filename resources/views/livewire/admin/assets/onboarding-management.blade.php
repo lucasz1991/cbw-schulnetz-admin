@@ -547,8 +547,8 @@
                             <label class="block text-sm font-medium text-gray-800">Zielgruppe</label>
                             <select wire:model="type" class="mt-1 block w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 bg-white">
                                 <option value="">Keine Zielgruppe</option>
-                                <option value="weiterbildung_ihk">Weiterbildung IHK</option>
-                                <option value="fortbildungs_kurs">Fortbildungs-Kurs</option>
+                                <option value="weiterbildung">Weiterbildung</option>
+                                <option value="umschulung">Umschulung</option>
                             </select>
                             <x-input-error for="type" class="mt-2" />
                         </div>

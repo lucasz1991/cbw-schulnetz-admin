@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Admin\Assets;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\ExamAppointment;
 use Illuminate\Support\Carbon;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ExamAppointmentsManagement extends Component
 {
@@ -13,23 +13,61 @@ class ExamAppointmentsManagement extends Component
 
     protected string $paginationTheme = 'tailwind';
 
+    /** URL Persist (Tabs + Suche + PerPage) */
+    public string $tab = 'intern'; // intern | extern
     public string $search = '';
-    public int $perPage = 10;
+    public int $perPage = 5;
 
     public bool $showModal = false;
     public ?int $editingId = null;
 
     // Form-Felder
     public string $type = 'intern'; // intern | extern
-    public ?string $name = null;
+    public ?string $name = 'Nachklausur';
     public ?string $preis = null;
     public ?string $room = null;
     public bool $pflicht_6w_anmeldung = false;
 
-    // Mehrere Termine
+    // Ein Termin (intern), bei extern optional leer
     public array $dates = [
         ['date' => null, 'time' => null],
     ];
+
+    /** getrennte Pagination Keys */
+    protected string $internPageName = 'internPage';
+    protected string $externPageName = 'externPage';
+
+    /** Querystring Sync */
+    protected array $queryString = [
+        'tab' => ['except' => 'intern'],
+        'search' => ['except' => ''],
+        'perPage' => ['except' => 5],
+    ];
+
+    // ------------------------------
+    // Lifecycle
+    // ------------------------------
+    public function mount(): void
+    {
+        $this->tab = in_array($this->tab, ['intern', 'extern'], true) ? $this->tab : 'intern';
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPages();
+    }
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPages();
+    }
+
+    public function updatedTab($value): void
+    {
+        $this->tab = in_array($value, ['intern', 'extern'], true) ? $value : 'intern';
+        // optional: Beim Tab-Wechsel beide Listen auf Seite 1
+        $this->resetPages();
+    }
 
     // ------------------------------
     // Regeln
@@ -38,34 +76,69 @@ class ExamAppointmentsManagement extends Component
     {
         return [
             'type'  => 'required|in:intern,extern',
-
-            // Name nur bei extern required
             'name'  => 'required_if:type,extern|nullable|string|max:255',
-
-            'preis' => 'nullable|numeric|min:0',
-
-            'dates'            => 'required|array|min:1',
-            'dates.*.date'     => 'required|date',
-            'dates.*.time'     => 'required|date_format:H:i',
-
-            'room'             => 'nullable|string|max:100',
-
+            'preis' => 'required_if:type,extern|nullable|numeric|min:0',
+            'dates' => 'array',
+            'dates.0.date' => 'required_if:type,intern|nullable|date',
+            'dates.0.time' => 'required_if:type,intern|nullable|date_format:H:i',
+            'room' => 'nullable|string|max:100',
             'pflicht_6w_anmeldung' => 'boolean',
         ];
     }
 
-    // ------------------------------
-    // Livewire Hooks
-    // ------------------------------
-    public function updatingSearch(): void
+    protected function messages(): array
     {
-        $this->resetPage('internPage');
-        $this->resetPage('externPage');
+        return [
+            'type.required' => 'Bitte wählen Sie einen Typ aus.',
+            'name.required_if' => 'Bitte geben Sie einen Namen ein.',
+            'preis.required_if' => 'Bitte geben Sie einen Preis ein.',
+            'dates.0.date.required_if' => 'Bitte wählen Sie ein Datum aus.',
+            'dates.0.time.required_if' => 'Bitte wählen Sie eine Uhrzeit aus.',
+            'room.max' => 'Der Raumname darf maximal 100 Zeichen lang sein.',
+        ];
+    }
+
+    // ------------------------------
+    // Helpers
+    // ------------------------------
+    protected function resetPages(): void
+    {
+        $this->resetPage($this->internPageName);
+        $this->resetPage($this->externPageName);
+    }
+
+    protected function blankDates(): array
+    {
+        return [['date' => null, 'time' => null]];
+    }
+
+    protected function buildDatesPayload(array $data): array
+    {
+        if (($data['type'] ?? 'intern') !== 'intern') {
+            return [];
+        }
+
+        $row = $data['dates'][0] ?? ['date' => null, 'time' => null];
+        if (empty($row['date']) || empty($row['time'])) {
+            return [];
+        }
+
+        $dt = Carbon::parse($row['date'] . ' ' . $row['time'] . ':00');
+
+        return [
+            ['datetime' => $dt->toDateTimeString()],
+        ];
     }
 
     // ------------------------------
     // UI-Methoden
     // ------------------------------
+    public function setTab(string $tab): void
+    {
+        $this->tab = in_array($tab, ['intern', 'extern'], true) ? $tab : 'intern';
+        $this->resetPages();
+    }
+
     public function create(): void
     {
         $this->reset([
@@ -79,9 +152,8 @@ class ExamAppointmentsManagement extends Component
         ]);
 
         $this->type = 'intern';
-        $this->dates = [
-            ['date' => null, 'time' => null],
-        ];
+        $this->name = 'Nachklausur';
+        $this->dates = $this->blankDates();
 
         $this->showModal = true;
     }
@@ -91,77 +163,46 @@ class ExamAppointmentsManagement extends Component
         $ap = ExamAppointment::findOrFail($id);
 
         $this->editingId            = $ap->id;
-        $this->type                 = $ap->type;
-        $this->name                 = $ap->name;
+        $this->type                 = $ap->type ?? 'intern';
+        $this->name                 = $ap->name ?? ($this->type === 'intern' ? 'Nachklausur' : '');
         $this->preis                = $ap->preis !== null ? (string) $ap->preis : null;
         $this->room                 = $ap->room ?? null;
         $this->pflicht_6w_anmeldung = (bool) $ap->pflicht_6w_anmeldung;
 
-        // JSON -> Form-Array
+        // JSON -> Form-Array (nur relevant für intern)
         $this->dates = [];
 
-        if (is_array($ap->dates) && count($ap->dates)) {
-            foreach ($ap->dates as $entry) {
-                $dt = $entry['datetime'] ?? $entry['from'] ?? null;
-                if (! $dt) {
-                    continue;
-                }
+        if ($this->type === 'intern' && is_array($ap->dates) && count($ap->dates)) {
+            $entry = $ap->dates[0] ?? null;
+            $dt = $entry['datetime'] ?? $entry['from'] ?? null;
 
+            if ($dt) {
                 $c = Carbon::parse($dt);
                 $this->dates[] = [
-                    'date' => $c->toDateString(), // YYYY-MM-DD
-                    'time' => $c->format('H:i'),   // HH:MM
+                    'date' => $c->toDateString(),
+                    'time' => $c->format('H:i'),
                 ];
             }
         }
 
-        if (empty($this->dates)) {
-            $this->dates = [
-                ['date' => null, 'time' => null],
-            ];
+        if ($this->type === 'intern' && empty($this->dates)) {
+            $this->dates = $this->blankDates();
         }
 
         $this->showModal = true;
-    }
-
-    public function addDate(): void
-    {
-        $this->dates[] = ['date' => null, 'time' => null];
-    }
-
-    public function removeDate(int $index): void
-    {
-        unset($this->dates[$index]);
-        $this->dates = array_values($this->dates);
     }
 
     public function save(): void
     {
         $data = $this->validate();
 
-        // Name für interne Prüfungen setzen
-        if ($data['type'] === 'intern') {
-            $data['name'] = 'Nachklausur';
-        }
-
-        // dates[] -> JSON-Array
-        $datesPayload = collect($data['dates'])
-            ->map(function ($row) {
-                $dt = Carbon::parse($row['date'].' '.$row['time'].':00');
-                return [
-                    'datetime' => $dt->toDateTimeString(),
-                ];
-            })
-            ->values()
-            ->all();
-
         $payload = [
             'type'                 => $data['type'],
-            'name'                 => $data['name'],
-            'preis'                => $data['preis'],
-            'dates'                => $datesPayload,
+            'name'                 => $data['type'] === 'intern' ? ($this->name ?: 'Nachklausur') : ($this->name ?? ''),
+            'preis'                => $data['type'] === 'extern' ? $this->preis : null,
+            'dates'                => $this->buildDatesPayload($data),
             'room'                 => $this->room,
-            'pflicht_6w_anmeldung' => $this->pflicht_6w_anmeldung,
+            'pflicht_6w_anmeldung' => $data['type'] === 'extern' ? (bool) $this->pflicht_6w_anmeldung : false,
         ];
 
         if ($this->editingId) {
@@ -171,20 +212,22 @@ class ExamAppointmentsManagement extends Component
         }
 
         $this->showModal = false;
-        
+
+        // Tab nach Save passend setzen (damit UX stimmt)
+        $this->tab = $data['type'];
+
         $this->dispatch('toast', 'Prüfung gespeichert', 'success');
 
-        $this->resetPage('internPage');
-        $this->resetPage('externPage');
+        $this->resetPages();
     }
 
     public function delete(int $id): void
     {
         ExamAppointment::findOrFail($id)->delete();
+
         $this->dispatch('toast', 'Prüfung gelöscht', 'success');
 
-        $this->resetPage('internPage');
-        $this->resetPage('externPage');
+        $this->resetPages();
     }
 
     // ------------------------------
@@ -197,8 +240,8 @@ class ExamAppointmentsManagement extends Component
                 $s = $this->search;
                 $q->where(function ($qq) use ($s) {
                     $qq->where('name', 'like', "%{$s}%")
-                       ->orWhere('type', 'like', "%{$s}%")
-                       ->orWhere('room', 'like', "%{$s}%");
+                        ->orWhere('type', 'like', "%{$s}%")
+                        ->orWhere('room', 'like', "%{$s}%");
                 });
             })
             // nach erstem Termin sortieren (JSON -> dates[0].datetime)
@@ -206,11 +249,11 @@ class ExamAppointmentsManagement extends Component
 
         $internAppointments = (clone $base)
             ->where('type', 'intern')
-            ->paginate($this->perPage, ['*'], 'internPage');
+            ->paginate($this->perPage, ['*'], $this->internPageName);
 
         $externAppointments = (clone $base)
             ->where('type', 'extern')
-            ->paginate($this->perPage, ['*'], 'externPage');
+            ->paginate($this->perPage, ['*'], $this->externPageName);
 
         return view('livewire.admin.assets.exam-appointments-management', [
             'internAppointments' => $internAppointments,
