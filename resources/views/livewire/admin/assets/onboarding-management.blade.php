@@ -557,16 +557,16 @@
                     <!-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label for="category" class="block text-sm font-medium text-gray-800">Kategorie</label>
-                            <input type="text" id="category" wire:model="category" class="mt-1 block w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-200 focus:border-blue-300" placeholder="z. B. Onboarding, HR">
+                            <input type="text" id="category" wiremodel="category" class="mt-1 block w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-200 focus:border-blue-300" placeholder="z. B. Onboarding, HR">
                             <xinput-error for="category" class="mt-2" />
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-800">Seiten</label>
-                            <select wire:model="assigned_pages" multiple class="mt-1 block w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 bg-white">
+                            <select wiremodel="assigned_pages" multiple class="mt-1 block w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-200 focus:border-blue-300 bg-white">
                                 <option value="all">Alle Seiten</option>
                                 isset($webpages)
                                     foreach($webpages as $page)
-                                        <option value="{{ $page->slug }}">{{ $page->title }}</option>
+                                        <option value="page->slug  $page->title </option>
                                     endforeach
                                 endisset
                             </select>
