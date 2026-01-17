@@ -67,7 +67,7 @@
                 :class="tab === 'intern' ? 'bg-secondary text-white shadow-sm' : 'bg-white text-gray-700 hover:bg-gray-100'"
                 @click="setTab('intern')"
             >
-                Interne Termine
+                Termine
             </button>
 
             <button
@@ -85,8 +85,7 @@
     <section class="space-y-3" x-show="tab === 'intern'" x-cloak x-transition.opacity>
         <div class="flex items-end justify-between gap-3">
             <div>
-                <div class="text-sm font-semibold text-gray-900">Interne Termine</div>
-                <div class="text-xs text-gray-500">Mit Datum/Uhrzeit</div>
+                <div class="text-sm font-semibold text-gray-900">Termine</div>
             </div>
         </div>
 
@@ -173,7 +172,6 @@
     <section class="space-y-3" x-show="tab === 'extern'" x-cloak x-transition.opacity>
         <div>
             <div class="text-sm font-semibold text-gray-900">Zertifizierungen</div>
-            <div class="text-xs text-gray-500">Externe Termine (optional ohne Datum)</div>
         </div>
 
         <div class="rounded-2xl ring-1 ring-gray-200">

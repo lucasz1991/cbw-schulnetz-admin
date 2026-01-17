@@ -166,7 +166,7 @@ class ExamAppointmentsManagement extends Component
 
         $this->editingId            = $ap->id;
         $this->type                 = $ap->type ?? 'intern';
-        $this->name                 = $ap->name ?? ($this->type === 'intern' ? 'Nachklausur' : '');
+        $this->name                 = $ap->name ?? ($this->type === 'intern' ? '' : '');
         $this->preis                = $ap->preis !== null ? (string) $ap->preis : null;
         $this->room                 = $ap->room ?? null;
         $this->pflicht_6w_anmeldung = (bool) $ap->pflicht_6w_anmeldung;
