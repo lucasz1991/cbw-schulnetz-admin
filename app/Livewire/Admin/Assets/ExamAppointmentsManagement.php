@@ -16,7 +16,7 @@ class ExamAppointmentsManagement extends Component
     /** URL Persist (Tabs + Suche + PerPage) */
     public string $tab = 'intern'; // intern | extern
     public string $search = '';
-    public int $perPage = 5;
+    public int $perPage = 10;
 
     public bool $showModal = false;
     public ?int $editingId = null;
@@ -41,7 +41,7 @@ class ExamAppointmentsManagement extends Component
     protected array $queryString = [
         'tab' => ['except' => 'intern'],
         'search' => ['except' => ''],
-        'perPage' => ['except' => 5],
+        'perPage' => ['except' => 10],
     ];
 
     // ------------------------------
