@@ -66,7 +66,7 @@ protected $queryString = [
 
     public function mount(): void
     {
-        $this->coursesTotal = Course::count();
+        $this->coursesTotal = Course::where('planned_start_date', '>=', $this->from)->count();
         $this->terms = $this->loadTermOptionsFromCourses();
     }
 
@@ -126,7 +126,7 @@ public function updated($prop): void
 
     
     $q->whereDate('courses.planned_start_date', '>=', $this->from);
-    
+
     if ($this->to) {
         $q->whereDate('courses.planned_end_date', '<=', $this->to);
     }
@@ -534,6 +534,7 @@ public function updated($prop): void
     {
         return Course::query()
             ->whereNotNull('termin_id')
+            ->where('planned_start_date', '>=', $this->from)
             ->groupBy('termin_id')
             ->orderBy('termin_id', 'asc')
             ->selectRaw('termin_id, COUNT(*) AS cnt, MIN(planned_start_date) AS planned_start_date, MAX(planned_end_date) AS planned_end_date')
