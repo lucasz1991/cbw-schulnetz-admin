@@ -124,10 +124,9 @@ public function updated($prop): void
         });
     }
 
-    // Zeitraumfilter (geplant)
-    if ($this->from) {
-        $q->whereDate('courses.planned_start_date', '>=', $this->from);
-    }
+    
+    $q->whereDate('courses.planned_start_date', '>=', $this->from);
+    
     if ($this->to) {
         $q->whereDate('courses.planned_end_date', '<=', $this->to);
     }
