@@ -21,7 +21,7 @@ class CourseList extends Component
     public int    $perPage = 15;
 
     // Filter
-    public ?string $from   = '2024-01-01'; // Y-m-d
+    public ?string $from   = '2025-10-01'; // Y-m-d
     public ?string $to     = null; // Y-m-d
     public ?string $vtz    = null; // 'VZ', 'TZ', …
     /**
