@@ -76,7 +76,7 @@ class UserCourses extends Component
 
         }
         // ------------------------------------------------------------------
-        // 📌 FALL 2: User ist Teilnehmer → Pivot-Relation über alle Persons
+        // FALL 2: User ist Teilnehmer → Pivot-Relation über alle Persons
         // ------------------------------------------------------------------
         else {
 
