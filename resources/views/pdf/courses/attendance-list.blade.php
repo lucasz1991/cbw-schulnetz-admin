@@ -248,12 +248,12 @@
                     @if($cell)
                         @if($cell['excused'])
                             E
+                        @elseif($cell['empty'] === true)
+                                
                         @elseif($cell['end_present'] === true)
                             x
                         @elseif($cell['end_present'] === false)
                             f
-                        @elseif($cell['empty'] === true)
-                            
                         @endif
                     @endif
                 </td>
