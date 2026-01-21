@@ -237,6 +237,8 @@
                             x
                         @elseif($cell['morning_present'] === false)
                             f
+                        @elseif($cell['empty'] === true)
+                            
                         @endif
                     @endif
                 </td>
@@ -250,6 +252,8 @@
                             x
                         @elseif($cell['end_present'] === false)
                             f
+                        @elseif($cell['empty'] === true)
+                            
                         @endif
                     @endif
                 </td>
