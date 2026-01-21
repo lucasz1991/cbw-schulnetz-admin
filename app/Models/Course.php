@@ -341,7 +341,7 @@ class Course extends Model
         }
 
         $total  = $pastDays->count();
-        $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '' || $d->note_status !== 2)->count();
+        $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '' && $d->note_status === 2)->count();
 
         if ($filled === 0)        return 0;
         if ($filled < $total)     return 2;
