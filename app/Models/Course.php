@@ -712,7 +712,7 @@ public function generateAttendanceListPdfFile(): ?string
 
         foreach ($days as $day) {
             $cells[$day->id] = $attendanceMatrix[$person->id][$day->id] ?? [];
-        }
+        } 
 
         return [
             'person' => $person,
