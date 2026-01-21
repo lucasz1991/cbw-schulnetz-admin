@@ -549,10 +549,8 @@ protected function sanitizePdfData($value)
 
     public function canExportDokuPdf(): bool
     {
-        // Doku nur, wenn es mind. einen Unterrichtstag Note gibt
-        return $this->days()
-            ->whereNotNull('notes')
-            ->exists();
+        // Sinnvoll: es gibt mind. einen Unterrichtstag
+        return $this->documentationState() > 0;
     }
 
     public function canExportMaterialConfirmationsPdf(): bool
