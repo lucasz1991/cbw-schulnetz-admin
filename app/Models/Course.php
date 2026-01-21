@@ -605,11 +605,12 @@ public function generateAttendanceListPdfFile(): ?string
 
     /**
      * Matrix: [person_id][day_id] = [
-     *   'morning_present'     => bool|null, // null nur bei "entschuldigt"
-     *   'end_present'         => bool|null,
+     *   'morning_present'     => bool|null, // null = entschuldigt ODER leer (keine Eintragung)
+     *   'end_present'         => bool|null, // null = entschuldigt ODER leer (keine Eintragung)
      *   'excused'             => bool,
-     *   'late_minutes'        => int,
-     *   'left_early_minutes'  => int,
+     *   'late_minutes'        => int|null,
+     *   'left_early_minutes'  => int|null,
+     *   'empty'               => bool,      // true wenn kein Eintrag vorhanden
      * ]
      */
     $attendanceMatrix = [];
@@ -626,51 +627,47 @@ public function generateAttendanceListPdfFile(): ?string
         foreach ($personIds as $pid) {
             $row = $map[$pid] ?? null;
 
-            // STANDARD: voll anwesend (x / x)
-            $morningPresent    = false;
-            $endPresent        = false;
-            $excused           = false;
-            $lateMinutes       = 0;
-            $leftEarlyMinutes  = 0;
+            // STANDARD: kein Eintrag -> leer
+            $isEmpty          = true;
+            $morningPresent   = null;
+            $endPresent       = null;
+            $excused          = false;
+            $lateMinutes      = null;
+            $leftEarlyMinutes = null;
 
-            if ($row) {
+            if (!empty($row) && is_array($row)) {
+                $isEmpty = false;
+
                 // Wenn "present" nicht gesetzt ist → als true behandeln (Standard = anwesend)
                 $presentRaw       = $row['present'] ?? null;
                 $present          = is_null($presentRaw) ? true : (bool) $presentRaw;
+
                 $excused          = (bool)($row['excused'] ?? false);
                 $leftEarlyMinutes = (int)($row['left_early_minutes'] ?? 0);
                 $lateMinutes      = (int)($row['late_minutes'] ?? 0);
 
                 if ($excused) {
-                    // Entschuldigt: im PDF als "E" (beide Zellen), keine true/false-Flags
+                    // Entschuldigt: im PDF als "E" (beide Zellen)
                     $morningPresent = null;
                     $endPresent     = null;
                 } else {
-                    // Vormittag: nicht da ODER zu spät → F
-                    if (!$present || $lateMinutes > 0) {
-                        $morningPresent = false;
-                    } else {
-                        $morningPresent = true;
-                    }
+                    // Vormittag: nicht da ODER zu spät -> false, sonst true
+                    $morningPresent = ($present && $lateMinutes === 0);
 
-                    // Nachmittag / Ende: nicht da ODER früher gegangen → F
-                    if (!$present || $leftEarlyMinutes > 0) {
-                        $endPresent = false;
-                    } else {
-                        $endPresent = true;
-                    }
-                }
+                    // Nachmittag/Ende: nicht da ODER früher gegangen -> false, sonst true
+                    $endPresent = ($present && $leftEarlyMinutes === 0);
 
-                // Für Seite 2: nur interessante Fälle (teilweise anwesend)
-                if (!$excused && ($lateMinutes > 0 || $leftEarlyMinutes > 0)) {
-                    $partials[] = [
-                        'person_id'          => $pid,
-                        'person'             => $participantsById[$pid] ?? null,
-                        'date'               => $day->date,
-                        'late_minutes'       => $lateMinutes,
-                        'left_early_minutes' => $leftEarlyMinutes,
-                        'excused'            => $excused,
-                    ];
+                    // Für Seite 2: nur interessante Fälle (teilweise anwesend)
+                    if ($lateMinutes > 0 || $leftEarlyMinutes > 0) {
+                        $partials[] = [
+                            'person_id'          => $pid,
+                            'person'             => $participantsById[$pid] ?? null,
+                            'date'               => $day->date,
+                            'late_minutes'       => $lateMinutes,
+                            'left_early_minutes' => $leftEarlyMinutes,
+                            'excused'            => false,
+                        ];
+                    }
                 }
             }
 
@@ -680,7 +677,7 @@ public function generateAttendanceListPdfFile(): ?string
                 'excused'            => $excused,
                 'late_minutes'       => $lateMinutes,
                 'left_early_minutes' => $leftEarlyMinutes,
-                'empty'              => false,
+                'empty'              => $isEmpty,
             ];
         }
     }
@@ -713,12 +710,12 @@ public function generateAttendanceListPdfFile(): ?string
 
         foreach ($days as $day) {
             $cells[$day->id] = $attendanceMatrix[$person->id][$day->id] ?? [
-                // Fallback, falls mal was fehlt → Standard: x / x
-                'morning_present'    => false,
-                'end_present'        => false,
+                // Fallback: wenn etwas fehlt -> LEER
+                'morning_present'    => null,
+                'end_present'        => null,
                 'excused'            => false,
-                'late_minutes'       => 0,
-                'left_early_minutes' => 0,
+                'late_minutes'       => null,
+                'left_early_minutes' => null,
                 'empty'              => true,
             ];
         }
