@@ -711,14 +711,7 @@ public function generateAttendanceListPdfFile(): ?string
         $cells = [];
 
         foreach ($days as $day) {
-            $cells[$day->id] = $attendanceMatrix[$person->id][$day->id] ?? [
-                // Fallback, falls mal was fehlt → Standard: x / x
-                'morning_present'    => true,
-                'end_present'        => true,
-                'excused'            => false,
-                'late_minutes'       => 0,
-                'left_early_minutes' => 0,
-            ];
+            $cells[$day->id] = $attendanceMatrix[$person->id][$day->id] ?? [];
         }
 
         return [
