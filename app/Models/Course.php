@@ -333,7 +333,7 @@ class Course extends Model
 
         $pastDays = $this->days()
             ->whereDate('date', '<=', $today)   // Feldnamen ggf. anpassen
-            ->get(['id', 'notes']);
+            ->get(['id', 'notes', 'notes_status']);
 
         if ($pastDays->isEmpty()) {
             // Keine vergangenen Tage -> als "fehlt" werten (0) oder 1, wenn du "nichts zu dokumentieren" als ok siehst
@@ -341,7 +341,7 @@ class Course extends Model
         }
 
         $total  = $pastDays->count();
-        $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '' && $d->notes_status == 2)->count();
+        $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '' || $d->notes_status !== 2)->count();
 
         if ($filled === 0)        return 0;
         if ($filled < $total)     return 2;
