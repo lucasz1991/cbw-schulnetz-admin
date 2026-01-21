@@ -627,8 +627,8 @@ public function generateAttendanceListPdfFile(): ?string
             $row = $map[$pid] ?? null;
 
             // STANDARD: voll anwesend (x / x)
-            $morningPresent    = true;
-            $endPresent        = true;
+            $morningPresent    = false;
+            $endPresent        = false;
             $excused           = false;
             $lateMinutes       = 0;
             $leftEarlyMinutes  = 0;
