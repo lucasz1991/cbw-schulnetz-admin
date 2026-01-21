@@ -680,6 +680,7 @@ public function generateAttendanceListPdfFile(): ?string
                 'excused'            => $excused,
                 'late_minutes'       => $lateMinutes,
                 'left_early_minutes' => $leftEarlyMinutes,
+                'empty'              => false,
             ];
         }
     }
