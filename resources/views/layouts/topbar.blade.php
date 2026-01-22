@@ -32,7 +32,7 @@
 
             </div>
             <div class="flex items-center ">
-                    
+                    <x-ui.lang.language-switcher />
                     @auth
                         <!-- Settings Dropdown -->
                         <div class="ms-3 relative">

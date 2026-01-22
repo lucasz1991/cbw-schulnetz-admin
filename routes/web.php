@@ -23,6 +23,7 @@ use App\Livewire\Admin\Assets\OnboardingManagement;
 use App\Livewire\Admin\AdminTasksList;
 
 use App\Http\Controllers\PagebuilderProjectController;
+use App\Http\Controllers\LocaleController;
 
 use App\Livewire\Admin\Tests\ApiTests;
 
@@ -38,6 +39,9 @@ use App\Livewire\Admin\Tests\ApiTests;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+Route::post('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+
 Route::middleware(['auth:sanctum', 'auth.status', config('jetstream.auth_session'), 'verified'])->group(function () {
     // Admin Routes
     Route::middleware(['role:admin,staff'])->group(function () {

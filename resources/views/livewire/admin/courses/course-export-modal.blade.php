@@ -122,7 +122,6 @@
                             Enthält die Dozenten-Rechnung.
                         </div>
                     </div>
-        
                 </div>
         
                 @error('courseIds')

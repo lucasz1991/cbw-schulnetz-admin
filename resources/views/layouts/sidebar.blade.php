@@ -5,21 +5,21 @@
                 <li>
                     <a href="{{ url('/') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                         <i data-feather="home" fill="#545a6d33"></i>
-                        <span data-key="t-dashboard">Dashboard</span>
+                        <span data-key="t-dashboard">{{ __('base.dashboard') }}</span>
                     </a>
                 </li>
                 @if(Auth::user()->current_team_id <= 2 )
-                    <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">System-Verwaltung</li>
+                    <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">{{ __('base.system_administration') }}</li>
                     <li>
                         <a href="{{ route('admin.config') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                             <i data-feather="settings" fill="#545a6d33"></i>
-                            <span data-key="t-config">Einstellungen</span>
+                            <span data-key="t-config">{{ __('base.settings') }}</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('admin.employees') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                             <i data-feather="users" fill="#545a6d33"></i>
-                            <span data-key="t-employees">Mitarbeiter</span>
+                            <span data-key="t-employees">{{ __('base.employees') }}</span>
                         </a>
                     </li>
                     @if(Auth::user()->role == "admin" )
@@ -37,17 +37,17 @@
                         </li>
                     @endif
                 @endif
-                <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Management</li>
+                <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">{{ __('base.management') }}</li>
                 <li>
                     <a href="javascript: void(0);" aria-expanded="false" class="block :rtl:pr-10 py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear nav-menu hover:text-blue-500 ">
                         <i data-feather="sliders" fill="#545a6d33"></i>
-                        <span data-key="t-auth" >Verwaltung</span>
+                        <span data-key="t-auth" >{{ __('base.administration') }}</span>
                     </a>
                     <ul>
                         <li>
                             <a href="{{ route('admin.assets.exam-appointments') }}" class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                 <i data-feather="edit-3" fill="#545a6d33"></i>
-                                <span>Termine</span>
+                                <span>{{ __('base.appointments') }}</span>
                             </a>
                         </li>
                         @if(Auth::user()->role == "admin" )
@@ -60,7 +60,7 @@
                             <li>
                                 <a href="{{ route('admin.assets.onboarding') }}"  class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                     <i data-feather="video" fill="#545a6d33"></i>
-                                    <span data-key="t-video">Onboarding</span>
+                                    <span data-key="t-video">{{ __('base.onboarding') }}</span>
                                 </a>
                             </li>
                             
@@ -70,13 +70,13 @@
                 <li>
                     <a href="{{ route('admin.users') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                         <i data-feather="users" fill="#545a6d33"></i>
-                        <span data-key="t-users">Benutzer</span>
+                        <span data-key="t-users">{{ __('base.users') }}</span>
                     </a>
                 </li>
                 <li>
                     <a href="{{ route('courses.index') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                         <i data-feather="book" fill="#545a6d33"></i>
-                        <span data-key="t-users">Bausteine</span>
+                        <span data-key="t-users">{{ __('base.blocks') }}</span>
                     </a>
                 </li>
                 <li>
@@ -84,7 +84,7 @@
                         <i data-feather="list" fill="#545a6d33"></i>
                         <span data-key="t-users">
                             <div class="inline-flex items-center">
-                                Job's
+                                {{ __('base.jobs') }}
                                 <x-navigation.open-tasks-counter />
                             </div>
                         </span>
