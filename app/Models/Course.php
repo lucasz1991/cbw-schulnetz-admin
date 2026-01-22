@@ -1480,4 +1480,71 @@ public function exportAll(array $settings = []): ?StreamedResponse
 }
 
 
+
+
+
+
+protected function storeTempFileForPreview(?string $tmpPath, string $subDir, string $ext = 'pdf'): ?string
+{
+    if (! $tmpPath || ! file_exists($tmpPath)) {
+        return null;
+    }
+
+    $subDir = trim($subDir, '/'); // z.B. tmp/cospy
+    $relPath = $subDir . '/'
+        . 'course_' . ($this->klassen_id ?: $this->id)
+        . '_' . now()->format('Ymd_His')
+        . '_' . Str::random(10)
+        . '.' . ltrim($ext, '.');
+
+    // schreiben
+    Storage::disk('local')->put($relPath, file_get_contents($tmpPath));
+
+    // tmp löschen (dein alter Stream-Flow hatte das auch)
+    @unlink($tmpPath);
+
+    return $relPath; // relativer Pfad auf local-disk (storage/app/...)
+}
+
+/**
+ * NEU: Attendance-PDF erzeugen + als Datei speichern + relativen Pfad zurückgeben
+ */
+public function createAttendanceListPdfForPreview(): ?string
+{
+    $tmpPath = $this->generateAttendanceListPdfFile();
+    return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
+}
+
+public function createDokuPdfForPreview(): ?string
+{
+    $tmpPath = $this->generateDokuPdfFile();
+    return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
+}
+
+public function createMaterialConfirmationsPdfForPreview(): ?string
+{
+    $tmpPath = $this->generateMaterialConfirmationsPdfFile();
+    return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
+}
+
+public function createInvoicePdfForPreview(): ?string
+{
+    $tmpPath = $this->generateInvoicePdfFile();
+    return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
+}
+
+public function createRedThreadPdfForPreview(): ?string
+{
+    $tmpPath = $this->generateRedThreadPdfFile();
+    return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
+}
+
+public function createExamResultsPdfForPreview(): ?string
+{
+    $tmpPath = $this->generateExamResultsPdfFile();
+    return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
+}
+
+
+
 }

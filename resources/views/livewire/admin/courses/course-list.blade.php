@@ -278,5 +278,6 @@
 
     </div>
 
-    <livewire:admin.courses.course-export-modal />
+    <livewire:admin.courses.course-export-modal  />
+    <livewire:tools.file-pools.file-preview-modal />
 </div>

@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Str;
 
 class CourseList extends Component
 {
@@ -585,42 +586,128 @@ public function updated($prop): void
     }
 
 
-    public function exportAttendancePdf($courseId): ?StreamedResponse
-    {
-        $this->course = Course::findOrFail($courseId);
-        return $this->course->exportAttendanceListPdf();
-    }
-
-    public function exportDokuPdf($courseId): ?StreamedResponse
-    {
-        $this->course = Course::findOrFail($courseId);
-        return $this->course->exportDokuPdf();
-    }
-
-    public function exportMaterialConfirmationsPdf($courseId): ?StreamedResponse
-    {
-        $this->course = Course::findOrFail($courseId);
-        return $this->course->exportMaterialConfirmationsPdf();
-    }
 
 
-    public function exportInvoicePdf($courseId): ?StreamedResponse
-    {
-        $this->course = Course::findOrFail($courseId);
-        return $this->course->exportInvoicePdf();
+public function exportAttendancePdf($courseId): void
+{
+    $course = Course::findOrFail($courseId);
+
+    $relPath = $course->createAttendanceListPdfForPreview(); // NEU: speichert in storage und gibt relativen Pfad zurück
+    if (! $relPath) {
+        $this->dispatch('showAlert', 'Keine Unterrichtstage vorhanden.', 'error');
+        return;
     }
 
-    public function exportRedThreadPdf($courseId): ?StreamedResponse
-    {
-        $this->course = Course::findOrFail($courseId);
-        return $this->course->exportRedThreadPdf();
+    $filename = sprintf('Klassen-Anwesenheitsliste_%s.pdf', $course->klassen_id ?: $course->id);
+
+    $this->dispatch('filepreview:open',
+        disk: 'local',
+        path: $relPath,
+        name: $filename,
+        deleteOnClose: true
+    );
+}
+
+public function exportDokuPdf($courseId): void
+{
+    $course = Course::findOrFail($courseId);
+
+    $relPath = $course->createDokuPdfForPreview();
+    if (! $relPath) {
+        $this->dispatch('showAlert', 'Keine Unterrichtstage vorhanden.', 'error');
+        return;
     }
 
-    public function exportExamResultsPdf($courseId): ?StreamedResponse
-    {
-        $this->course = Course::findOrFail($courseId);
-        return $this->course->exportExamResultsPdf();
+    $filename = sprintf('Kurs-Doku_%s.pdf', $course->klassen_id ?: $course->id);
+
+    $this->dispatch('filepreview:open',
+        disk: 'local',
+        path: $relPath,
+        name: $filename,
+        deleteOnClose: true
+    );
+}
+
+public function exportMaterialConfirmationsPdf($courseId): void
+{
+    $course = Course::findOrFail($courseId);
+
+    $relPath = $course->createMaterialConfirmationsPdfForPreview();
+    if (! $relPath) {
+        $this->dispatch('showAlert', 'Keine Teilnehmer / Materialbestätigungen vorhanden.', 'error');
+        return;
     }
+
+    $filename = sprintf('Materialbestaetigungen_%s.pdf', $course->klassen_id ?: $course->id);
+
+    $this->dispatch('filepreview:open',
+        disk: 'local',
+        path: $relPath,
+        name: $filename,
+        deleteOnClose: true
+    );
+}
+
+public function exportInvoicePdf($courseId): void
+{
+    $course = Course::findOrFail($courseId);
+
+    $relPath = $course->createInvoicePdfForPreview();
+    if (! $relPath) {
+        $this->dispatch('showAlert', 'Keine Rechnungsdaten vorhanden.', 'error');
+        return;
+    }
+
+    $filename = sprintf('Rechnung_%s.pdf', $course->klassen_id ?: $course->id);
+
+    $this->dispatch('filepreview:open',
+        disk: 'local',
+        path: $relPath,
+        name: $filename,
+        deleteOnClose: true
+    );
+}
+
+public function exportRedThreadPdf($courseId): void
+{
+    $course = Course::findOrFail($courseId);
+
+    $relPath = $course->createRedThreadPdfForPreview();
+    if (! $relPath) {
+        $this->dispatch('showAlert', 'Roter Faden nicht verfügbar.', 'error');
+        return;
+    }
+
+    $filename = sprintf('RoterFaden_%s.pdf', $course->klassen_id ?: $course->id);
+
+    $this->dispatch('filepreview:open',
+        disk: 'local',
+        path: $relPath,
+        name: $filename,
+        deleteOnClose: true
+    );
+}
+
+public function exportExamResultsPdf($courseId): void
+{
+    $course = Course::findOrFail($courseId);
+
+    $relPath = $course->createExamResultsPdfForPreview();
+    if (! $relPath) {
+        $this->dispatch('showAlert', 'Keine Prüfungsergebnisse vorhanden.', 'error');
+        return;
+    }
+
+    $filename = sprintf('Pruefungsergebnisse_%s.pdf', $course->klassen_id ?: $course->id);
+
+    $this->dispatch('filepreview:open',
+        disk: 'local',
+        path: $relPath,
+        name: $filename,
+        deleteOnClose: true
+    );
+}
+
 
     public function exportCourse($courseId): ?StreamedResponse
     {
