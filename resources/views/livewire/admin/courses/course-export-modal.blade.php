@@ -1,5 +1,4 @@
 <div
-    wire:key="course-export-modal-{{ implode('-', $courseIds) }}"
     wire:target="export"
     wire:loading.class="opacity-50 pointer-events-none cursor-wait"
 >
