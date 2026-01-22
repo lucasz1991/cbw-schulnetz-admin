@@ -1,4 +1,12 @@
-<div class="ttt  " wire:loading.class="opacity-50 pointer-events-none cursor-wait" wire:key="course-export-modal-{{ implode('-', $courseIds) }}" wire:target="export">
+<div
+    class="ttt"
+    wire:key="course-export-modal-{{ implode('-', $courseIds) }}"
+    wire:target="export"
+    wire:loading.class="opacity-50 pointer-events-none cursor-wait"
+    @class([
+        'opacity-50 pointer-events-none cursor-wait' => $isExporting,
+    ])
+>
 
     <x-dialog-modal wire:model="showModal" >
     
@@ -131,7 +139,11 @@
                     Abbrechen
                 </x-secondary-button>
     
-                <x-button wire:click="export">
+                <x-button
+                    wire:click="export"
+                    wire:target="export"
+                    wire:loading.attr="disabled"
+                >
                     <i class="fal fa-download mr-1 text-xs"></i>
                     Download
                 </x-button>

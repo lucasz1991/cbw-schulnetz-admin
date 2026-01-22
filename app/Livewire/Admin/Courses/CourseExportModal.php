@@ -30,6 +30,9 @@ class CourseExportModal extends Component
     /** ZIP-Option */
     public bool $asZip = true;
 
+    /** Client-seitiges Loading-Flag fuer Export */
+    public bool $isExporting = false;
+
     /** Optional: Name des Exports */
     public ?string $exportName = null;
 
@@ -65,6 +68,7 @@ class CourseExportModal extends Component
         $this->asZip = true;
 
         $this->showModal = true;
+        $this->isExporting = false;
     }
 
     public function close(): void
@@ -78,6 +82,8 @@ class CourseExportModal extends Component
             $this->addError('courseIds', 'Es wurden keine Bausteine ausgewählt.');
             return;
         }
+
+        $this->isExporting = true;
 
         $courses = $this->selectedCourses;
 
@@ -100,10 +106,14 @@ class CourseExportModal extends Component
             $response = $this->exportMultipleAll($courses, $settings);
         }
 
-        $this->showModal = false;
-        $this->dispatch('toast', type: 'success', message: 'Download wurde gestartet.');
+        try {
+            $this->showModal = false;
+            $this->dispatch('toast', type: 'success', message: 'Download wurde gestartet.');
 
-        return $response;
+            return $response;
+        } finally {
+            $this->isExporting = false;
+        }
     }
 
     /**
