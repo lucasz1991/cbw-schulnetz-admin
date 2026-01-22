@@ -6,10 +6,14 @@ return [
     'save' => 'Speichern',
     'delete' => 'Löschen',
 
+    'export' => 'exportieren',
+
     'yes' => 'Ja',
     'no' => 'Nein',
 
     'back' => 'Zurück',
+
+    'block' => 'Baustein',
     'blocks' => 'Bausteine',
 
     // Navigation
@@ -31,4 +35,7 @@ return [
     'language' => 'Sprache',
     'german' => 'Deutsch',
     'english' => 'Englisch',
+
+    'tip' => 'Tipp',
+    'block.tip_description' => 'Sie können die Bausteine nach ihrem Status filtern (aktiv, inaktiv, geplant, abgeschlossen) und nach Terminen gruppieren.',
 ];

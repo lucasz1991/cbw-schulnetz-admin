@@ -6,10 +6,14 @@ return [
     'save' => 'Save',
     'delete' => 'Delete',
 
+    'export' => 'export',
+
     'yes' => 'Yes',
     'no' => 'No',
 
     'back' => 'Back',
+
+    'block' => 'Block',
     'blocks' => 'Blocks',
 
     // Navigation
@@ -31,4 +35,7 @@ return [
     'language' => 'Language',
     'german' => 'German',
     'english' => 'English',
+
+    'tip' => 'Tip',
+    'block.tip_description' => 'You can filter the blocks by their status (active, inactive, planned, completed) and group them by appointments.',
 ];

@@ -7,7 +7,7 @@
     
         {{-- TITLE --}}
         <x-slot name="title">
-            Baustein{{ count($courseIds) > 1 ? 'e' : '' }} exportieren
+            {{ count($courseIds) > 1 ? __('base.blocks') : __('base.block') }} {{ __('base.export') }}
         </x-slot>
     
         <x-slot name="content">

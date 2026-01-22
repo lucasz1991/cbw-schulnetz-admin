@@ -10,14 +10,14 @@
             </div>
             <div class="ml-3">
                 <div class="text-sm">
-                    <p class="font-medium">Tipp:</p>
-                    <p class="mt-1">Sie können die Bausteine nach ihrem Status filtern (aktiv, inaktiv, geplant, abgeschlossen) und nach Terminen gruppieren.</p>
+                    <p class="font-medium">{{ __('base.tip') }}:</p>
+                    <p class="mt-1">{{ __('base.block.tip_description') }}</p>
                 </div>
             </div>
         </div>
     </div>
     <div class="flex items-center ">
-        <h1 class="text-2xl font-bold text-gray-700">Bausteine</h1>
+        <h1 class="text-2xl font-bold text-gray-700">{{ __('base.blocks') }}</h1>
         <span class="ml-2 bg-white text-sky-600 text-xs shadow border border-sky-200 font-bold px-2 py-1 flex items-center justify-center rounded-full h-7 leading-none">
             {{ $coursesTotal }}
         </span>
