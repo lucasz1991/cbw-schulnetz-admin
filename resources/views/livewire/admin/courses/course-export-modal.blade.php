@@ -1,6 +1,6 @@
 <div
     wire:target="export"
-    wire:loading.class="opacity-50 pointer-events-none cursor-wait"
+    wire:loading.class="pointer-events-none cursor-wait"
 >
 
     <x-dialog-modal wire:model="showModal" >
