@@ -1,4 +1,4 @@
-<div wire:loading.class="opacity-50 pointer-events-none cursor-wait" >
+<div class="ttt  " wire:loading.class="opacity-50 pointer-events-none cursor-wait" wire:key="course-export-modal-{{ implode('-', $courseIds) }}" wire:target="export">
 
     <x-dialog-modal wire:model="showModal" >
     
