@@ -1,4 +1,4 @@
-<div class="px-2">
+<div class="px-2" wire:loading.class="pointer-events-none cursor-wait">
         <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
         <div class="flex">
             <div class="flex-shrink-0">
