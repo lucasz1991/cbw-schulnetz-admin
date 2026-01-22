@@ -126,7 +126,7 @@
         </x-slot>
     
         <x-slot name="footer">
-            <div class="flex justify-end gap-2">
+            <div class="flex justify-end gap-2 @if($isExporting) opacity-50 pointer-events-none cursor-wait @endif">
                 <x-secondary-button wire:click="close">
                     Abbrechen
                 </x-secondary-button>
@@ -139,6 +139,7 @@
                     <i class="fal fa-download mr-1 text-xs"></i>
                     Download
                 </x-button>
+                <span>{{ $isExporting ? 'Wird exportiert...' : '' }}</span>
             </div>
         </x-slot>
     </x-dialog-modal>
