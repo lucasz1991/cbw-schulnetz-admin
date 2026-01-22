@@ -1,4 +1,4 @@
-<div class="{{ $isExporting ? 'opacity-50 pointer-events-none cursor-wait' : '' }}">
+<div x-data="{ isExporting: @entangle('isExporting').live }" :class="{ 'opacity-50 pointer-events-none cursor-wait': isExporting }">
 
     <x-dialog-modal wire:model="showModal" >
     
@@ -139,7 +139,7 @@
                     <i class="fal fa-download mr-1 text-xs"></i>
                     Download
                 </x-button>
-                <span>{{ $isExporting ? 'Wird exportiert...' : '' }}</span>
+                <span x-show="isExporting">Wird exportiert...></span>
             </div>
         </x-slot>
     </x-dialog-modal>
