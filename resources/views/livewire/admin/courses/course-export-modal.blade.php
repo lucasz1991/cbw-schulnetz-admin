@@ -1,4 +1,23 @@
-<div x-data="{ isExporting: @entangle('isExporting').live }" :class="{ 'opacity-50 pointer-events-none cursor-wait': isExporting }">
+<div
+    wire:key="course-export-modal-{{ implode('-', $courseIds) }}"
+    wire:target="export"
+    wire:loading.class="opacity-50 pointer-events-none cursor-wait"
+    x-data="{
+        exporting: false,
+        init() {
+            const self = this;
+            const component = Livewire.find(@js($this->id));
+            component.hook('message.sent', ({ message }) => {
+                if (message.method === 'export') self.exporting = true;
+            });
+            component.hook('message.failed', () => self.exporting = false);
+            component.hook('message.processed', ({ message }) => {
+                if (message.method === 'export') self.exporting = false;
+            });
+        },
+    }"
+    :class="{ 'opacity-50 pointer-events-none cursor-wait': exporting }"
+>
 
     <x-dialog-modal wire:model="showModal" >
     
@@ -126,11 +145,11 @@
         </x-slot>
     
         <x-slot name="footer">
-            <div class="flex justify-end gap-2 @if($isExporting) opacity-50 pointer-events-none cursor-wait @endif">
+            <div class="flex justify-end gap-2 items-center" :class="{ 'opacity-50 pointer-events-none cursor-wait': exporting }">
                 <x-secondary-button wire:click="close">
                     Abbrechen
                 </x-secondary-button>
-    
+
                 <x-button
                     wire:click="export"
                     wire:target="export"
@@ -139,7 +158,7 @@
                     <i class="fal fa-download mr-1 text-xs"></i>
                     Download
                 </x-button>
-                <span x-show="isExporting">Wird exportiert...></span>
+                <span x-show="exporting">Wird exportiert...></span>
             </div>
         </x-slot>
     </x-dialog-modal>
