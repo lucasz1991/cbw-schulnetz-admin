@@ -132,14 +132,13 @@
         </x-slot>
     
         <x-slot name="footer">
-            <div class="flex justify-end gap-2 items-center">
+            <div class="flex justify-end gap-2 items-center" wire:loading.class=" cursor-not-allowed">
                 <x-secondary-button wire:click="close">
                     Abbrechen
                 </x-secondary-button>
 
                 <x-button
                     wire:click="export"
-                    wire:target="export"
                     wire:loading.attr="disabled"
                 >
                     <i class="fal fa-download mr-1 text-xs"></i>
