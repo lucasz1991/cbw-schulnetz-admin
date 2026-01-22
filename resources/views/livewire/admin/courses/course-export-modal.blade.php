@@ -1,5 +1,4 @@
 <div class="{{ $isExporting ? 'opacity-50 pointer-events-none cursor-wait' : '' }}">
->
 
     <x-dialog-modal wire:model="showModal" >
     
