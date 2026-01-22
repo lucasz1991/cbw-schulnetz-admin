@@ -2,24 +2,6 @@
     wire:key="course-export-modal-{{ implode('-', $courseIds) }}"
     wire:target="export"
     wire:loading.class="opacity-50 pointer-events-none cursor-wait"
-    x-data="{
-        exporting: false,
-        init() {
-            const self = this;
-            const componentId = $wire.__instance.id;
-            const component = Livewire.find(componentId);
-            if (!component) return;
-
-            component.hook('message.sent', ({ message }) => {
-                if (message.method === 'export') self.exporting = true;
-            });
-            component.hook('message.failed', () => self.exporting = false);
-            component.hook('message.processed', ({ message }) => {
-                if (message.method === 'export') self.exporting = false;
-            });
-        },
-    }"
-    :class="{ 'opacity-50 pointer-events-none cursor-wait': exporting }"
 >
 
     <x-dialog-modal wire:model="showModal" >
@@ -148,7 +130,7 @@
         </x-slot>
     
         <x-slot name="footer">
-            <div class="flex justify-end gap-2 items-center" :class="{ 'opacity-50 pointer-events-none cursor-wait': exporting }">
+            <div class="flex justify-end gap-2 items-center">
                 <x-secondary-button wire:click="close">
                     Abbrechen
                 </x-secondary-button>
@@ -161,7 +143,9 @@
                     <i class="fal fa-download mr-1 text-xs"></i>
                     Download
                 </x-button>
-                <span x-show="exporting">Wird exportiert...></span>
+                <span class="text-xs text-gray-500" wire:loading.delay wire:target="export">
+                    Wird exportiert...
+                </span>
             </div>
         </x-slot>
     </x-dialog-modal>
