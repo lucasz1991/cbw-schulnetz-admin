@@ -6,7 +6,10 @@
         exporting: false,
         init() {
             const self = this;
-            const component = Livewire.find(@js($this->id));
+            const componentId = $wire.__instance.id;
+            const component = Livewire.find(componentId);
+            if (!component) return;
+
             component.hook('message.sent', ({ message }) => {
                 if (message.method === 'export') self.exporting = true;
             });
