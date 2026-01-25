@@ -2,10 +2,7 @@
     <div class="flex items-start justify-between gap-4">
         {{-- linke Buttons --}}
         <div>
-            <x-ui.buttons.button-basic href="{{ route('courses.index') }}" :size="'sm'" class="px-2">
-                <i class="fal fa-arrow-left text-[14px] mr-2 text-gray-500"></i>
-                {{ __('base.back') }}
-            </x-ui.buttons.button-basic>
+            <x-back-button />
         </div>
         {{-- rechte Buttons --}}
         <x-ui.dropdown.anchor-dropdown
