@@ -57,6 +57,7 @@
                                     <span data-key="t-mails">Nachrichten</span>
                                 </a>
                             </li>
+                            @endif
                             <li>
                                 <a href="{{ route('admin.assets.onboarding') }}"  class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                     <i data-feather="video" fill="#545a6d33"></i>
@@ -64,7 +65,6 @@
                                 </a>
                             </li>
                             
-                        @endif
                     </ul>
                 </li>
                 <li>
