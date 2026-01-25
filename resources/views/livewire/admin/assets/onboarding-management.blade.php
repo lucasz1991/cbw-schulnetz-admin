@@ -272,6 +272,8 @@
                     <thead class="bg-gray-50">
                         <tr class="text-left text-xs font-semibold text-gray-600">
                             <th class="px-4 py-3">Titel</th>
+                            <th class="px-4 py-3">Zielgruppe</th>
+                            <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3 text-right"></th>
                         </tr>
                     </thead>
@@ -313,6 +315,16 @@
                                             </div>
                                         </div>
                                     </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    {{ ucfirst(data_get($video->settings, 'type', '')) ?: 'Keine Zielgruppe' }}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    @if($video->is_active)
+                                        Aktiv
+                                    @else
+                                        Inaktiv
+                                    @endif
                                 </td>
 
                                 <td class="px-4 py-3 text-right">
