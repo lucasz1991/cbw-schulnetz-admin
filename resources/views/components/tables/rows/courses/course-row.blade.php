@@ -151,57 +151,59 @@
 @endphp
 
 @foreach($exportActions as $action)
-    @if($action['can'])
-        {{-- Klickbar: mit Dropdown + Download-Button --}}
-        <x-ui.dropdown.anchor-dropdown
-            align="right"
-            width="40"
-            dropdownClasses="mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
-            contentClasses="bg-white"
-            :overlay="false"
-            :trap="false"
-            :scrollOnOpen="false"
-            :offset="6"
-        >
-            {{-- Trigger: Icon + Badge --}}
-            <x-slot name="trigger">
-                <div
-                    title="{{ $action['title'] }}"
-                    class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2 cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition"
-                >
-                    <i class="{{ $action['icon'] }}"></i>
-                    <div class="absolute -top-2 -right-2 bg-white/70 rounded-full aspect-square p-[2px]">
-                        {!! $action['badge'] !!}
-                    </div>
-                </div>
-            </x-slot>
-
-            {{-- Dropdown-Inhalt: Download-Button --}}
-            <x-slot name="content">
-                <div class="py-1 text-xs text-gray-700">
-                    <button
-                        type="button"
-                        wire:click="{{ $action['wire'] }}"
-                        class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm"
+    <div wire:key="export-action-{{ $action['title'] }}-{{ $item->id }}">
+        @if($action['can'])
+            {{-- Klickbar: mit Dropdown + Download-Button --}}
+            <x-ui.dropdown.anchor-dropdown
+                align="right"
+                width="40"
+                dropdownClasses="mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+                contentClasses="bg-white"
+                :overlay="false"
+                :trap="false"
+                :scrollOnOpen="false"
+                :offset="6"
+            >
+                {{-- Trigger: Icon + Badge --}}
+                <x-slot name="trigger">
+                    <div
+                        title="{{ $action['title'] }}"
+                        class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2 cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition"
                     >
-                        <i class="fal fa-download text-[14px] text-gray-500"></i>
-                        <span>{{ $action['title'] }}</span>
-                    </button>
+                        <i class="{{ $action['icon'] }}"></i>
+                        <div class="absolute -top-2 -right-2 bg-white/70 rounded-full aspect-square p-[2px]">
+                            {!! $action['badge'] !!}
+                        </div>
+                    </div>
+                </x-slot>
+    
+                {{-- Dropdown-Inhalt: Download-Button --}}
+                <x-slot name="content">
+                    <div class="py-1 text-xs text-gray-700">
+                        <button
+                            type="button"
+                            wire:click="{{ $action['wire'] }}"
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm"
+                        >
+                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                            <span>{{ $action['title'] }}</span>
+                        </button>
+                    </div>
+                </x-slot>
+            </x-ui.dropdown.anchor-dropdown>
+        @else
+            {{-- Nicht klickbar: wie bisher, ohne Dropdown --}}
+            <div
+                title="{{ $action['title'] }}"
+                class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-400 border border-gray-200 mr-2 cursor-not-allowed opacity-60"
+            >
+                <i class="{{ $action['icon'] }}"></i>
+                <div class="absolute -top-2 -right-2 bg-white/70 rounded-full aspect-square p-[2px]">
+                    {!! $action['badge'] !!}
                 </div>
-            </x-slot>
-        </x-ui.dropdown.anchor-dropdown>
-    @else
-        {{-- Nicht klickbar: wie bisher, ohne Dropdown --}}
-        <div
-            title="{{ $action['title'] }}"
-            class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-400 border border-gray-200 mr-2 cursor-not-allowed opacity-60"
-        >
-            <i class="{{ $action['icon'] }}"></i>
-            <div class="absolute -top-2 -right-2 bg-white/70 rounded-full aspect-square p-[2px]">
-                {!! $action['badge'] !!}
             </div>
-        </div>
-    @endif
+        @endif
+    </div>
 @endforeach
 
     </div>
