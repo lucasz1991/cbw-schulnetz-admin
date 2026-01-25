@@ -118,6 +118,8 @@ public function updated($prop): void
         $s = '%' . str_replace(' ', '%', $this->search) . '%';
         $q->where(function ($w) use ($s) {
             $w->where('courses.title', 'like', $s)
+              ->orWhere('courses.description', 'like', $s)
+              ->orWhere('courses.source_snapshot->course->kurzbez', 'like', $s)
               ->orWhere('courses.klassen_id', 'like', $s)
               ->orWhere('courses.termin_id', 'like', $s)
               ->orWhere('courses.room', 'like', $s)
