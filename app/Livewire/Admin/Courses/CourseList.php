@@ -100,7 +100,7 @@ public function updated($prop): void
 
    protected function baseQuery()
 {
-    $now   = Carbon::now();
+    $now   = Carbon::now(); 
     $today = $now->toDateString();
 
     // defensiv: nur filtern, wenn Property existiert
