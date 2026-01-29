@@ -166,7 +166,7 @@ class OnboardingManagement extends Component
 
             // Create: 1 Datei required; Edit: optional
             'fileUploads' => [$this->editingId ? 'nullable' : 'required', 'array', 'max:1'],
-            'fileUploads.*' => ['file', 'mimes:mp4,wav,pdf', 'max:101200'], // max 99 MB + Overhead
+            'fileUploads.*' => ['file', 'mimes:mp4,wav,pdf'], // max 99 MB + Overhead
         ];
     }
 
