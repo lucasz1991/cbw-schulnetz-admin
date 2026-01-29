@@ -497,7 +497,7 @@
                                     :model="'fileUploads'"
                                     mode="single"
                                     label="Datei auswaehlen"
-                                    acceptedFiles="mp4,wav,pdf"
+                                    acceptedFiles=".mp4,.wav,.pdf"
                                     :maxFilesize="100"
                                 />
                             </div>
