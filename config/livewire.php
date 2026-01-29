@@ -68,7 +68,7 @@ return [
         'disk' => null,
 
         // Erlaubt größere Videos/PDFs bis 100 MB und beschränkt die Mimes auf die genutzten Typen.
-        'rules' => ['required', 'file', 'mimes:mp4,wav,pdf', 'max:102400'], // max in KB (102400 = 100 MB)
+        'rules' => ['required', 'file', 'max:102400'], // max in KB (102400 = 100 MB)
 
         'directory' => null,   // Example: 'tmp'                      | Default: 'livewire-tmp'
         'middleware' => null,  // Example: 'throttle:5,1'             | Default: 'throttle:60,1'
