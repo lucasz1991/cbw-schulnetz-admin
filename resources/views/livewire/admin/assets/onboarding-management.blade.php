@@ -496,7 +496,7 @@
                                 <x-ui.filepool.drop-zone
                                     :model="'fileUploads'"
                                     mode="single"
-                                    label="Datei auswaehlen"
+                                    label="Datei auswählen"
                                     acceptedFiles=".mp4,.wav,.pdf"
                                     :maxFilesize="100"
                                 />
