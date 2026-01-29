@@ -12,6 +12,7 @@
 <div
   x-data="{
     dz: null,
+    maxFilesize: {{ $maxFilesize ?? '50' }}, // Default 50 MB
 
     init() {
       window.addEventListener('filepool:saved', () => {
@@ -34,7 +35,7 @@
         previewsContainer: el.querySelector('.dz-previews') || el,
         addRemoveLinks: true,
         maxFiles: 20,
-        maxFilesize: 15,
+        maxFilesize: {{ $maxFilesize ?? '50' }},
         chunking: true,
         chunkSize: 1000000, // 1 MB pro Chunk
       });
