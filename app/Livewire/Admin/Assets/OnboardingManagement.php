@@ -165,7 +165,7 @@ class OnboardingManagement extends Component
             'thumbnailDataUrl' => ['nullable', 'string'],
 
             // Create: 1 Datei required; Edit: optional
-            'fileUploads' => [$this->editingId ? 'nullable' : 'required', 'array', 'max:1'],
+            'fileUploads' => [$this->editingId ? 'nullable' : 'required', 'array'],
             'fileUploads.*' => ['file', 'mimes:mp4,wav,pdf'], // max 99 MB + Overhead
         ];
     }
