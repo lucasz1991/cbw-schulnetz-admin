@@ -166,7 +166,7 @@ class OnboardingManagement extends Component
 
             // Create: 1 Datei required; Edit: optional
             'fileUploads' => [$this->editingId ? 'nullable' : 'required', 'array', 'max:1'],
-            'fileUploads.*' => ['file', 'mimes:mp4,wav,pdf', 'max:51200'],
+            'fileUploads.*' => ['file', 'mimes:mp4,wav,pdf', 'max:101200'], // max 99 MB + Overhead
         ];
     }
 
@@ -180,7 +180,7 @@ class OnboardingManagement extends Component
             'fileUploads.max' => 'Bitte nur eine Datei hochladen.',
 
             'fileUploads.*.mimes' => 'Nur .mp4, .wav oder .pdf Dateien sind erlaubt.',
-            'fileUploads.*.max' => 'Die Datei überschreitet die maximale Größe von 50 MB.',
+            'fileUploads.*.max' => 'Die Datei überschreitet die maximale Größe von 100 MB.',
         ];
     }
 

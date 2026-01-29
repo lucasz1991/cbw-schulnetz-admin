@@ -498,6 +498,7 @@
                                     :mode="'single'"
                                     :label="'Datei auswaehlen'"
                                     :acceptedFiles="'mp4,wav,pdf'"
+                                    :maxFilesize="100"
                                 />
                             </div>
                             <x-input-error for="fileUploads.*" class="mt-2" />
