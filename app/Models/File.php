@@ -20,6 +20,7 @@ class File extends Model
         'user_id',
         'name',
         'path',
+        'disk',
         'mime_type',
         'type',
         'size',
@@ -95,6 +96,13 @@ class File extends Model
 
             $request = Request::create('/admin/media/upload', 'POST');
             $request->files->set('file', $uploaded);
+            //weitere Parameter setzen, z.B. 'folder' oder 'visibility'
+            $request->merge([
+                'folder'     => null,
+                'visibility' => $this->disk === 'public' ? 'public' : 'private',
+            ]);
+            
+
 
             $controller = app(MediaController::class);
             $response = $controller->store($request);
