@@ -36,8 +36,7 @@
         addRemoveLinks: true,
         maxFiles: 20,
         maxFilesize: {{ $maxFilesize ?? '50' }},
-        chunking: true,
-        chunkSize: 1000000, // 1 MB pro Chunk
+        chunking: false,
       });
       // Mehrere Dateien hinzufügen → bestehende + neue mergen, dann CHANGE feuern
       this.dz.on('addedfile', (file) => {
