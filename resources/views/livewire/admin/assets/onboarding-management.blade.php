@@ -495,9 +495,9 @@
                             <div class="mt-1" x-ref="dropzoneRoot">
                                 <x-ui.filepool.drop-zone
                                     :model="'fileUploads'"
-                                    :mode="'single'"
-                                    :label="'Datei auswaehlen'"
-                                    :acceptedFiles="'mp4,wav,pdf'"
+                                    mode="single"
+                                    label="Datei auswaehlen"
+                                    acceptedFiles="mp4,wav,pdf"
                                     :maxFilesize="100"
                                 />
                             </div>
