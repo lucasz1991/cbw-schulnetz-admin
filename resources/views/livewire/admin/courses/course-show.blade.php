@@ -415,10 +415,16 @@
         class="mt-4"
     >
         <x-ui.accordion.tab-panel for="courseDays">
-            <livewire:admin.courses.course-days-panel :course="$course" lazy />  
+            <livewire:admin.courses.course-days-panel
+                :course="$course"
+                :key="'course-days-'.$course->id"
+            />  
         </x-ui.accordion.tab-panel>
         <x-ui.accordion.tab-panel for="courseParticipants">
-            <livewire:admin.courses.course-participants-panel :course="$course" lazy />
+            <livewire:admin.courses.course-participants-panel
+                :course="$course"
+                :key="'course-participants-'.$course->id"
+            />
         </x-ui.accordion.tab-panel>
     </x-ui.accordion.tabs>
 </div>  

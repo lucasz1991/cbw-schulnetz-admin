@@ -7,6 +7,7 @@ use App\Models\Course;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
+use App\Models\CourseDay;
 
 class CourseDaysPanel extends Component
 {
@@ -65,9 +66,13 @@ class CourseDaysPanel extends Component
 
                 // Doku-Text (HTML)
                 $notesHtml = $day->notes ?? null;
+                $hasNotes  = filled($day->notes);
+                $noteStatus = (int)($day->note_status ?? CourseDay::NOTE_STATUS_MISSING);
+                $noteStatusMeta = $this->mapNoteStatus($noteStatus);
 
                 // Anwesenheits-Statistik aus attendance_data JSON
                 $attendance = $this->buildAttendanceSummary($day->attendance_data ?? []);
+                $hasAttendance = ($attendance['total'] ?? 0) > 0;
 
                 return [
                     'id'         => $day->id,
@@ -76,10 +81,33 @@ class CourseDaysPanel extends Component
                     'end_time'   => $end,
                     'room'       => $day->room ?? null,
                     'notes_html' => $notesHtml,
+                    'has_notes'  => $hasNotes,
+                    'note_status' => $noteStatus,
+                    'note_status_label' => $noteStatusMeta['label'],
+                    'note_status_classes' => $noteStatusMeta['classes'],
+                    'has_attendance' => $hasAttendance,
                     'attendance' => $attendance,
                 ];
             })
             ->values();
+    }
+
+    protected function mapNoteStatus(int $status): array
+    {
+        return match ($status) {
+            CourseDay::NOTE_STATUS_DRAFT => [
+                'label'   => 'Entwurf',
+                'classes' => 'bg-amber-50 text-amber-700 border border-amber-200',
+            ],
+            CourseDay::NOTE_STATUS_COMPLETED => [
+                'label'   => 'Fertiggestellt',
+                'classes' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+            ],
+            default => [
+                'label'   => 'Fehlt',
+                'classes' => 'bg-neutral-50 text-neutral-500 border border-neutral-200',
+            ],
+        };
     }
 
     /**
