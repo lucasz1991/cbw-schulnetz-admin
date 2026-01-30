@@ -48,10 +48,9 @@
 
                         {{-- Rechte Seite: Status-Badges fuer Doku & Anwesenheit --}}
                         <div class="mt-2 sm:mt-0 flex flex-wrap items-center gap-2 text-[11px]">
-                            <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5
-                                {{ $day['has_notes'] ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-neutral-50 text-neutral-500 border-neutral-200' }}">
-                                <i class="fal fa-file-edit text-[11px]"></i>
-                                <span>{{ $day['has_notes'] ? 'Dokumentation vorhanden' : 'Keine Dokumentation' }}</span>
+                            <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] {{ $day['note_status_classes'] }}">
+                                <i class="fal fa-flag text-[11px]"></i>
+                                <span>Dokumentation {{ $day['note_status_label'] }}</span>
                             </span>
 
                             <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5
