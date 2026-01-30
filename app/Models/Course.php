@@ -193,8 +193,9 @@ class Course extends Model
     public function getStatusAttribute(): string
     {
         $now   = now();
-        $start = $this->planned_start_date;
-        $end   = $this->planned_end_date;
+        // normalize to full calendar days so "today" counts as running
+        $start = optional($this->planned_start_date)->copy()->startOfDay();
+        $end   = optional($this->planned_end_date)->copy()->endOfDay();
 
         if ($start && $end) {
             if ($now->lt($start)) {
