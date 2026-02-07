@@ -188,7 +188,7 @@
                             class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm disabled:opacity-60 disabled:cursor-wait"
                         >
                             <i class="fal fa-download text-[14px] text-gray-500" wire:loading.remove wire:target="{{ $action['wire'] }}"></i>
-                            <i class="fal fa-spinner fa-spin text-[14px] text-gray-500" wire:loading wire:target="{{ $action['wire'] }}"></i>
+                            <i class="fal fa-spinner fa-spin text-[14px] text-blue-500" wire:loading wire:target="{{ $action['wire'] }}"></i>
                             <span>{{ $action['title'] }}</span>
                         </button>
                     </div>
