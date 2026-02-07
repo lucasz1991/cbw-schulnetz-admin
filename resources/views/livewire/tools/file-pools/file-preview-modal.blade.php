@@ -247,8 +247,11 @@
           :mode="'basic'"
           wire:click="close"
           :size="'sm'"
+          wire:loading.attr="disabled"
+          class="disabled:opacity-60 disabled:cursor-wait"
         >
-          <i class="fas fa-times mr-2"></i>
+          <i class="fas fa-times mr-2 " wire:loading.remove></i>
+          <i class="fal fa-spinner fa-spin text-[14px] text-blue-500" wire:loading ></i>
           Schließen
         </x-ui.buttons.button-basic>
       </div>
