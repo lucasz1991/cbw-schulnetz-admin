@@ -12,7 +12,7 @@ class AdminTasksList extends Component
     use WithPagination;
 
     // Filter OHNE strikte Typen, damit Livewire Strings aus Query/Request setzen darf
-    public $filterStatus   = null; // null = alle, Default setzen wir in mount()
+    public $filterStatus   = AdminTask::STATUS_OPEN; // null = alle, Default setzen wir in mount()
     public $filterPriority = null; // null = alle
     public bool $onlyMine  = false;
 
