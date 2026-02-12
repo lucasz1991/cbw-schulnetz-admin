@@ -134,7 +134,7 @@
             <div class="flex gap-2">
 
                 {{-- Kontext einsehen / zurück --}}
-                @if($task->context && (int) $task->assigned_to === (int) $currentUserId)
+                @if($task->context && (int) $task->assigned_to === (int) $currentUserId || Auth::user()->role == "admin")
                     <x-ui.buttons.button-basic
                         :mode="'blue'"
                         :size="'sm'"
