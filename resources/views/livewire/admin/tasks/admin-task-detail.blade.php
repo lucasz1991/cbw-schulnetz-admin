@@ -163,6 +163,11 @@
                     </x-ui.buttons.button-basic>
                 @endif
 
+                
+            </div>
+            
+            {{-- Rechte Button-Gruppe --}}
+            <div class="flex gap-2">
                 {{-- Abschließen --}}
                 @if(
                     $task->status !== \App\Models\AdminTask::STATUS_COMPLETED &&
@@ -178,11 +183,6 @@
                         Abschließen
                     </x-ui.buttons.button-basic>
                 @endif
-
-            </div>
-
-            {{-- Rechte Button-Gruppe --}}
-            <div class="flex gap-2">
                 <x-ui.buttons.button-basic
                    :mode="'white'"
                      :size="'sm'"
