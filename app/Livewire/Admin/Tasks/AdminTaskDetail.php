@@ -81,6 +81,8 @@ class AdminTaskDetail extends Component
 
         $task->assignTo(Auth::id());
 
+        $this->switchToContext();
+
         $this->task = $task->fresh(['creator', 'assignedAdmin', 'context']);
 
         $this->dispatch('taskAssigned');
