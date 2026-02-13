@@ -79,19 +79,20 @@
                         <span data-key="t-users">{{ __('base.blocks') }}</span>
                     </a>
                 </li>
-                <li>
-                    <a href="{{ route('admin.tasks.index') }}"   class=" block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                        <i data-feather="list" fill="#545a6d33"></i>
-                        <span data-key="t-users">
-                            <div class="inline-flex items-center">
-                                {{ __('base.jobs') }}
-                                <x-navigation.open-tasks-counter />
-                            </div>
-                        </span>
-                    </a>
-                </li>
-
-                @if(Auth::user()->role == "admin" )
+                @if(Auth::user()->role == "admin"  || Auth::user()->current_team_id === 6)
+                    <li>
+                        <a href="{{ route('admin.tasks.index') }}"   class=" block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <i data-feather="list" fill="#545a6d33"></i>
+                            <span data-key="t-users">
+                                <div class="inline-flex items-center">
+                                    {{ __('base.jobs') }}
+                                    <x-navigation.open-tasks-counter />
+                                </div>
+                            </span>
+                        </a>
+                    </li>
+                @endif
+                @if(Auth::user()->role == "admin")
                     <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Dev Tests</li>
                     <li>
                         <a href="{{ route('admin.tests.api') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
