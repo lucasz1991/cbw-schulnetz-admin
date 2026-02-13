@@ -19,16 +19,12 @@
 
             <div class="md:col-span-2 space-y-1">
                 <x-ui.forms.label value="Rolle"/>
-                <select class="w-full rounded border-gray-300" wire:model.live.defer="primary_team_id">
-                    <option value="">— bitte wählen —</option>
+                <x-ui.forms.select wire:model.live.defer="primary_team_id" placeholder="-- bitte wählen --">
                     @foreach($teams as $t)
                         <option value="{{ $t->id }}">{{ $t->name }}</option>
                     @endforeach
-                </select>
+                </x-ui.forms.select>
                 <x-ui.forms.input-error for="primary_team_id"/>
-                <p class="text-xs text-gray-500">
-                    Das gewählte Team wird als aktuelles Team gespeichert.
-                </p>
             </div>
 
             <div class="md:col-span-2 grid md:grid-cols-2 gap-4">

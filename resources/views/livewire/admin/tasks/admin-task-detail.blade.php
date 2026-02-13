@@ -81,7 +81,14 @@
                     <div>
                         <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Kontext</h3>
                         <p class="mt-1 text-sm text-slate-700">
-                            {{ $task->context_text ?? 'Kein Kontext' }}
+                            <span class="inline-flex items-center mt-2 gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                {{ $task->context_text ?? 'Kein Kontext' }}
+                            </span>
+                            @if(class_basename($task->context_type) == 'ReportBook' )
+                                <span class="inline-flex items-center mt-2 gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                    {{ $task->context->course->planned_start_date ? Carbon\Carbon::parse($task->context->course->planned_start_date)->format('d.m.Y') : '-' }} - {{ $task->context->course->planned_end_date ? Carbon\Carbon::parse($task->context->course->planned_end_date)->format('d.m.Y') : '-' }}
+                                </span>
+                            @endif
                         </p>
                     </div>
                     {{-- Beschreibung --}}
@@ -171,7 +178,8 @@
                 {{-- Abschließen --}}
                 @if(
                     $task->status !== \App\Models\AdminTask::STATUS_COMPLETED &&
-                    (int) $task->assigned_to === (int) $currentUserId
+                    (int) $task->assigned_to === (int) $currentUserId &&
+                    $viewMode === 'task'
                 )
                     <x-ui.buttons.button-basic
                         :mode="'success'"

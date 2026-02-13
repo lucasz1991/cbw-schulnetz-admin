@@ -1,3 +1,4 @@
+<div class="">
 <div class="space-y-8">
 
 {{-- Hinweisbox --}}
@@ -100,5 +101,6 @@
     <div class="mt-4">
         {{ $tasks->links() }}
     </div>
+</div>
 <livewire:admin.tasks.admin-task-detail wire:key="admin-task-detail-global"  />
 </div>

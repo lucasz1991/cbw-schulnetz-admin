@@ -105,7 +105,7 @@ class AdminTask extends Model
         return match ($this->context_type) {
             Course::class       => 'Kurs: ' . ($this->context->title ?? 'Unbekannt'),
             User::class         => 'User: ' . ($this->context->name ?? 'Unbekannt'),
-            ReportBook::class   => 'Berichtsheft: ' . ($this->context->course->title ?? 'Unbekannt'),
+            ReportBook::class   => 'Berichtsheft: ' . ($this->context->course->title ?? 'Unbekannt') . ' - ' . ($this->context->course->course_short_name ?? 'Unbekannt'),
             UserRequest::class  => $this->context->type_label ?? 'Unbekannt',
             default             => 'Unbekannter Kontext',
         };

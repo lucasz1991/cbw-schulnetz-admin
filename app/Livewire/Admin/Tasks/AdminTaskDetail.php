@@ -5,6 +5,8 @@ namespace App\Livewire\Admin\Tasks;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Models\AdminTask;
+use App\Models\Mail;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 
 // Falls dein Context wirklich App\Models\ReportBook ist:
@@ -22,6 +24,8 @@ class AdminTaskDetail extends Component
 
     // erhält zusätzliche Metadaten beim Öffnen
     public array $payload = [];
+    public array $entryApprovals = [];
+    public string $rejectionComment = '';
 
     protected $listeners = [
         'openAdminTaskDetail' => 'open',
@@ -48,6 +52,8 @@ class AdminTaskDetail extends Component
         ])->find($taskId);
 
         $this->payload = $meta;
+        $this->initializeEntryApprovals();
+        $this->rejectionComment = '';
         $this->viewMode = 'task';
         $this->showDetailModal = true;
     }
@@ -128,6 +134,7 @@ class AdminTaskDetail extends Component
      * (bei dir: 2)
      */
     protected int $reviewedStatus = 2;
+    protected int $rejectedStatus = 3;
 
     /**
      * File-Type für Ausbilder-Signatur (wie Teilnehmer: sign_reportbook_participant)
@@ -167,6 +174,31 @@ class AdminTaskDetail extends Component
 
         $this->task = $this->task->fresh(['creator', 'assignedAdmin', 'context']);
         $this->viewMode = 'context';
+
+        $this->markAsCompleted();
+    }
+
+    public function rejectReportBook(): void
+    {
+        if (! $this->taskId || ! $this->task) return;
+        if ($this->task->task_type !== 'reportbook_review') return;
+        if ((int) $this->task->assigned_to !== (int) Auth::id()) return;
+
+        $reportBook = $this->task->context;
+
+        if (! $reportBook) return;
+
+        if (! $this->hasRejectedEntries()) {
+            return;
+        }
+
+
+        $this->applyReportBookReview($reportBook);
+        $this->sendReportBookRejectionMessage($reportBook);
+
+        $this->task = $this->task->fresh(['creator', 'assignedAdmin', 'context']);
+        $this->viewMode = 'context';
+        $this->rejectionComment = '';
 
         $this->markAsCompleted();
     }
@@ -246,15 +278,151 @@ class AdminTaskDetail extends Component
      */
     protected function applyReportBookReview($reportBook): void
     {
-        $reportBook->entries()
-            ->where('status', '!=', $this->reviewedStatus)
-            ->update(['status' => $this->reviewedStatus]);
+        $entryIds = $reportBook->entries()->pluck('id')->map(fn ($id) => (string) $id);
 
-        // Optional: Gesamtstatus
-        if ($reportBook->isFillable('status')) {
-            $reportBook->status = 'reviewed';
-            $reportBook->save();
+        $approvedEntryIds = [];
+        $rejectedEntryIds = [];
+
+        foreach ($entryIds as $entryId) {
+            $isApproved = filter_var(
+                $this->entryApprovals[$entryId] ?? true,
+                FILTER_VALIDATE_BOOLEAN
+            );
+
+            if ($isApproved) {
+                $approvedEntryIds[] = (int) $entryId;
+                continue;
+            }
+
+            $rejectedEntryIds[] = (int) $entryId;
         }
+
+        if (! empty($approvedEntryIds)) {
+            $reportBook->entries()
+                ->whereIn('id', $approvedEntryIds)
+                ->update(['status' => $this->reviewedStatus]);
+        }
+
+        if (! empty($rejectedEntryIds)) {
+            $reportBook->entries()
+                ->whereIn('id', $rejectedEntryIds)
+                ->update(['status' => $this->rejectedStatus]);
+        }
+
+    }
+
+
+    protected function initializeEntryApprovals(): void
+    {
+        $this->entryApprovals = [];
+
+        if (! $this->task) {
+            return;
+        }
+
+        if ($this->task->task_type !== 'reportbook_review' || ! $this->task->context) {
+            return;
+        }
+
+        $entryIds = $this->task->context->entries()->pluck('id');
+
+        foreach ($entryIds as $entryId) {
+            $this->entryApprovals[(string) $entryId] = true;
+        }
+    }
+
+    protected function hasRejectedEntries(): bool
+    {
+        foreach ($this->entryApprovals as $isApproved) {
+            $approved = filter_var($isApproved, FILTER_VALIDATE_BOOLEAN);
+
+            if (! $approved) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function sendReportBookRejectionMessage($reportBook): void
+    {
+        $recipientId = (int) data_get($reportBook, 'user_id');
+
+        if (! $recipientId) {
+            return;
+        }
+
+        $courseTitle = data_get($reportBook, 'course.title') ?? 'dein Berichtsheft';
+        $courseId = (int) data_get($reportBook, 'course_id');
+        $baseUrl = rtrim((string) (Setting::getValue('api', 'base_api_url') ?: config('app.url')), '/');
+        $rejectedEntryIds = $this->getRejectedEntryIds();
+
+        $rejectedEntries = $reportBook->entries()
+            ->whereIn('id', $rejectedEntryIds)
+            ->orderBy('entry_date')
+            ->orderBy('id')
+            ->get(['entry_date', 'created_at', 'course_day_id']);
+
+        $entryLines = [];
+        foreach ($rejectedEntries as $entry) {
+            $dateValue = $entry->entry_date ?? $entry->created_at;
+            $dateText = $dateValue ? $dateValue->format('d.m.Y') : '-';
+            $dayId = (int) ($entry->course_day_id ?? 0);
+
+            if ($courseId > 0 && $dayId > 0) {
+                $entryLines[] = "- {$dateText}: <a href='{$baseUrl}/user/reportbook?course={$courseId}&day={$dayId}' target='_blank'>Berichtsheft ansehen</a>";
+                continue;
+            }
+
+            if ($courseId > 0) {
+                $entryLines[] = "- {$dateText}: <a href='{$baseUrl}/user/reportbook?course={$courseId}' target='_blank'>Berichtsheft ansehen</a>";
+                continue;
+            }
+
+            $entryLines[] = "- {$dateText}";
+        }
+
+        $entriesText = empty($entryLines)
+            ? "- Keine konkreten Einträge gefunden."
+            : implode("\n", $entryLines);
+
+        $subject = 'Berichtsheft abgelehnt';
+        $body = "Dein Berichtsheft für den Baustein ({$courseTitle}) wurde abgelehnt und muss neu eingereicht werden.<br><br>"
+            . "Abgelehnte Einträge:<br>"
+            . "{$entriesText}<br><br>"
+            . "Begründung:<br>"
+            . trim($this->rejectionComment);
+
+        Mail::create([
+            'type' => 'message',
+            'status' => false,
+            'content' => [
+                'subject' => $subject,
+                'header'  => 'Berichtsheft abgelehnt',
+                'body'    => $body,
+                'link'    => '',
+            ],
+            'recipients' => [[
+                'user_id' => $recipientId,
+                'email'   => (string) data_get($reportBook, 'user.email', ''),
+                'status'  => false,
+            ]],
+        ]);
+    }
+
+    protected function getRejectedEntryIds(): array
+    {
+        $ids = [];
+
+        foreach ($this->entryApprovals as $entryId => $isApproved) {
+            $approved = filter_var($isApproved, FILTER_VALIDATE_BOOLEAN);
+
+            if (! $approved) {
+                $ids[] = (int) $entryId;
+            }
+        }
+
+        return $ids;
     }
 
     /**
@@ -262,12 +430,10 @@ class AdminTaskDetail extends Component
      */
     protected function hasTrainerSignature($reportBook): bool
     {
-        // Falls du helper-Methoden hast, kannst du das hier bevorzugen:
         if (method_exists($reportBook, 'trainerSignatureFile')) {
             return (bool) $reportBook->trainerSignatureFile();
         }
 
-        // Fallback: files()-Relation wie im Teilnehmer-Flow :contentReference[oaicite:4]{index=4}
         if (method_exists($reportBook, 'files')) {
             return $reportBook->files()
                 ->where('type', $this->trainerSignatureType)
