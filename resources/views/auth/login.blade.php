@@ -37,13 +37,6 @@
                         <label for="password"
                             class="text-gray-600 dark:text-gray-100 font-medium mb-2 block">Passwort <span class="text-red-600">*</span></label>
                     </div>
-                    @if (Route::has('password.request'))
-                        <div class="ltr:ml-auto rtl:mr-auto">
-                            <a href="{{ route('password.request') }}"
-                                class="text-gray-500 dark:text-gray-100">Passwort
-                                vergessen?</a>
-                        </div>
-                    @endif
                 </div>
                 <div class="flex">
                     <input type="password" name="password" id="password" value=""
