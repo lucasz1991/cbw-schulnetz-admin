@@ -370,7 +370,7 @@ class AdminTaskDetail extends Component
             $dayId = (int) ($entry->course_day_id ?? 0);
 
             if ($courseId > 0 && $dayId > 0) {
-                $entryLines[] = "- {$dateText}: <a href='{$baseUrl}/user/reportbook?course={$courseId}&day={$dayId}' target='_blank'>Berichtsheft ansehen</a>";
+                $entryLines[] = "- {$dateText}: <a href='{$baseUrl}/user/reportbook?course={$courseId}&day={$dayId}' target='_blank'>Berichtsheft ansehen</a><br>";
                 continue;
             }
 
