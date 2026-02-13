@@ -25,7 +25,7 @@ class MessageForm extends Component
     public $mailHeader = '';
     public $mailBody = '';
     public $mailLink = '';
-    public array $fileUploads = [];
+    public array $fileUploads = []; 
 
     #[On('openMailModal')]
     public function handleOpenMailModal($payload = null): void
