@@ -394,7 +394,7 @@ class AdminTaskDetail extends Component
             . trim($this->rejectionComment);
 
         Mail::create([
-            'type' => 'message',
+            'type' => 'both',
             'status' => false,
             'content' => [
                 'subject' => $subject,
