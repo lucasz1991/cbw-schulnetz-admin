@@ -18,11 +18,6 @@ class AdminConfig extends Component
     // Admin-Notifications: META (statisch, NICHT überschreiben)
     // ------------------------------------------------------------------
     public $adminEmailNotificationMeta = [
-        'new_user' => [
-            'label' => 'Neuer Benutzer registriert',
-            'description' => 'Sie werden benachrichtigt, sobald sich ein neuer Teilnehmer oder Dozent im Schulnetz registriert hat.',
-            'default' => true,
-        ],
         'new_user_request' => [
             'label' => 'Neuer Antrag eines Teilnehmers angelegt ( Admin Mail Adresse )',
             'description' => 'Benachrichtigt Sie, sobald ein Teilnehmer einen neuen Antrag eingereicht hat – z. B. Fehlzeitmeldung, Nachklausur-Anmeldung oder Anmeldung zur externen Prüfung. Mails an Admin Mail Adresse.',
@@ -33,78 +28,28 @@ class AdminConfig extends Component
             'description' => 'Benachrichtigt Sie, sobald ein Teilnehmer einen neuen Antrag eingereicht hat – z. B. Fehlzeitmeldung, Nachklausur-Anmeldung oder Anmeldung zur externen Prüfung. Diese Mails werden an das Jeweilige Institut gesendet. Mail Adressen werden aus Uvs geladen.',
             'default' => false,
         ],
-        'daily_error_report' => [
-            'label' => 'Täglicher Systemfehler-Bericht',
-            'description' => 'Erhalten Sie eine tägliche Zusammenfassung von aufgetretenen Fehlern oder Warnungen im Systemlog.',
-            'default' => false,
-        ],
-        'pending_approval' => [
-            'label' => 'Neue Freigabe erforderlich',
-            'description' => 'Benachrichtigung, wenn neue Inhalte, Kurse oder Dokumente auf eine administrative Freigabe warten.',
-            'default' => true,
-        ],
-        'user_feedback_received' => [
-            'label' => 'Neues Benutzerfeedback eingegangen',
-            'description' => 'Sie werden informiert, wenn ein Teilnehmer oder Dozent neues Feedback oder eine Bewertung abgegeben hat.',
-            'default' => false,
-        ],
     ];
 
     // Admin-Notifications: Werte (nur bools; werden geladen/gespeichert)
     public $adminEmailNotifications = [
-        'new_user' => true,
         'new_user_request' => false,
         'new_user_request_to_inst' => false,
-        'daily_error_report' => false,
-        'pending_approval' => true,
-        'user_feedback_received' => false,
     ];
 
     // ------------------------------------------------------------------
     // User-Notifications: META (statisch, NICHT überschreiben)
     // ------------------------------------------------------------------
     public $userEmailNotificationMeta = [
-        'reminder_start_tomorrow' => [
-            'label' => 'Kurs startet morgen',
-            'description' => 'Sie erhalten eine Erinnerung, wenn Ihr Kurs am nächsten Tag beginnt.',
-            'default' => false,
-        ],
-        'reminder_ratings_open_tomorrow' => [
-            'label' => 'Bewertungen öffnen morgen',
-            'description' => 'Sie werden benachrichtigt, sobald ab morgen Bewertungen für Ihren Kurs möglich sind.',
-            'default' => false,
-        ],
-        'reminder_exam_tomorrow' => [
-            'label' => 'Klausur findet morgen statt',
-            'description' => 'Sie erhalten einen Hinweis am Tag vor Ihrer Prüfung.',
-            'default' => false,
-        ],
-        // Falls du die drei zusätzlichen aus früherer Antwort wieder nutzen willst:
-        'reminder_day_started' => [
-            'label' => 'Unterricht hat begonnen',
-            'description' => 'Erinnerung am Morgen eines Kurstages, dass der Unterricht gestartet ist.',
-            'default' => false,
-        ],
-        'reminder_new_material' => [
-            'label' => 'Neues Unterrichtsmaterial',
-            'description' => 'Benachrichtigung, sobald Dozenten neue Dateien oder Lernmaterialien hochladen.',
-            'default' => false,
-        ],
-        'reminder_course_ending_soon' => [
-            'label' => 'Kurs endet bald',
-            'description' => 'Erinnerung einige Tage vor Kursende, um offene Aufgaben oder Bewertungen abzuschließen.',
+        'reminder_missing_report_book' => [
+            'label' => 'Berichtsheft fehlt',
+            'description' => 'Erinnerung, wenn ein Berichtsheft nicht vollständig ausgefüllt wurde. 2 Wochen nach Kursende, wenn noch fehlende Einträge vorhanden sind.',
             'default' => false,
         ],
     ];
 
     // User-Notifications: Werte (nur bools; werden geladen/gespeichert)
     public $userEmailNotifications = [
-        'reminder_start_tomorrow' => false,
-        'reminder_ratings_open_tomorrow' => false,
-        'reminder_exam_tomorrow' => false,
-        'reminder_day_started' => false,
-        'reminder_new_material' => false,
-        'reminder_course_ending_soon' => false,
+        'reminder_missing_report_book' => false,
     ];
 
     // ------------------------------------------------------------------
