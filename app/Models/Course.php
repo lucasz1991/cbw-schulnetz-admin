@@ -43,6 +43,7 @@ class Course extends Model
         // Anzeige/Meta
         'title',
         'description',
+        'educational_materials',
 
         // Grobe Plan-Daten
         'planned_start_date',
@@ -66,6 +67,7 @@ class Course extends Model
         'is_active'          => 'boolean',
         'settings'           => 'array',
         'source_snapshot'    => 'array',
+        'educational_materials' => 'array',
     ];
 
     /**
@@ -107,6 +109,12 @@ class Course extends Model
     public function getDatesCountAttribute(): int
     {
         return $this->days()->count();
+    }
+
+    public function getMaterialsAttribute(): array
+    {
+        $raw = $this->educational_materials;
+        return is_array($raw) ? $raw : [];
     }
 
     /*
@@ -326,27 +334,34 @@ class Course extends Model
 
 
     /**
-     * 0 = keine/fehlende Doku, 1 = alle vergangene Tage dokumentiert, 2 = teils dokumentiert
+     * Dokumentationsstatus inkl. Teilnehmer-Signatur:
+     * 0 = fehlt (kein Tag fertig)
+     * 1 = vollständig (alle Tage fertig + Teilnehmer-Signatur vorhanden)
+     * 2 = teilweise / ausstehend
      */
     public function documentationState(): int
     {
-        $today = now()->toDateString();
+        $days = $this->days()
+            ->get(['id', 'note_status']);
 
-        $pastDays = $this->days()
-            ->whereDate('date', '<=', $today)   // Feldnamen ggf. anpassen
-            ->get(['id', 'notes', 'note_status']);
-
-        if ($pastDays->isEmpty()) {
-            // Keine vergangenen Tage -> als "fehlt" werten (0) oder 1, wenn du "nichts zu dokumentieren" als ok siehst
+        if ($days->isEmpty()) {
             return 0;
         }
 
-        $total  = $pastDays->count();
-        $filled = $pastDays->filter(fn ($d) => trim((string)$d->notes) !== '' && $d->note_status === 2)->count();
+        $total = $days->count();
+        $completed = $days->filter(
+            fn ($d) => (int) $d->note_status === CourseDay::NOTE_STATUS_COMPLETED
+        )->count();
 
-        if ($filled === 0)        return 0;
-        if ($filled < $total)     return 2;
-        return 1;
+        $hasParticipantSignature = $this->files()
+            ->where('type', 'sign_course_doku_participant')
+            ->exists();
+
+        if ($completed === 0) {
+            return 0;
+        }
+
+        return ($completed === $total && $hasParticipantSignature) ? 1 : 2;
     }
 
     // Optionales Icon (wenn du direkt im Blade ohne Logik ausgeben willst)
@@ -853,9 +868,56 @@ public function generateDokuPdfFile(): ?string
         ];
     });
 
+    // Teilnehmer-Unterschrift (Klassensprecher) für den PDF-Footer laden
+    $settings = is_array($this->settings) ? $this->settings : [];
+    $speakerSignatureFile = $this->files()
+        ->where('type', 'sign_course_doku_participant')
+        ->latest('id')
+        ->first();
+
+    $speakerUserId = data_get($settings, 'course_doku_acknowledged_user_id')
+        ?: data_get($settings, 'class_representative_user_id')
+        ?: ($speakerSignatureFile?->user_id ?? null);
+
+    $speakerSignedAt = data_get($settings, 'course_doku_acknowledged_at')
+        ?: ($speakerSignatureFile?->created_at?->toIso8601String());
+
+    $speakerPerson = null;
+    if ($speakerUserId) {
+        $speakerPerson = \App\Models\Person::query()
+            ->where('user_id', (int) $speakerUserId)
+            ->orderBy('id')
+            ->first();
+    }
+
+    $speakerSignatureSrc = null;
+    if ($speakerSignatureFile) {
+        $path = $speakerSignatureFile->getEphemeralPublicUrl();
+        if ($path) {
+            $mime = $speakerSignatureFile->mime_type ?? 'image/png';
+            $data = @file_get_contents($path);
+            if ($data !== false) {
+                $speakerSignatureSrc = 'data:' . $mime . ';base64,' . base64_encode($data);
+            }
+        }
+    }
+
+    $speakerName = null;
+    if ($speakerPerson) {
+        $speakerName = trim(($speakerPerson->vorname ?? '') . ' ' . ($speakerPerson->nachname ?? ''));
+    }
+    if (!$speakerName) {
+        $speakerName = $speakerUserId ? ('User-ID ' . $speakerUserId) : null;
+    }
+
     $html = view('pdf.courses.documentation', [
         'meta' => $meta,
         'rows' => $rows,
+        'footer' => [
+            'class_speaker_name' => $speakerName,
+            'class_speaker_signed_at' => $speakerSignedAt,
+            'class_speaker_signature_src' => $speakerSignatureSrc,
+        ],
     ])->render();
 
     $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8, ISO-8859-1, Windows-1252');

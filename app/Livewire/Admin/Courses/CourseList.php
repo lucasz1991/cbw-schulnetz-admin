@@ -505,7 +505,7 @@ public function updated($prop): void
 
     if ($this->sortBy === 'tutor_name') {
         $q->orderByRaw(
-            "CONCAT(COALESCE(tutor.nachname,''), ', ', COALESCE(tutor.vorname,'')) " .
+            "CONCAT(COALESCE(tutor.vorname,''), ', ', COALESCE(tutor.nachname,'')) " .
             ($this->sortDir === 'desc' ? 'DESC' : 'ASC')
         );
     } else {
@@ -539,7 +539,7 @@ public function updated($prop): void
             ->whereNotNull('termin_id')
             ->where('planned_start_date', '>=', $this->from)
             ->groupBy('termin_id')
-            ->orderBy('termin_id', 'asc')
+            ->orderBy('planned_start_date', 'asc')
             ->selectRaw('termin_id, COUNT(*) AS cnt, MIN(planned_start_date) AS planned_start_date, MAX(planned_end_date) AS planned_end_date')
             ->get()
             ->map(fn($row) => (object)[

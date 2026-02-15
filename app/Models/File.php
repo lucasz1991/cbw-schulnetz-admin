@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Mime\MimeTypes;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class File extends Model
 {
@@ -199,5 +201,93 @@ class File extends Model
     public function isExpired(): bool
     {
         return $this->expires_at && $this->expires_at->isPast();
+    }
+
+    public function getSizeFormattedAttribute(): string
+    {
+        $bytes = (int) ($this->size ?? 0);
+
+        if ($bytes < 1024) {
+            return $bytes . ' B';
+        }
+
+        if ($bytes < 1048576) {
+            return number_format($bytes / 1024, 1, ',', '.') . ' KB';
+        }
+
+        return number_format($bytes / 1048576, 2, ',', '.') . ' MB';
+    }
+
+    public function getNameWithExtensionAttribute(): string
+    {
+        $safeName = $this->sanitizeName((string) ($this->name ?? 'datei'));
+        $ext = pathinfo($safeName, PATHINFO_EXTENSION);
+
+        if ($ext !== '') {
+            return $safeName;
+        }
+
+        $guessed = $this->guessExtension($this->mime_type ?? null, $this->path ?? null);
+
+        return $guessed ? ($safeName . '.' . $guessed) : $safeName;
+    }
+
+    public function getMimeTypeForHumans(): string
+    {
+        $mime = strtolower((string) ($this->mime_type ?? ''));
+        $ext = strtoupper((string) ($this->guessExtension($mime, $this->path) ?? ''));
+
+        if ($mime === '') {
+            return $ext ? "Datei ({$ext})" : 'Datei';
+        }
+
+        return $ext ? "{$mime} ({$ext})" : $mime;
+    }
+
+    public function download(?string $disk = null, bool $denyExpired = true): StreamedResponse
+    {
+        if ($denyExpired && $this->isExpired()) {
+            abort(403, 'Diese Datei ist abgelaufen und kann nicht mehr heruntergeladen werden.');
+        }
+
+        $disk = $disk ?: ($this->disk ?: self::DISK);
+        $filename = $this->name_with_extension ?? $this->name ?? 'datei';
+        $mime = $this->mime_type
+            ?: (Storage::disk($disk)->exists($this->path) ? (Storage::disk($disk)->mimeType($this->path) ?: null) : null)
+            ?: 'application/octet-stream';
+
+        return Storage::disk($disk)->download($this->path, $filename, [
+            'Content-Type' => $mime,
+        ]);
+    }
+
+    protected function sanitizeName(string $name): string
+    {
+        $name = trim($name);
+        $name = str_replace(['\\', '/', "\0"], '-', $name);
+
+        return $name === '' ? 'datei' : $name;
+    }
+
+    protected function guessExtension(?string $mime, ?string $storagePath): ?string
+    {
+        if ($mime) {
+            try {
+                $candidates = MimeTypes::getDefault()->getExtensions($mime);
+                if (!empty($candidates)) {
+                    return strtolower($candidates[0]);
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        if ($storagePath) {
+            $ext = pathinfo($storagePath, PATHINFO_EXTENSION);
+            if ($ext !== '') {
+                return strtolower($ext);
+            }
+        }
+
+        return null;
     }
 }

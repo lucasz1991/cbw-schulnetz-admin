@@ -4,6 +4,8 @@ namespace App\Livewire\Admin\Courses;
 
 use Livewire\Component;
 use App\Models\Course;
+use App\Models\File;
+use App\Models\Person;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
@@ -35,12 +37,21 @@ class CourseDaysPanel extends Component
      * ]
      */
     public Collection $days;
+    public ?int $classRepresentativeUserId = null;
+    public ?Person $classRepresentativePerson = null;
+    public ?int $signedByUserId = null;
+    public ?Person $signedByPerson = null;
+    public ?string $signedAt = null;
+    public ?File $dokuSignatureFile = null;
+    public bool $dokuSigned = false;
+    public bool $allDaysCompleted = false;
 
     public function mount(Course $course): void
     {
         // Kurs & Tage laden
         $this->course = $course;
         $this->loadDays();
+        $this->loadDokuSignatureMeta();
     }
 
     protected function loadDays(): void
@@ -90,6 +101,44 @@ class CourseDaysPanel extends Component
                 ];
             })
             ->values();
+
+        $this->allDaysCompleted = $this->days->isNotEmpty()
+            && $this->days->every(fn ($day) => (int) ($day['note_status'] ?? CourseDay::NOTE_STATUS_MISSING) === CourseDay::NOTE_STATUS_COMPLETED);
+    }
+
+    protected function loadDokuSignatureMeta(): void
+    {
+        $settings = is_array($this->course->settings) ? $this->course->settings : [];
+
+        $this->dokuSignatureFile = $this->course->files()
+            ->where('type', 'sign_course_doku_participant')
+            ->latest('id')
+            ->first();
+
+        $fileUserId = $this->dokuSignatureFile?->user_id ? (int) $this->dokuSignatureFile->user_id : null;
+        $fileSignedAt = $this->dokuSignatureFile?->created_at?->toIso8601String();
+
+        // Fallback-Kette: Settings -> Signaturdatei
+        $this->signedByUserId = data_get($settings, 'course_doku_acknowledged_user_id') ?: $fileUserId;
+        $this->signedAt = data_get($settings, 'course_doku_acknowledged_at') ?: $fileSignedAt;
+        $this->classRepresentativeUserId = data_get($settings, 'class_representative_user_id') ?: $this->signedByUserId;
+
+        $this->classRepresentativePerson = $this->resolvePersonByUserId($this->classRepresentativeUserId);
+        $this->signedByPerson = $this->resolvePersonByUserId($this->signedByUserId);
+
+        $this->dokuSigned = (bool) $this->dokuSignatureFile;
+    }
+
+    protected function resolvePersonByUserId(?int $userId): ?Person
+    {
+        if (! $userId) {
+            return null;
+        }
+
+        return Person::query()
+            ->where('user_id', $userId)
+            ->orderBy('id')
+            ->first();
     }
 
     protected function mapNoteStatus(int $status): array

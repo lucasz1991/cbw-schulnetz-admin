@@ -10,6 +10,11 @@
     $logoSrc = file_exists($logoPath)
         ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
         : null;
+
+    $classSpeakerName = data_get($footer ?? [], 'class_speaker_name');
+    $classSpeakerSignedAtRaw = data_get($footer ?? [], 'class_speaker_signed_at');
+    $classSpeakerSignatureSrc = data_get($footer ?? [], 'class_speaker_signature_src');
+    $classSpeakerSignedAt = $classSpeakerSignedAtRaw ? \Carbon\Carbon::parse($classSpeakerSignedAtRaw)->format('d.m.Y H:i') : null;
 @endphp
 <!DOCTYPE html>
 <html lang="de">
@@ -66,16 +71,17 @@
         }
 
         .header-meta .label {
-            width: 12%;
+            width: 14%;
             font-weight: bold;
         }
 
         .header-meta .value {
-            width: 13%;
+            width: 26%;
         }
 
         .header-meta .value-wide {
-            width: 25%;
+            width: 46%;
+            word-break: break-word;
         }
 
         .head-row th {
@@ -85,9 +91,8 @@
             font-weight: bold;
         }
 
-        .col-tag      { width: 12%; }
-        .col-time     { width: 10%; }
-        .col-content  { width: 58%; }
+        .col-tag      { width: 20%; }
+        .col-content  { width: 60%; }
         .col-ue       { width: 5%;  }
         .col-sign     { width: 15%; }
 
@@ -142,14 +147,8 @@
         }
 
         .footer-sign {
-            margin-top: 20px;
+            margin-top: 22px;
             font-size: 8px;
-        }
-
-        .footer-sign td {
-            padding-top: 20px;
-            border-top: 0.4px solid #000;
-            text-align: center;
         }
 
         .footer-sign .spacer {
@@ -159,6 +158,45 @@
         .logo {
             max-width: 110px;
             max-height: 40px;
+        }
+
+        .footer-signature-img {
+            max-height: 42px;
+            max-width: 100%;
+            display: block;
+            margin: 0 auto 4px auto;
+        }
+
+        .footer-signature-meta {
+            font-size: 7px;
+            line-height: 1.2;
+        }
+
+        .footer-sign td {
+            vertical-align: bottom;
+            text-align: center;
+            padding: 0;
+        }
+
+        .sig-content {
+            min-height: 52px;
+            padding: 4px 2px;
+            text-align: center;
+        }
+
+        .sig-line {
+            border-top: 0.4px solid #000;
+            margin: 0 4px;
+        }
+
+        .sig-label {
+            font-size: 8px;
+            margin-top: 3px;
+        }
+
+        .sig-muted {
+            font-size: 7px;
+            color: #444;
         }
     </style>
 </head>
@@ -188,12 +226,10 @@
 {{-- Meta-Zeile (ähnlich deinem Formular) --}}
 <table class="header-meta" style="margin-top: 4px;">
     <tr>
-        <td class="label">CBW</td>
-        <td class="value-wide"></td>
         <td class="label">Standort</td>
-        <td class="value-wide">{{ $meta['location'] }}</td>
+        <td class="value">{{ $meta['location'] }}</td>
         <td class="label">Bausteinkurzbezeichnung</td>
-        <td class="value">{{ $meta['module'] }}</td>
+        <td class="value-wide">{{ $meta['module'] }}</td>
     </tr>
     <tr>
         <td class="label">Von:</td>
@@ -203,18 +239,15 @@
             {{ $to->format('d.m.y') }}
             &nbsp;{{ $meta['year'] }}
         </td>
-        <td class="label">Klasse:</td>
-        <td class="value">{{ $meta['class_label'] }}</td>
-        <td class="label">Anzahl der Unterrichtstage</td>
-        <td class="value">{{ $meta['num_days'] }}</td>
+        <td class="label">Klasse / Unterrichtstage</td>
+        <td class="value-wide">{{ $meta['class_label'] }} / {{ $meta['num_days'] }}</td>
     </tr>
 </table>
 
 {{-- Tabellenkopf für Tage --}}
 <table class="bordered" style="margin-top: 6px;">
     <tr class="head-row">
-        <th class="col-tag">Datum/Uhrzeit</th>
-        <th class="col-time"></th>
+        <th class="col-tag">Datum / Uhrzeit</th>
         <th class="col-content">V E R M I T T E L T E &nbsp;&nbsp; I N H A L T E (Hauptpunkte)</th>
         <th class="col-ue">UE</th>
         <th class="col-sign">Unterschrift Instruktor/-in</th>
@@ -230,26 +263,22 @@
             {{-- 1. Spalte: "1. Tag" + Datum --}}
             <td class="col-tag cell-day-label">
                 {{ $row['index'] }}. Tag<br>
-                {{ $date->format('d.m.Y') }}
-            </td>
-
-            {{-- 2. Spalte: Uhrzeit --}}
-            <td class="col-time">
+                {{ $date->format('d.m.Y') }}<br>
                 {{ $row['time_range'] }}
             </td>
 
-            {{-- 3. Spalte: Inhalte (graue Fläche, HTML aus notes) --}}
+            {{-- 2. Spalte: Inhalte (graue Fläche, HTML aus notes) --}}
             <td class="col-content cell-content">
                 {{-- notes_html enthält deine HTML-Struktur aus course_days.notes --}}
                 {!! $row['notes_html'] !!}
             </td>
 
-            {{-- 4. Spalte: UE --}}
+            {{-- 3. Spalte: UE --}}
             <td class="col-ue" style="text-align:center;">
                 {{ $row['ue'] ?? '' }}
             </td>
 
-            {{-- 5. Spalte: Unterschrift-Feld mit Bild (falls vorhanden) --}}
+            {{-- 4. Spalte: Unterschrift-Feld mit Bild (falls vorhanden) --}}
             <td class="col-sign sign-cell">
                 <div class="sign-cell-inner">
                     @if(!empty($row['tutor_signature_src']))
@@ -272,11 +301,39 @@
 {{-- Abschluss-Signaturzeile wie im Beispiel --}}
 <table class="footer-sign">
     <tr>
-        <td style="width: 35%;">DATUM</td>
+        <td style="width: 35%;">
+            <div class="sig-content">
+                {{ $classSpeakerSignedAt ? \Illuminate\Support\Str::before($classSpeakerSignedAt, ' ') : '' }}
+            </div>
+            <div class="sig-line"></div>
+            <div class="sig-label">DATUM</div>
+        </td>
         <td class="spacer" style="width: 10%;"></td>
-        <td style="width: 25%;">Unterschrift Klassensprecher</td>
+        <td style="width: 25%;">
+            <div class="sig-content">
+                @if($classSpeakerSignatureSrc)
+                    <img src="{{ $classSpeakerSignatureSrc }}" alt="Klassensprecher-Signatur" class="footer-signature-img">
+                @endif
+                @if($classSpeakerName || $classSpeakerSignedAt)
+                    <div class="footer-signature-meta">
+                        @if($classSpeakerName)
+                            <div>{{ $classSpeakerName }}</div>
+                        @endif
+                        @if($classSpeakerSignedAt)
+                            <div class="sig-muted">{{ $classSpeakerSignedAt }}</div>
+                        @endif
+                    </div>
+                @endif
+            </div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Unterschrift Klassensprecher</div>
+        </td>
         <td class="spacer" style="width: 5%;"></td>
-        <td style="width: 25%;">Unterschrift Kontrolle</td>
+        <td style="width: 25%;">
+            <div class="sig-content"></div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Unterschrift Kontrolle</div>
+        </td>
     </tr>
 </table>
 

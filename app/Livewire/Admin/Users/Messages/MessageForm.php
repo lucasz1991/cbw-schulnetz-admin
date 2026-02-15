@@ -67,6 +67,8 @@ class MessageForm extends Component
 
     public function sendMail()
     {
+          $this->dispatch('showAlert', 'Diese Funktion ist noch in Entwicklung und aktuell deaktiviert.', 'warning');
+        return;
         // Validierung mit individuellen Fehlermeldungen
         $this->validate([
             'mailSubject' => 'required|string|max:255',
