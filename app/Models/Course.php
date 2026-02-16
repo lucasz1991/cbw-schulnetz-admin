@@ -417,9 +417,6 @@ class Course extends Model
         return $this->renderAssetIcon('Dokumentation', $this->documentationState());
     }
 
-    /**
-     * 0 = fehlt, 1 = vorhanden, 2 = (optional) teilw./ausstehend – falls du z. B. mehrere Pflichtdateien erwartest
-     */
     public function redThreadState(): int
     {
         $exists = $this->files()
