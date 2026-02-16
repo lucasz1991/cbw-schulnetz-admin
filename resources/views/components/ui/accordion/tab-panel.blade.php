@@ -6,6 +6,7 @@
 <div
     x-show="openTab === '{{ $for }}'"
     x-cloak
+    wire:ignore
     role="tabpanel"
     :aria-hidden="openTab !== '{{ $for }}'"
     class="{{ $panelClass }}"
