@@ -19,11 +19,19 @@ use App\Models\File;
 use App\Models\CourseDay;
 use App\Models\CourseResult;
 use App\Models\CourseRating;
+use Illuminate\Support\Facades\Cache;
+use App\Jobs\ApiUpdates\CreateOrUpdateCourse;
 
 
 class Course extends Model
 {
     use HasFactory, SoftDeletes;
+
+    public const API_UPDATE_COOLDOWN_MINUTES = 20;
+
+    private const API_UPDATE_ROUTES = [
+        'admin.courses.show',
+    ];
 
     /**
      * Wenn du lieber alles freigeben willst:
@@ -55,7 +63,7 @@ class Course extends Model
         'type',
         'settings',
         'is_active',
-
+ 
         // Komfort: primärer Tutor (Person, nicht User)
         'primary_tutor_person_id',
     ];
@@ -82,6 +90,45 @@ class Course extends Model
         'status_label',
         'status_badge_classes',
     ];
+
+    protected static function booted(): void
+    {
+        static::retrieved(function (Course $course) {
+            if (app()->runningInConsole()) {
+                return;
+            }
+
+            if (! $course->id || empty($course->klassen_id)) {
+                return;
+            }
+
+            $routeName = request()?->route()?->getName();
+            if (! $routeName || ! in_array($routeName, self::API_UPDATE_ROUTES, true)) {
+                return;
+            }
+
+            static::dispatchApiUpdateIfNotThrottled($course, 'retrieved');
+        });
+    }
+
+    protected static function dispatchApiUpdateIfNotThrottled(Course $course, string $source): void
+    {
+        if (! $course->id || empty($course->klassen_id)) {
+            return;
+        }
+
+        $cacheKey = "course-sync-cooldown:{$course->klassen_id}";
+        $payload = [
+            'last'   => now()->toDateTimeString(),
+            'source' => $source,
+        ];
+
+        if (! Cache::add($cacheKey, $payload, now()->addMinutes(self::API_UPDATE_COOLDOWN_MINUTES))) {
+            return;
+        }
+
+        CreateOrUpdateCourse::dispatch((string) $course->klassen_id);
+    }
 
     /*
     |--------------------------------------------------------------------------
