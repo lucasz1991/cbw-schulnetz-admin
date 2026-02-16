@@ -64,12 +64,12 @@
                     <tbody wire:key="user-course-{{ $rowKey }}" class="group">
                         <tr
                             class="cursor-pointer border-t border-slate-100 transition"
-                            :class="openId === '{{ $rowKey }}' ? 'bg-sky-50/70' : 'hover:bg-slate-50/70'"
+                            :class="openId === '{{ $rowKey }}' ? 'bg-sky-50/50' : 'hover:bg-slate-50/70'"
                             @click="openId = (openId === '{{ $rowKey }}') ? null : '{{ $rowKey }}'"
                         >
                             <td class="px-2 py-3 align-top">
                                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg border text-gray-700"
-                                      :class="openId === '{{ $rowKey }}' ? 'border-sky-300 bg-sky-100 text-sky-700' : 'border-gray-300 bg-white'">
+                                      :class="openId === '{{ $rowKey }}' ? 'border-sky-300 bg-white text-sky-700' : 'border-gray-300 bg-white'">
                                     <svg x-show="openId !== '{{ $rowKey }}'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                     </svg>
@@ -132,7 +132,7 @@
                         <tr>
                             <td colspan="5">
                                 <div x-cloak x-show="openId === '{{ $rowKey }}'" x-collapse>
-                                    <div class="border-t border-sky-200 bg-gradient-to-b from-sky-50/70 to-white px-4 py-4">
+                                    <div class="border-t border-sky-200 bg-gradient-to-b from-sky-50/60 to-sky-50/30 px-4 py-4">
                                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                                                 <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Dozent</h4>

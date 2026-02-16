@@ -31,7 +31,6 @@
                             Aktivieren
                         </x-ui.dropdown.dropdown-link>
                     @endif
-
                     <x-ui.dropdown.dropdown-link wire:click="openMailModal({{ $user->id }})" class="hover:bg-blue-100 focus:bg-blue-100">
                         <i class="far fa-envelope mr-2"></i>
                         Nachricht senden
