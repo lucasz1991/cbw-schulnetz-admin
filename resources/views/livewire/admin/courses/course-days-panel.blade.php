@@ -8,20 +8,16 @@
 
             <button
                 type="button"
-                class="relative w-full p-4 md:p-5 text-left {{ $this->dokuSigned ? 'cursor-pointer' : 'cursor-default' }}"
+                class="relative w-full p-2 text-left {{ $this->dokuSigned ? 'cursor-pointer' : 'cursor-default' }}"
                 @click="{{ $this->dokuSigned ? 'signCardOpen = !signCardOpen' : '' }}"
             >
                 <div class="flex items-start justify-between gap-3">
-                    <div class="flex items-start gap-3">
-                        <div class="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-full border {{ $this->dokuSigned ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : 'border-amber-200 bg-amber-100 text-amber-700' }}">
+                    <div class="flex items-center gap-3">
+                        <div class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full border {{ $this->dokuSigned ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : 'border-amber-200 bg-amber-100 text-amber-700' }}">
                             <i class="fal fa-signature text-sm"></i>
                         </div>
                         <div>
-                            <div class="text-[11px] uppercase tracking-wide text-slate-600">Kurs-Doku Teilnehmer-Signatur</div>
-                            <div class="mt-0.5 text-sm font-semibold text-slate-800">Klassensprecher-Bestätigung</div>
-                            @if(!$this->dokuSigned)
-                                <div class="mt-1 text-[11px] text-amber-700">Details sind erst nach Unterschrift verfuegbar.</div>
-                            @endif
+                            <div class="text-[11px] uppercase tracking-wide text-slate-800">Baustein-Doku Klassensprecher-Bestätigung</div>
                         </div>
                     </div>
 
