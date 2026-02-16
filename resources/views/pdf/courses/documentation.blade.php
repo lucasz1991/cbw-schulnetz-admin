@@ -5,7 +5,6 @@
     $from = $meta['date_from'];
     $to   = $meta['date_to'];
 
-    // Logo laden
     $logoPath = public_path('site-images/logo.png');
     $logoSrc = file_exists($logoPath)
         ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
@@ -22,106 +21,104 @@
     <meta charset="utf-8">
     <title>Unterrichtsdokumentation</title>
     <style>
-        @page {
-            margin: 20px 25px 30px 25px;
-        }
+        @page { margin: 20px 20px 30px 20px; }
 
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 9px;
+            font-size: 10px;
+            color: #1f2937;
         }
 
-        table {
-            border-collapse: collapse;
+        table { width: 100%; border-collapse: collapse; }
+
+        .header-table {
             width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
         }
-
-        .bordered td,
-        .bordered th {
-            border: 0.4px solid #000;
-        }
-
-        .header-top td {
-            border: 0.4px solid #000;
+        .header-table td {
             padding: 4px 6px;
+            vertical-align: top;
         }
 
-        .header-top .left {
-            width: 35%;
-            font-weight: bold;
+        .logo {
+            width: 120px;
+            margin-bottom: 8px;
         }
 
-        .header-top .center {
-            width: 35%;
+        .title-center {
             text-align: center;
-            font-size: 11px;
             font-weight: bold;
+            font-size: 13px;
+            color: #0f172a;
+            padding-top: 6px;
         }
 
-        .header-top .right {
-            width: 30%;
-            text-align: center;
-            font-size: 11px;
+        .subtitle {
+            font-size: 9px;
+            color: #64748b;
+            margin-top: 2px;
+            font-weight: normal;
         }
 
-        .header-meta td {
-            border: 0.4px solid #000;
-            padding: 3px 5px;
-            font-size: 8px;
+        .meta-box {
+            border: 0.4px solid #cbd5e1;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 6px 8px;
+            line-height: 1.35;
         }
 
-        .header-meta .label {
-            width: 14%;
+        .meta-k {
+            display: inline-block;
+            min-width: 105px;
             font-weight: bold;
+            color: #334155;
         }
 
-        .header-meta .value {
-            width: 26%;
+        table.list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
         }
-
-        .header-meta .value-wide {
-            width: 46%;
-            word-break: break-word;
+        table.list th,
+        table.list td {
+            border: 0.4px solid #cbd5e1;
+            padding: 5px 6px;
+        }
+        table.list th {
+            text-align: left;
+            background: #eef2f7;
+            color: #334155;
+            font-weight: bold;
         }
 
         .head-row th {
-            padding: 3px 4px;
             font-size: 8px;
             text-align: center;
-            font-weight: bold;
+            padding: 4px 5px;
         }
 
-        .col-tag      { width: 20%; }
-        .col-content  { width: 60%; }
-        .col-ue       { width: 5%;  }
-        .col-sign     { width: 15%; }
+        .col-tag     { width: 20%; }
+        .col-content { width: 60%; }
+        .col-ue      { width: 5%; }
+        .col-sign    { width: 15%; }
 
         .day-row td {
             font-size: 8px;
             vertical-align: top;
-            padding: 3px 4px;
+            padding: 4px 5px;
         }
 
-        .cell-day-label {
-            white-space: nowrap;
-        }
+        .cell-day-label { white-space: nowrap; }
 
         .cell-content {
-            background-color: #e6e6e6;
+            background-color: #f8fafc;
+            line-height: 1.25;
         }
-
-        .cell-content p {
-            margin: 0 0 2px 0;
-        }
-
-        .cell-content ul {
-            margin: 0 0 2px 12px;
-            padding: 0;
-        }
-
-        .cell-content li {
-            margin: 0;
-        }
+        .cell-content p { margin: 0 0 2px 0; }
+        .cell-content ul { margin: 0 0 2px 12px; padding: 0; }
+        .cell-content li { margin: 0; }
 
         .sign-cell {
             text-align: center;
@@ -131,34 +128,20 @@
             max-height: 45px;
             max-width: 100%;
         }
-
-        .sign-cell-inner {
-            min-height: 55px;
-        }
-
-        .sign-label-top {
-            display: block;
-            margin-bottom: 22px;
-        }
-
-        .sign-label-bottom {
-            display: block;
-            margin-top: 15px;
-        }
+        .sign-cell-inner { min-height: 55px; }
+        .sign-label-top { display: block; margin-bottom: 22px; color: #64748b; }
+        .sign-label-bottom { display: block; margin-top: 15px; color: #334155; }
 
         .footer-sign {
             margin-top: 22px;
             font-size: 8px;
         }
-
-        .footer-sign .spacer {
-            border: none;
+        .footer-sign td {
+            vertical-align: bottom;
+            text-align: center;
+            padding: 0;
         }
-
-        .logo {
-            max-width: 110px;
-            max-height: 40px;
-        }
+        .footer-sign .spacer { border: none; }
 
         .footer-signature-img {
             max-height: 42px;
@@ -167,16 +150,7 @@
             margin: 0 auto 4px auto;
         }
 
-        .footer-signature-meta {
-            font-size: 7px;
-            line-height: 1.2;
-        }
-
-        .footer-sign td {
-            vertical-align: bottom;
-            text-align: center;
-            padding: 0;
-        }
+        .footer-signature-meta { font-size: 7px; line-height: 1.2; }
 
         .sig-content {
             min-height: 52px;
@@ -185,100 +159,80 @@
         }
 
         .sig-line {
-            border-top: 0.4px solid #000;
+            border-top: 0.4px solid #cbd5e1;
             margin: 0 4px;
         }
 
         .sig-label {
             font-size: 8px;
             margin-top: 3px;
+            color: #334155;
+            font-weight: bold;
         }
 
-        .sig-muted {
-            font-size: 7px;
-            color: #444;
-        }
+        .sig-muted { font-size: 7px; color: #64748b; }
     </style>
 </head>
 <body>
 
-{{-- Oberer Formblatt-Kopf --}}
-<table class="header-top">
+<table class="header-table">
     <tr>
-        <td class="left">
-            Formblatt<br>
-            <span style="font-size:8px;">Unterrichtsdokumentation</span>
-        </td>
-        <td class="center">
-            Unterrichtsdokumentation {{ $from->format('d.m.') }}-{{ $to->format('d.m.') }}.{{ $from->format('Y') }}
-        </td>
-        <td class="right">
-            {{-- Platz für Logo / Text --}}
+        <td style="width: 32%;">
             @if($logoSrc)
                 <img src="{{ $logoSrc }}" alt="Logo" class="logo">
-            @else
-                CBW GmbH
             @endif
+            <div class="meta-box">
+                <div><span class="meta-k">Standort:</span> {{ $meta['location'] ?? '-' }}</div>
+                <div><span class="meta-k">Klasse:</span> {{ $meta['class_label'] ?? '-' }}</div>
+                <div><span class="meta-k">Unterrichtstage:</span> {{ $meta['num_days'] ?? '-' }}</div>
+            </div>
+        </td>
+
+        <td class="title-center" style="width: 40%;">
+            Unterrichtsdokumentation
+            <div class="subtitle">
+                {{ $from->format('d.m.') }}-{{ $to->format('d.m.') }}.{{ $from->format('Y') }}
+            </div>
+        </td>
+
+        <td style="width: 28%;">
+            <div class="meta-box">
+                <div><span class="meta-k">Baustein:</span> {{ $meta['module'] ?? '-' }}</div>
+                <div><span class="meta-k">Zeitraum:</span> {{ $from->format('d.m.Y') }} - {{ $to->format('d.m.Y') }}</div>
+                <div><span class="meta-k">Dozent/in:</span> {{ $meta['tutor_name'] ?? '-' }}</div>
+            </div>
         </td>
     </tr>
 </table>
 
-{{-- Meta-Zeile (ähnlich deinem Formular) --}}
-<table class="header-meta" style="margin-top: 4px;">
-    <tr>
-        <td class="label">Standort</td>
-        <td class="value">{{ $meta['location'] }}</td>
-        <td class="label">Bausteinkurzbezeichnung</td>
-        <td class="value-wide">{{ $meta['module'] }}</td>
-    </tr>
-    <tr>
-        <td class="label">Von:</td>
-        <td class="value">
-            {{ $from->format('d.m.y') }}
-            &nbsp;&nbsp;–&nbsp;&nbsp;
-            {{ $to->format('d.m.y') }}
-            &nbsp;{{ $meta['year'] }}
-        </td>
-        <td class="label">Klasse / Unterrichtstage</td>
-        <td class="value-wide">{{ $meta['class_label'] }} / {{ $meta['num_days'] }}</td>
-    </tr>
-</table>
-
-{{-- Tabellenkopf für Tage --}}
-<table class="bordered" style="margin-top: 6px;">
+<table class="list">
     <tr class="head-row">
         <th class="col-tag">Datum / Uhrzeit</th>
-        <th class="col-content">V E R M I T T E L T E &nbsp;&nbsp; I N H A L T E (Hauptpunkte)</th>
+        <th class="col-content">V E R M I T T E L T E  I N H A L T E (Hauptpunkte)</th>
         <th class="col-ue">UE</th>
         <th class="col-sign">Unterschrift Instruktor/-in</th>
     </tr>
 
-    {{-- Tage untereinander --}}
     @foreach($rows as $row)
         @php
             /** @var \Carbon\Carbon $date */
             $date = $row['date'];
         @endphp
         <tr class="day-row">
-            {{-- 1. Spalte: "1. Tag" + Datum --}}
             <td class="col-tag cell-day-label">
                 {{ $row['index'] }}. Tag<br>
                 {{ $date->format('d.m.Y') }}<br>
                 {{ $row['time_range'] }}
             </td>
 
-            {{-- 2. Spalte: Inhalte (graue Fläche, HTML aus notes) --}}
             <td class="col-content cell-content">
-                {{-- notes_html enthält deine HTML-Struktur aus course_days.notes --}}
                 {!! $row['notes_html'] !!}
             </td>
 
-            {{-- 3. Spalte: UE --}}
             <td class="col-ue" style="text-align:center;">
                 {{ $row['ue'] ?? '' }}
             </td>
 
-            {{-- 4. Spalte: Unterschrift-Feld mit Bild (falls vorhanden) --}}
             <td class="col-sign sign-cell">
                 <div class="sign-cell-inner">
                     @if(!empty($row['tutor_signature_src']))
@@ -290,7 +244,7 @@
                     @endif
 
                     <span class="sign-label-bottom">
-                        {{ $meta['tutor_name'] }}
+                        {{ $meta['tutor_name'] ?? '-' }}
                     </span>
                 </div>
             </td>
@@ -298,7 +252,6 @@
     @endforeach
 </table>
 
-{{-- Abschluss-Signaturzeile wie im Beispiel --}}
 <table class="footer-sign">
     <tr>
         <td style="width: 35%;">
@@ -337,6 +290,5 @@
     </tr>
 </table>
 
-</body> 
-
+</body>
 </html>

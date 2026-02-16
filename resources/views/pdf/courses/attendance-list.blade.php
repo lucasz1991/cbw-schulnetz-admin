@@ -15,11 +15,20 @@
         'Sun' => 'SO',
     ];
 
-    // Logo laden
     $logoPath = public_path('site-images/logo.png');
     $logoSrc = file_exists($logoPath)
         ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
         : null;
+
+    // DomPDF behandelt Prozentbreiten bei vielen Spalten oft "weich".
+    // Name daher als 2 echte Spalten (colspan=2) mit fixer Gesamtbreite.
+    $nameColsTotalMm = 120.0;
+    $nameColMm = $nameColsTotalMm / 2;
+    $smallColMm = 7.0; // Uform/Qpro/FT
+    $usableWidthMm = 257.0; // A4 landscape (297) - 2x20mm Seitenrand
+    $dayCols = max(1, (count($days ?? []) * 2));
+    $remainingMm = max(20.0, $usableWidthMm - $nameColsTotalMm - (3 * $smallColMm));
+    $dayColMm = max(2.2, $remainingMm / $dayCols);
 @endphp
 <!DOCTYPE html>
 <html lang="de">
@@ -27,157 +36,184 @@
     <meta charset="utf-8">
     <title>Klassen-Anwesenheitsliste</title>
     <style>
-        @page {
-            margin: 18px 18px 26px 18px;
-        }
+        @page { margin: 20px 20px 30px 20px; }
 
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 1em;
+            font-size: 10px;
+            color: #1f2937;
         }
 
-        /* ---------- Header ---------- */
+        table { border-collapse: collapse; width: 100%; }
+
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6px; /* Abstand zur Tabelle wie in der Vorlage */
+            margin-bottom: 10px;
         }
         .header-table td {
-            border: none;
-            padding: 2px 3px;
+            padding: 4px 6px;
             vertical-align: top;
-        }
-        .header-left {
-            width: 35%;
-            font-size: 8.5px;
-        }
-        .header-center {
-            width: 30%;
-            text-align: center;
-            font-size: 11px;
-        }
-        .header-right {
-            width: 35%;
-            text-align: right;
-            font-size: 8.5px;
         }
 
         .logo {
-            width: 110px;
-            margin-bottom: 6px;
+            width: 120px;
+            margin-bottom: 8px;
         }
 
-        /* ---------- Tabelle ---------- */
+        .title-center {
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            color: #0f172a;
+            padding-top: 6px;
+        }
+
+        .subtitle {
+            font-size: 9px;
+            color: #64748b;
+            margin-top: 2px;
+            font-weight: normal;
+        }
+
+        .meta-box {
+            border: 0.4px solid #cbd5e1;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 6px 8px;
+            line-height: 1.35;
+        }
+
+        .meta-k {
+            display: inline-block;
+            min-width: 82px;
+            font-weight: bold;
+            color: #334155;
+        }
+
         table.attendance {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 40px;    /* großer Abstand wie in der KARE-PDF */
-            font-size: 12px;
+            margin-top: 8px;
+            table-layout: fixed;
+            font-size: 8px;
         }
 
-        /* Kopfzeile: keine kompletten Rahmen, nur Linie unten */
-        table.attendance thead th {
-            border-top: none;
-            border-left: none;
-            border-right: none;
-            border-bottom: none;
-            padding: 2px 2px 0px 2px;
-            height: 14px;
-            font-size: 10px;
-            font-weight: normal;
-        }
-        table.attendance tbody{ 
-            border-bottom: 0.4px solid #000; 
-        }
-        table.attendance tbody tr{
-            border-top: 0.4px solid #333;
-        }
-        table.attendance tbody tr:last-of-type {
-        }
-        table.attendance tbody tr:nth-child(odd) {
-            background-color: #f9f9f9;
-        }
-        /* Datenzeilen: kompletter Rahmen */
+        table.attendance thead th,
         table.attendance tbody td {
-            border: none;
-            padding: 7px;
-            height: 20px;
+            border: 0.4px solid #cbd5e1;
+            padding: 4px 3px;
         }
 
-        .col-name  { width: 210px; text-align: left;  padding-left: 4px; }
-        .col-small { width: 18px;  text-align: center; }
+        table.attendance tbody td {
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+
+        table.attendance thead th {
+            background: #eef2f7;
+            color: #334155;
+            text-align: center;
+            font-weight: bold;
+            font-size: 8px;
+        }
+
+        table.attendance tbody tr:nth-child(odd) {
+            background-color: #fafcff;
+        }
+
+        .col-name  { text-align: left; padding-left: 6px; }
+        .col-small { text-align: center; }
+
+        td.border-x { border-left: 0.4px solid #94a3b8 !important; border-right: 0.4px solid #94a3b8 !important; }
+        td.border-l { border-left: 0.4px solid #94a3b8 !important; }
+        td.border-r { border-right: 0.4px solid #94a3b8 !important; }
+        td.day { border-left: 0.4px solid #cbd5e1 !important; border-right: 0.4px solid #cbd5e1 !important; }
+        td.day.morning { border-left: 0.4px solid #94a3b8 !important; }
+        td.day.end { border-right: 0.4px solid #94a3b8 !important; }
 
         .legend {
-            margin-top: 4px;
-            font-size: 7.5px;
+            margin-top: 6px;
+            font-size: 8px;
+            color: #64748b;
         }
 
-        /* Unsichtbare zweite Header-Zeile (nur für die Colspans notwendig) */
-        .invisible-header th {
-            height: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border: none !important;
-            font-size: 0 !important;
-            line-height: 0
+        .section-title {
+            margin-top: 8px;
+            margin-bottom: 6px;
+            font-weight: bold;
+            font-size: 10px;
+            color: #0f172a;
         }
-        td.border-x{
-            border-left: 0.4px solid #111 !important;
-            border-right: 0.4px solid #111 !important;
+
+        table.list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 8.5px;
         }
-        td.border-l{
-            border-left: 0.4px solid #111 !important;
+        table.list th,
+        table.list td {
+            border: 0.4px solid #cbd5e1;
+            padding: 3px 4px;
         }
-        td.border-r{
-            border-right: 0.4px solid #111 !important;
-        }
-        td.day{
-            border-left: 0.4px solid #ccc !important;
-            border-right: 0.4px solid #ccc !important;
-        }
-        td.day.morning{
-            border-left: 0.4px solid #111 !important;
-        }
-        td.day.end{
-            border-right: 0.4px solid #111 !important;
+        table.list th {
+            text-align: left;
+            background: #eef2f7;
+            color: #334155;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    @if($logoSrc) 
-        <img src="{{ $logoSrc }}" class="logo">
-    @endif
+
 <table class="header-table">
     <tr>
-        <td class="header-left">
+        <td style="width: 32%;">
+            @if($logoSrc)
+                <img src="{{ $logoSrc }}" class="logo" alt="Logo">
+            @endif
+            <div class="meta-box">
+                <div><span class="meta-k">Datum:</span> {{ optional($from)->format('d.m.Y') }} - {{ optional($to)->format('d.m.Y') }}</div>
+                <div><span class="meta-k">Tage:</span> {{ $meta['num_days'] ?? '-' }}</div>
+                <div><span class="meta-k">Raum:</span> {{ $meta['room'] ?? '-' }}</div>
+            </div>
+        </td>
 
-            Datum:
-            {{ optional($from)->format('d.m.Y') }}-{{ optional($to)->format('d.m.Y') }}
-            ({{ $meta['num_days'] }})<br>
-            Raum:
-            {{ $meta['room'] ?? '—' }},
-            Unterrichts-Beginn:
-            {{ $meta['start_time'] ?? '—' }} Uhr
-        </td>
-        <td class="header-center">
+        <td class="title-center" style="width: 40%;">
             Klassen-Anwesenheitsliste
+            <div class="subtitle">Anwesenheit pro Teilnehmer und Unterrichtstag</div>
         </td>
-        <td class="header-right">
-            Baustein {{ $meta['module'] }}<br>
-            Klasse {{ $meta['class_label'] }}, Dozent: {{ $meta['tutor_name'] }}
+
+        <td style="width: 28%;">
+            <div class="meta-box">
+                <div><span class="meta-k">Modul:</span> {{ $meta['module'] ?? '-' }}</div>
+                <div><span class="meta-k">Klasse:</span> {{ $meta['class_label'] ?? '-' }}</div>
+                <div><span class="meta-k">Dozent:</span> {{ $meta['tutor_name'] ?? '-' }}</div>
+                <div><span class="meta-k">Beginn:</span> {{ $meta['start_time'] ?? '-' }} Uhr</div>
+            </div>
         </td>
     </tr>
 </table>
 
 <table class="attendance">
+    <colgroup>
+        <col style="width: {{ number_format($nameColMm, 2, '.', '') }}mm;">
+        <col style="width: {{ number_format($nameColMm, 2, '.', '') }}mm;">
+        <col style="width: {{ number_format($smallColMm, 2, '.', '') }}mm;">
+        <col style="width: {{ number_format($smallColMm, 2, '.', '') }}mm;">
+        <col style="width: {{ number_format($smallColMm, 2, '.', '') }}mm;">
+        @foreach($days as $day)
+            <col style="width: {{ number_format($dayColMm, 2, '.', '') }}mm;">
+            <col style="width: {{ number_format($dayColMm, 2, '.', '') }}mm;">
+        @endforeach
+    </colgroup>
     <thead>
-    {{-- Zeile 1: Name + Datum/Wochentag (jede Tagesgruppe colspan=2) --}}
     <tr>
-        <th class="col-name"  rowspan="2">Name</th>
-        <th class="col-small" rowspan="2">Uform</th>
-        <th class="col-small" rowspan="2">Qpro</th>
-        <th class="col-small" rowspan="2">Punkte</th>
-        <th class="col-small" rowspan="2">FT</th>
+        <th class="col-name" colspan="2">Name</th>
+        <th class="col-small">Uform</th>
+        <th class="col-small">Qpro</th>
+        <th class="col-small">FT</th>
 
         @foreach($days as $day)
             @php
@@ -188,14 +224,6 @@
                 {{ $day->date->format('d.m.') }}<br>
                 {{ $weekday }}
             </th>
-        @endforeach
-    </tr>
-
-    {{-- Zeile 2: strukturell notwendig, aber unsichtbar --}}
-    <tr class="invisible-header">
-        @foreach($days as $day)
-            <th class="col-small"></th>
-            <th class="col-small"></th>
         @endforeach
     </tr>
     </thead>
@@ -216,25 +244,22 @@
             $name = trim($nachname . ', ' . $vorname);
         @endphp
         <tr>
-            <td class="col-name border-l">{{ $name }}</td>
+            <td class="col-name border-l" colspan="2">{{ $name }}</td>
 
-            <td class="col-small">{{ $row['uform']  ?? '' }}</td>
-            <td class="col-small border-x" >{{ $row['qpro']   ?? '' }}</td>
-            <td class="col-small border-r">{{ $row['points'] ?? '' }}</td>
-            <td class="col-small">{{ $row['ft']     ?? '' }}</td>
+            <td class="col-small">{{ $row['uform'] ?? '' }}</td>
+            <td class="col-small border-x">{{ $row['qpro'] ?? '' }}</td>
+            <td class="col-small border-r">{{ $row['ft'] ?? '' }}</td>
 
             @foreach($days as $day)
                 @php
                     $cell = $row['cells'][$day->id] ?? null;
                 @endphp
 
-                {{-- Vormittag --}}
-                <td class="col-small day morning" >
+                <td class="col-small day morning">
                     @if($cell)
                         @if($cell['excused'])
                             E
                         @elseif($cell['empty'] === true)
-                                
                         @elseif($cell['morning_present'] === true)
                             x
                         @elseif($cell['morning_present'] === false)
@@ -243,13 +268,11 @@
                     @endif
                 </td>
 
-                {{-- Nachmittag / Ende --}}
                 <td class="col-small day end">
                     @if($cell)
                         @if($cell['excused'])
                             E
                         @elseif($cell['empty'] === true)
-                                
                         @elseif($cell['end_present'] === true)
                             x
                         @elseif($cell['end_present'] === false)
@@ -263,18 +286,20 @@
     </tbody>
 </table>
 
+<div class="legend">
+    x = anwesend, f = fehlt, E = entschuldigt
+</div>
+
 @if(!empty($partials))
     <div style="page-break-before: always; margin-top: 10px;">
-        <h3 style="font-size: 10px; margin-bottom: 4px;">
-            Übersicht: teilweise Anwesenheit (zu spät / früher gegangen)
-        </h3>
-        <table style="width:100%; border-collapse: collapse; font-size:8.5px;">
+        <div class="section-title">Uebersicht: teilweise Anwesenheit (zu spaet / frueher gegangen)</div>
+        <table class="list">
             <thead>
             <tr>
-                <th style="border:0.4px solid #000; padding:2px 3px; text-align:left;">Name</th>
-                <th style="border:0.4px solid #000; padding:2px 3px; text-align:left;">Datum</th>
-                <th style="border:0.4px solid #000; padding:2px 3px; text-align:right;">Zu spät (Min)</th>
-                <th style="border:0.4px solid #000; padding:2px 3px; text-align:right;">Früher gegangen (Min)</th>
+                <th>Name</th>
+                <th>Datum</th>
+                <th style="text-align:right;">Zu spaet (Min)</th>
+                <th style="text-align:right;">Frueher gegangen (Min)</th>
             </tr>
             </thead>
             <tbody>
@@ -286,16 +311,10 @@
                     $pName = trim($nach . ', ' . $vor);
                 @endphp
                 <tr>
-                    <td style="border:0.4px solid #000; padding:2px 3px;">{{ $pName }}</td>
-                    <td style="border:0.4px solid #000; padding:2px 3px;">
-                        {{ $entry['date']?->format('d.m.Y') }}
-                    </td>
-                    <td style="border:0.4px solid #000; padding:2px 3px; text-align:right;">
-                        {{ $entry['late_minutes'] ?: '—' }}
-                    </td>
-                    <td style="border:0.4px solid #000; padding:2px 3px; text-align:right;">
-                        {{ $entry['left_early_minutes'] ?: '—' }}
-                    </td>
+                    <td>{{ $pName }}</td>
+                    <td>{{ $entry['date']?->format('d.m.Y') }}</td>
+                    <td style="text-align:right;">{{ $entry['late_minutes'] ?: '-' }}</td>
+                    <td style="text-align:right;">{{ $entry['left_early_minutes'] ?: '-' }}</td>
                 </tr>
             @endforeach
             </tbody>
