@@ -163,18 +163,27 @@
     </div>
     <div>
         @foreach ($users as $user)
+            @php
+                $lastName = $user->person->nachname ?? '';
+                $firstName = $user->person->vorname ?? '';
+                $personDisplayName = trim($lastName . ', ' . $firstName, ' ,');
+                $displayName = $personDisplayName !== '' ? $personDisplayName : ($user->name ?? '-');
+                $legacyUserName = $user->name ?? '';
+            @endphp
             <div class="grid grid-cols-12 items-center p-2 border text-left hover:bg-blue-100 text-sm">
                 <div class="col-span-5 font-bold pl-1 cursor-pointer flex items-center justify-between"  wire:click="toggleUserSelection({{ $user->id }})" x-on:dblclick="window.location='{{ route('admin.user-profile', ['userId' => $user->id]) }}'">
                     <div class="flex items-center space-x-4">
                         <img class="h-10 w-10 rounded-full object-cover transition-all duration-300 {{ in_array($user->id, $selectedUsers) ? 'ring-4 ring-green-300' : '' }}" 
-                        src="{{ $user->baseProfilePhotoUrl }}" alt="{{ $user->name }}" />
+                        src="{{ $user->baseProfilePhotoUrl }}" alt="{{ $displayName }}" />
                         <div>
                             <div class="text-sm font-medium">
-                                {{ $user->name }}
+                                {{ $displayName }}
                             </div>
-                            <div class="text-xs text-gray-400">
-                                {{ $user->person->vorname ?? 'Vorname' }} {{ $user->person->nachname ?? 'Nachname' }}
-                            </div>
+                            @if($legacyUserName !== '' && $legacyUserName !== $displayName)
+                                <div class="text-xs text-gray-400">
+                                    {{ $legacyUserName }}
+                                </div>
+                            @endif
                         </div>
                         @if($user->isOnline())
                             <span class="h-2 w-2 rounded-full bg-green-300" title="Online"></span>

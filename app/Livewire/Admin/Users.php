@@ -150,7 +150,11 @@ class Users extends Component
             ->where(function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                       ->orWhere('email', 'like', '%' . $this->search . '%')
-                      ->orWhere('created_at', 'like', '%' . $this->search . '%');
+                      ->orWhere('created_at', 'like', '%' . $this->search . '%')
+                      ->orWhereHas('person', function ($personQuery) {
+                          $personQuery->where('nachname', 'like', '%' . $this->search . '%')
+                              ->orWhere('vorname', 'like', '%' . $this->search . '%');
+                      });
             })
             ->exists();
     }
@@ -183,7 +187,11 @@ class Users extends Component
                 ->where(function ($query) {
                     $query->where('name', 'like', '%' . $this->search . '%')
                           ->orWhere('email', 'like', '%' . $this->search . '%')
-                          ->orWhere('created_at', 'like', '%' . $this->search . '%');
+                          ->orWhere('created_at', 'like', '%' . $this->search . '%')
+                          ->orWhereHas('person', function ($personQuery) {
+                              $personQuery->where('nachname', 'like', '%' . $this->search . '%')
+                                  ->orWhere('vorname', 'like', '%' . $this->search . '%');
+                          });
                 })
                 ->pluck('id')
                 ->toArray();
@@ -204,20 +212,49 @@ class Users extends Component
 
     public function render()
     {
-        $usersList = User::query()
-        ->when($this->userTypeFilter, fn($query) =>
-            $query->where('role', $this->userTypeFilter)
-        )
-        ->whereIn('role', ['guest', 'tutor'])
-        ->where(function($query) {
-            $query->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%')
-                  ->orWhere('created_at', 'like', '%' . $this->search . '%');
-        })
-        ->orderBy($this->sortBy, $this->sortDirection)
-        ->paginate(10)  
-        ->withQueryString()
-        ->setPath(url('/admin/users'));
+        $sortDirection = $this->sortDirection === 'desc' ? 'desc' : 'asc';
+
+        $usersQuery = User::query()
+            ->with('person')
+            ->when($this->userTypeFilter, fn($query) =>
+                $query->where('role', $this->userTypeFilter)
+            )
+            ->whereIn('role', ['guest', 'tutor'])
+            ->where(function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%')
+                    ->orWhere('created_at', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('person', function ($personQuery) {
+                        $personQuery->where('nachname', 'like', '%' . $this->search . '%')
+                            ->orWhere('vorname', 'like', '%' . $this->search . '%');
+                    });
+            });
+
+        if ($this->sortBy === 'name') {
+            $usersQuery
+                ->orderBy(
+                    Person::select('nachname')
+                        ->whereColumn('persons.user_id', 'users.id')
+                        ->limit(1),
+                    $sortDirection
+                )
+                ->orderBy(
+                    Person::select('vorname')
+                        ->whereColumn('persons.user_id', 'users.id')
+                        ->limit(1),
+                    $sortDirection
+                )
+                ->orderBy('users.name', $sortDirection);
+        } elseif (in_array($this->sortBy, ['email', 'created_at'], true)) {
+            $usersQuery->orderBy('users.' . $this->sortBy, $sortDirection);
+        } else {
+            $usersQuery->orderBy('users.name', $sortDirection);
+        }
+
+        $usersList = $usersQuery
+            ->paginate(10)
+            ->withQueryString()
+            ->setPath(url('/admin/users'));
 
         $this->updateHasUsers();
 
