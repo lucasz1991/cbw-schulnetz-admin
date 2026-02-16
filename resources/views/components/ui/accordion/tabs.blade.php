@@ -60,8 +60,7 @@
     x-init="setupMQ(@js($collapseAt)); onResize(); $watch('openTab', () => onResize())"
     class="w-full"
     role="tablist"
-    wire:key="tutor-course-tabs"
-    wire:ignore
+    wire:ignore.self
 >
     <div class="flex -mb-[1px]" x-ref="row" x-resize.debounce.150ms="onResize()">
         <!-- Normalmodus: alle Tabs (Layout unverändert) -->

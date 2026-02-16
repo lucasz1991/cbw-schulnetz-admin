@@ -137,7 +137,7 @@ class UserProfile extends Component
             $this->dispatch('showAlert', 'UVS-Daten konnten nicht aktualisiert werden.', 'error');
         }
     }
-    
+
     public function render()
     {
         return view('livewire.admin.user-profile', [

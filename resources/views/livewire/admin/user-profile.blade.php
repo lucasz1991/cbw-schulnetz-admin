@@ -64,7 +64,7 @@
 
         <div class="px-4 pb-5 pt-16 md:px-6 md:pt-20">
             <div class="text-center">
-                <h2 class="text-xl font-semibold text-slate-900">{{ $user->name }}</h2>
+                <h2 class="text-xl font-semibold text-slate-700">{{ $user->name }}</h2>
                 <div class="mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset"
                      x-cloak
                      :class="{ 'bg-emerald-50 text-emerald-700 ring-emerald-200': {{ $user->role == 'guest' ? 'true' : 'false' }}, 'bg-sky-50 text-sky-700 ring-sky-200': {{ $user->role == 'tutor' ? 'true' : 'false' }} }">
@@ -101,79 +101,73 @@
                 @endphp
 
                 {{-- Benutzerkonto Card --}}
-                <div class="">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="flex items-center gap-2 text-base font-semibold text-slate-800">
-                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                                <i class="far fa-user text-sm"></i>
-                            </span>
-                            <span>Benutzerdetails</span>
-                        </h3>
-                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">User-ID: {{ $user->id }}</span>
+                <section class="">
+                    <div class="mb-3">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h3 class="flex items-center gap-2 text-base font-semibold text-slate-800">
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                                    <i class="far fa-user text-sm"></i>
+                                </span>
+                                <span>Benutzerdetails</span>
+                            </h3>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+                                    User-ID: {{ $user->id }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-3  md:grid-cols-2">
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                            <div class="text-[11px] uppercase tracking-wide text-slate-500">Benutzername</div>
-                            <div class="mt-1 text-sm font-semibold text-slate-900">{{ $user->name }}</div>
-                            @if($firstPerson)
-                                <div class="mt-1 text-sm text-slate-700">{{ $firstPerson->nachname ?? '—' }}, {{ $firstPerson->vorname ?? '—' }}</div>
-                            @endif
-                        </div>
-
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                            <div class="text-[11px] uppercase tracking-wide text-slate-500">Registriert am</div>
-                            <div class="mt-1 text-sm font-semibold text-slate-900">{{ $user->created_at->format('d.m.Y') }}</div>
-                            <div class="mt-3 border-t border-slate-200 pt-3">
-                                <div class="mb-2 text-[11px] uppercase tracking-wide text-slate-500">E-Mail & Verifizierungsstatus</div>
-                                <div class="min-w-0">
-                                    <div class="truncate text-sm text-slate-900" title="{{ $user->email }}">{{ $user->email }}</div>
-                                </div>
-                                @if($user->email_verified_at)
-                                    <span class="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"
-                                          title="Verifiziert am: {{ $user->email_verified_at->format('d.m.Y H:i') }}">
-                                        <i class="far fa-check-circle"></i>
-                                        Verifiziert
-                                    </span>
-                                @else
-                                    <span class="mt-2 inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700"
-                                          title="E-Mail nicht verifiziert">
-                                        <i class="far fa-exclamation-circle"></i>
-                                        Nicht verifiziert
-                                    </span>
+                    <div class="pt-4">
+                        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                            <article class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                                <div class="text-[11px] uppercase tracking-wide text-slate-500">Benutzername</div>
+                                <div class="mt-1 text-sm font-semibold text-slate-800">{{ $user->name }}</div>
+                                @if($firstPerson)
+                                    <div class="mt-3 text-[11px] uppercase tracking-wide text-slate-500">Vollständiger Name</div>
+                                    <div class="mt-1 text-sm text-slate-700">{{ $firstPerson->nachname ?? '-' }}, {{ $firstPerson->vorname ?? '-' }}</div>
+                                    <div class="mt-3 text-[11px] uppercase tracking-wide text-slate-500">Geburtsdatum</div>
+                                    <div class="mt-1 text-sm font-semibold text-slate-800">
+                                        {{ !empty($firstPerson->geburt_datum) ? \Carbon\Carbon::parse($firstPerson->geburt_datum)->format('d.m.Y') : '-' }}
+                                    </div>
+                                    <div class="mt-2 inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                                        UVS PersonNr.: {{ $firstPerson->person_nr ?? '-' }}
+                                    </div>
                                 @endif
-                            </div>
-                        </div>
+                            </article>
 
-                        @if($firstPerson)
-                            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2">
-                                <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <div>
-                                        <div class="text-[11px] uppercase tracking-wide text-slate-500">Name</div>
-                                        <div class="mt-1 text-sm font-semibold text-slate-900">{{ $firstPerson->nachname ?? '—' }}, {{ $firstPerson->vorname ?? '—' }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[11px] uppercase tracking-wide text-slate-500">Person-Nr.</div>
-                                        <div class="mt-1 text-sm font-semibold text-slate-900">{{ $firstPerson->person_nr ?? '—' }}</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[11px] uppercase tracking-wide text-slate-500">Geburtsdatum</div>
-                                        <div class="mt-1 text-sm font-semibold text-slate-900">
-                                            {{ !empty($firstPerson->geburt_datum) ? \Carbon\Carbon::parse($firstPerson->geburt_datum)->format('d.m.Y') : '—' }}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="text-[11px] uppercase tracking-wide text-slate-500">Anschrift</div>
-                                        <div class="mt-1 text-sm font-semibold text-slate-900">
-                                            {{ $firstPerson->strasse ?? '—' }}<br>
-                                            {{ trim(($firstPerson->plz ?? '') . ' ' . ($firstPerson->ort ?? '')) ?: '—' }}
-                                        </div>
-                                    </div>
+                            <article class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                                <div class="text-[11px] uppercase tracking-wide text-slate-500">Registriert am</div>
+                                <div class="mt-1 text-sm font-semibold text-slate-800">{{ $user->created_at->format('d.m.Y') }}</div>
+                                <div class="mt-3 text-[11px] uppercase tracking-wide text-slate-500">E-Mail</div>
+                                <div class="mt-1 flex items-center justify-left gap-2">
+                                    <div class="break-all text-sm text-slate-700" title="{{ $user->email }}">{{ $user->email }}</div>
+                                    @if($user->email_verified_at)
+                                        <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-[11px] text-emerald-700"
+                                              title="Verifiziert am: {{ $user->email_verified_at->format('d.m.Y H:i') }}">
+                                            <i class="far fa-check-circle"></i>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-[11px] text-rose-700"
+                                              title="E-Mail nicht verifiziert">
+                                            <i class="far fa-exclamation-circle"></i>
+                                        </span>
+                                    @endif
                                 </div>
-                            </div>
-                        @endif
+                            </article>
+
+                            <article class="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
+                                <div class="text-[11px] uppercase tracking-wide text-slate-500">Anschrift</div>
+                                @if($firstPerson)
+                                    <div class="mt-1 text-sm font-semibold text-slate-800">{{ $firstPerson->strasse ?? '-' }}</div>
+                                    <div class="mt-1 text-sm text-slate-700">{{ trim(($firstPerson->plz ?? '') . ' ' . ($firstPerson->ort ?? '')) ?: '-' }}</div>
+                                @else
+                                    <div class="mt-1 text-sm text-slate-600">Keine Anschrift verknuepft</div>
+                                @endif
+                            </article>
+                        </div>
                     </div>
-                </div>
+                </section>
             @if(auth()->user()->isAdmin())
                 @if($persons->count())
                     @foreach($persons as $person)
@@ -398,3 +392,4 @@
     <livewire:admin.users.messages.message-form :key="'message-form-'.$user->id" />
 
 </div>
+

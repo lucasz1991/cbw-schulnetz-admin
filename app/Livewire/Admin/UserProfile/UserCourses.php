@@ -15,7 +15,10 @@ use Illuminate\Support\Collection;
 
 class UserCourses extends Component
 {
-    use WithPagination, WithoutUrlPagination;
+    use WithPagination;
+    use WithoutUrlPagination;
+
+    protected string $pageName = 'coursesPage';
 
     public User $user;
 
@@ -33,7 +36,7 @@ class UserCourses extends Component
 
     public function updatingSearch()
     {
-        $this->resetPage();
+        $this->resetPage($this->pageName);
     }
 
     public function placeholder()
@@ -79,7 +82,7 @@ class UserCourses extends Component
                 });
             }
 
-            $courses = $query->paginate($this->perPage);
+            $courses = $query->paginate($this->perPage, ['*'], $this->pageName);
 
         }
         // ------------------------------------------------------------------
@@ -120,7 +123,7 @@ class UserCourses extends Component
                 });
             }
 
-            $courses = $query->paginate($this->perPage);
+            $courses = $query->paginate($this->perPage, ['*'], $this->pageName);
         }
 
         if ($courses->count() > 0) {

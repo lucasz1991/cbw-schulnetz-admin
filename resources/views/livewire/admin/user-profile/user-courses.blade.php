@@ -248,7 +248,7 @@
         </div>
 
         <div class="mt-3">
-            {{ $courses->onEachSide(1)->links() }}
+            {{ $courses->withQueryString()->links('pagination::tailwind') }}
         </div>
     @endif
 
