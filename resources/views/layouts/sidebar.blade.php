@@ -79,7 +79,7 @@
                         <span data-key="t-users">{{ __('base.blocks') }}</span>
                     </a>
                 </li>
-                @if(Auth::user()->role == "admin"  || Auth::user()->current_team_id === 6)
+                @if(Auth::user()->role == "admin"  || Auth::user()->current_team_id === 6 || Auth::user()->current_team_id === 2)
                     <li>
                         <a href="{{ route('admin.tasks.index') }}"   class=" block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                             <i data-feather="list" fill="#545a6d33"></i>
