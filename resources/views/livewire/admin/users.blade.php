@@ -164,11 +164,9 @@
     <div>
         @foreach ($users as $user)
             <div class="grid grid-cols-12 items-center p-2 border text-left hover:bg-blue-100 text-sm">
-
-                <div class="col-span-5 font-bold pl-1 cursor-pointer flex items-center justify-between"  wire:click="toggleUserSelection({{ $user->id }})" x-on:dblclick="window.location='{{ route('admin.user-profile', ['userId' => $user->id]) }}'"
->
+                <div class="col-span-5 font-bold pl-1 cursor-pointer flex items-center justify-between"  wire:click="toggleUserSelection({{ $user->id }})" x-on:dblclick="window.location='{{ route('admin.user-profile', ['userId' => $user->id]) }}'">
                     <div class="flex items-center space-x-4">
-                        <img     class="h-10 w-10 rounded-full object-cover transition-all duration-300 {{ in_array($user->id, $selectedUsers) ? 'ring-4 ring-green-300' : '' }}" 
+                        <img class="h-10 w-10 rounded-full object-cover transition-all duration-300 {{ in_array($user->id, $selectedUsers) ? 'ring-4 ring-green-300' : '' }}" 
                         src="{{ $user->baseProfilePhotoUrl }}" alt="{{ $user->name }}" />
                         <div>
                             <div class="text-sm font-medium">
