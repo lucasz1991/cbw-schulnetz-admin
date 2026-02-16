@@ -446,21 +446,18 @@ class Course extends Model
             ->count('person_id');
 
         if ($total === 0) {
-            // Kein Teilnehmer -> als "fehlt" werten (0). 
-            // Falls du das als "ok" sehen willst, ändere auf "return 1;"
             return 0;
         }
 
-        // Distinct bestätigte Personen (nur mit acknowledged_at) für diesen Kurs
         $ack = DB::table('course_material_acknowledgements')
             ->where('course_id', $this->id)
             ->whereNotNull('acknowledged_at')
             ->distinct()
             ->count('person_id');
 
-        if ($ack === 0)       return 0; // keiner bestätigt
-        if ($ack < $total)    return 2; // teilweise / ausstehend
-        return 1;                       // alle bestätigt
+        if ($ack === 0)       return 0;
+        if ($ack < $total)    return 2;
+        return 1;
     }
 
 
