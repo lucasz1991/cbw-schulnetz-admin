@@ -124,42 +124,12 @@
                             @endif
                         </div>
 
-                        {{-- Admin-Kommentar + Aktionen --}}
-                        <div class="space-y-3">
-                            <label class="block text-sm font-medium text-gray-700">Admin-Kommentar (optional)</label>
-                            <textarea wire:model.defer="adminComment" rows="3"
-                                      class="w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300"
-                                      placeholder="Notiz für Genehmigung/Ablehnung …"></textarea>
-
-                            <div class="flex flex-wrap gap-2 pt-1">
-                                <button wire:click="markInReview"
-                                        class="rounded-md border px-3 py-1.5 text-sm hover:bg-blue-50">
-                                    In Prüfung
-                                </button>
-                                <button wire:click="approve"
-                                        class="rounded-md border px-3 py-1.5 text-sm hover:bg-green-50">
-                                    Genehmigen
-                                </button>
-                                <button wire:click="reject"
-                                        class="rounded-md border px-3 py-1.5 text-sm hover:bg-red-50">
-                                    Ablehnen
-                                </button>
-                                <button wire:click="cancel"
-                                        class="rounded-md border px-3 py-1.5 text-sm hover:bg-amber-50">
-                                    Stornieren
-                                </button>
-
-                                <div class="ms-auto"></div>
-
-                                <button wire:click="delete"
-                                        class="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
-                                    Löschen
-                                </button>
-                                <button @click="open=false" wire:click="close"
-                                        class="rounded-md border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
-                                    Schließen
-                                </button>
-                            </div>
+                        <div class="flex justify-end pt-1">
+                            <button wire:click="delete"
+                                    onclick="return confirm('Antrag wirklich löschen?')"
+                                    class="rounded-md border px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">
+                                Löschen
+                            </button>
                         </div>
                     </div>
                 @endif

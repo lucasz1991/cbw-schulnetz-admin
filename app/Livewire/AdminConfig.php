@@ -36,6 +36,30 @@ class AdminConfig extends Component
         'new_user_request_to_inst' => false,
     ];
 
+    // Admin-Notifications: Vorschlaege (sichtbar, aber nicht aktivierbar)
+    public $adminEmailNotificationSuggestions = [
+        'course_start_without_lecturer' => [
+            'label' => 'Kursstart ohne Dozentenzuordnung',
+            'description' => 'Automatische Nachricht, wenn ein Kurs in den naechsten 7 Tagen startet, aber kein Dozent zugeordnet ist.',
+        ],
+        'final_exam_missing' => [
+            'label' => 'Abschlusspruefung nicht geplant',
+            'description' => 'Automatische Nachricht, wenn ein Kursende naht und noch kein Pruefungstermin hinterlegt wurde.',
+        ],
+        'attendance_entries_incomplete' => [
+            'label' => 'Anwesenheiten unvollstaendig',
+            'description' => 'Automatische Nachricht, wenn in laufenden Kursen fuer mehrere Tage keine Anwesenheit erfasst wurde.',
+        ],
+        'instructor_invoice_overdue' => [
+            'label' => 'Dozentenrechnung ueberfaellig',
+            'description' => 'Automatische Nachricht, wenn ein Baustein beendet ist, aber die Dozentenrechnung nach 14 Tagen noch fehlt.',
+        ],
+        'api_sync_failed' => [
+            'label' => 'UVS-Synchronisation fehlgeschlagen',
+            'description' => 'Automatische Nachricht, wenn die Synchronisation von Teilnehmer- oder Kursdaten mit UVS fehlschlaegt.',
+        ],
+    ];
+
     // ------------------------------------------------------------------
     // User-Notifications: META (statisch, NICHT überschreiben)
     // ------------------------------------------------------------------
@@ -44,6 +68,35 @@ class AdminConfig extends Component
             'label' => 'Berichtsheft fehlt',
             'description' => 'Erinnerung, wenn ein Berichtsheft nicht vollständig ausgefüllt wurde. 2 Wochen nach Kursende, wenn noch fehlende Einträge vorhanden sind.',
             'default' => false,
+        ],
+    ];
+
+
+    // User-Notifications: Vorschlaege (sichtbar, aber nicht aktivierbar)
+    public $userEmailNotificationSuggestions = [
+        'lecturer_module_documentation_missing' => [
+            'label' => 'Dozenten Baustein-Dokumentation fehlt',
+            'description' => 'Automatische Nachricht, wenn fuer einen Baustein die Dozenten-Dokumentation fehlt.',
+        ],
+        'rote_faden_missing' => [
+            'label' => 'Dozenten Roter Faden fehlt',
+            'description' => 'Automatische Nachricht, wenn der rote Faden fuer einen Kurs fehlt.',
+        ],
+        'attendance_proof_missing' => [
+            'label' => 'Anwesenheitsnachweis fehlt',
+            'description' => 'Automatische Nachricht, wenn fuer einen Baustein kein Anwesenheitsnachweis vorliegt.',
+        ],
+        'exam_results_missing_by_lecturer' => [
+            'label' => 'Pruefungsergebnisse fehlen vom Dozenten',
+            'description' => 'Automatische Nachricht, wenn nach einer Pruefung noch keine Ergebnisse durch den Dozenten eingetragen wurden.',
+        ],
+        'lecturer_module_invoice_missing' => [
+            'label' => 'Dozenten Baustein Rechnung fehlt',
+            'description' => 'Automatische Nachricht, wenn fuer einen abgeschlossenen Baustein noch keine Dozenten-Rechnung hinterlegt wurde.',
+        ],
+        'participant_education_material_confirmation_missing' => [
+            'label' => 'Bildungsmittel-Bestaetigung fehlt (Teilnehmer)',
+            'description' => 'Automatische Erinnerung an Teilnehmer, wenn die Bestaetigung zu den Bildungsmitteln noch aussteht.',
         ],
     ];
 
@@ -125,26 +178,32 @@ class AdminConfig extends Component
 
     public function saveAdminMailSettings(): void
     {
-        foreach ($this->adminEmailNotifications as $key => $value) {
-            Setting::updateOrCreate(
-                ['key' => $key, 'type' => 'mails'],
-                ['value' => json_encode((bool) $value)]
-            );
-        }
-
+        $this->persistAdminMailSettings();
         $this->dispatch('showAlert', 'Admin E-Mail Einstellungen wurden gespeichert.', 'success');
     }
 
     public function saveUserMailSettings(): void
     {
-        foreach ($this->userEmailNotifications as $key => $enabled) {
-            Setting::updateOrCreate(
-                ['key' => $key, 'type' => 'mails'],
-                ['value' => json_encode((bool) $enabled)]
-            );
+        $this->persistUserMailSettings();
+        $this->dispatch('showAlert', 'Benutzer E-Mail Einstellungen wurden gespeichert.', 'success');
+    }
+
+    public function updatedAdminEmailNotifications($value, $key): void
+    {
+        if (! array_key_exists($key, $this->adminEmailNotifications)) {
+            return;
         }
 
-        $this->dispatch('showAlert', 'Benutzer E-Mail Einstellungen wurden gespeichert.', 'success');
+        $this->persistAdminMailSettings();
+    }
+
+    public function updatedUserEmailNotifications($value, $key): void
+    {
+        if (! array_key_exists($key, $this->userEmailNotifications)) {
+            return;
+        }
+
+        $this->persistUserMailSettings();
     }
 
     public function saveAdminEmail(): void
@@ -195,6 +254,26 @@ class AdminConfig extends Component
     private function getUserDefault(string $key): bool
     {
         return (bool) ($this->userEmailNotificationMeta[$key]['default'] ?? false);
+    }
+
+    private function persistAdminMailSettings(): void
+    {
+        foreach ($this->adminEmailNotifications as $key => $value) {
+            Setting::updateOrCreate(
+                ['key' => $key, 'type' => 'mails'],
+                ['value' => json_encode((bool) $value)]
+            );
+        }
+    }
+
+    private function persistUserMailSettings(): void
+    {
+        foreach ($this->userEmailNotifications as $key => $enabled) {
+            Setting::updateOrCreate(
+                ['key' => $key, 'type' => 'mails'],
+                ['value' => json_encode((bool) $enabled)]
+            );
+        }
     }
 
     // ------------------------------------------------------------------

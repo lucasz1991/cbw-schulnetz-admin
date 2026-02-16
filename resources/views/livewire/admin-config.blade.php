@@ -152,7 +152,7 @@
                                     <input
                                     id="admin_notif_{{ $key }}"
                                     type="checkbox"
-                                    wire:model="adminEmailNotifications.{{ $key }}"
+                                    wire:model.live="adminEmailNotifications.{{ $key }}"
                                     class="sr-only peer">
                                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300
                                                 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700
@@ -166,15 +166,32 @@
                             @endforeach
                             </div>
 
+                            <div class="mt-5">
+                                <div class="space-y-4">
+                                @foreach($adminEmailNotificationSuggestions as $key => $meta)
+                                    <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3 shadow-sm opacity-90">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-gray-700">{{ $meta['label'] }}</span>
+                                            <span class="text-sm text-gray-500">{{ $meta['description'] }}</span>
+                                        </div>
 
-                            <!-- Speichern Button -->
-                            <button 
-                                wire:click="saveAdminMailSettings" 
-                                class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 mt-4"
-                            >
-                                Änderungen speichern
-                            </button>
-                        </x-slot>
+                                        <label for="admin_notif_suggestion_{{ $key }}" class="relative inline-flex items-center cursor-not-allowed ml-4">
+                                            <input
+                                            id="admin_notif_suggestion_{{ $key }}"
+                                            type="checkbox"
+                                            class="sr-only peer"
+                                            disabled
+                                            >
+                                            <div class="w-11 h-6 bg-gray-200 rounded-full after:content-[''] after:absolute after:top-[2px]
+                                                        after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                                                        after:h-5 after:w-5 after:transition-all dark:border-gray-600">
+                                            </div>
+                                        </label>
+                                    </div>
+                                @endforeach
+                                </div>
+                            </div>
+</x-slot>
                     </x-settings-collapse>
                     <!-- Benutzer Mails -->
                     <x-settings-collapse>
@@ -189,42 +206,59 @@
                                 <div class="space-y-4">
                                 @foreach($userEmailNotificationMeta as $key => $meta)
                                     <div class="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-                                    <div class="flex flex-col">
-                                        <span class="font-medium text-gray-800">{{ $meta['label'] }}</span>
-                                        <span class="text-sm text-gray-500">{{ $meta['description'] }}</span>
-                                    </div>
-
-                                    <label for="notif_{{ $key }}" class="relative inline-flex items-center cursor-pointer ml-4">
-                                        <input 
-                                        id="notif_{{ $key }}" 
-                                        type="checkbox" 
-                                        wire:model="userEmailNotifications.{{ $key }}"
-                                        class="sr-only peer"
-                                        >
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 
-                                                    dark:peer-focus:ring-blue-800 rounded-full peer 
-                                                    dark:bg-gray-700 
-                                                    peer-checked:after:translate-x-full 
-                                                    rtl:peer-checked:after:-translate-x-full 
-                                                    peer-checked:after:border-white 
-                                                    after:content-[''] after:absolute after:top-[2px] after:start-[2px] 
-                                                    after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 
-                                                    after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-gray-800">{{ $meta['label'] }}</span>
+                                            <span class="text-sm text-gray-500">{{ $meta['description'] }}</span>
                                         </div>
-                                    </label>
+
+                                        <label for="notif_{{ $key }}" class="relative inline-flex items-center cursor-pointer ml-4">
+                                            <input 
+                                                id="notif_{{ $key }}" 
+                                                type="checkbox" 
+                                                wire:model.live="userEmailNotifications.{{ $key }}"
+                                                class="sr-only peer"
+                                            >
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 
+                                                        dark:peer-focus:ring-blue-800 rounded-full peer 
+                                                        0dark:bg-gray-700 
+                                                        peer-checked:after:translate-x-full 
+                                                        rtl:peer-checked:after:-translate-x-full 
+                                                        peer-checked:after:border-white 
+                                                        after:content-[''] after:absolute after:top-[2px] after:start-[2px] 
+                                                        after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 
+                                                        after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+                                            </div>
+                                        </label>
                                     </div>
                                 @endforeach
                                 </div>
 
+                                <div class="mt-5">
+                                    <div class="space-y-4">
+                                    @foreach($userEmailNotificationSuggestions as $key => $meta)
+                                        <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3 shadow-sm opacity-90">
+                                            <div class="flex flex-col">
+                                                <span class="font-medium text-gray-700">{{ $meta['label'] }}</span>
+                                                <span class="text-sm text-gray-500">{{ $meta['description'] }}</span>
+                                            </div>
 
-                            <!-- Speichern Button -->
-                            <button 
-                                wire:click="saveUserMailSettings" 
-                                class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 mt-4"
-                            >
-                                Änderungen speichern
-                            </button>
-                        </x-slot>
+                                            <label for="notif_suggestion_{{ $key }}" class="relative inline-flex items-center cursor-not-allowed ml-4">
+                                                <input
+                                                id="notif_suggestion_{{ $key }}"
+                                                type="checkbox"
+                                                class="sr-only peer"
+                                                disabled
+                                                >
+                                                <div class="w-11 h-6 bg-gray-200 rounded-full after:content-[''] after:absolute after:top-[2px]
+                                                            after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full
+                                                            after:h-5 after:w-5 after:transition-all dark:border-gray-600">
+                                                </div>
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                    </div>
+                                </div>
+</x-slot>
                     </x-settings-collapse>
                 </div>
                 <!-- Api Tab -->
@@ -324,4 +358,3 @@
             </div>
         </div>
 </div>
-

@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use Livewire\WithoutUrlPagination;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class UserMessages extends Component
 {
@@ -14,6 +15,8 @@ class UserMessages extends Component
 
     public User $user;
     public string $search = '';
+    public bool $showMessageModal = false;
+    public ?int $selectedMessageId = null;
 
     protected $paginationTheme = 'tailwind';
 
@@ -48,5 +51,76 @@ class UserMessages extends Component
         return view('livewire.admin.user-profile.user-messages', [
             'messages' => $messages,
         ]);
+    }
+
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function openMessage(int $messageId): void
+    {
+        $exists = Message::query()
+            ->where('id', $messageId)
+            ->where('to_user', $this->user->id)
+            ->exists();
+
+        if (! $exists) {
+            return;
+        }
+
+        $this->selectedMessageId = $messageId;
+        $this->showMessageModal = true;
+    }
+
+    public function closeMessageModal(): void
+    {
+        $this->showMessageModal = false;
+        $this->selectedMessageId = null;
+    }
+
+    public function deleteMessage(int $messageId): void
+    {
+        if (!Auth::user()?->isAdmin()) {
+            $this->dispatch('showAlert', 'Keine Berechtigung zum Löschen.', 'error');
+            return;
+        }
+
+        $message = Message::query()
+            ->where('id', $messageId)
+            ->where('to_user', $this->user->id)
+            ->with('files')
+            ->first();
+
+        if (! $message) {
+            $this->dispatch('showAlert', 'Nachricht nicht gefunden.', 'error');
+            return;
+        }
+
+        foreach ($message->files as $file) {
+            $file->delete();
+        }
+
+        $message->delete();
+
+        if ($this->selectedMessageId === $messageId) {
+            $this->closeMessageModal();
+        }
+
+        $this->dispatch('showAlert', 'Nachricht wurde gelöscht.', 'success');
+        $this->resetPage();
+    }
+
+    public function getSelectedMessageProperty(): ?Message
+    {
+        if (! $this->selectedMessageId) {
+            return null;
+        }
+
+        return Message::query()
+            ->where('id', $this->selectedMessageId)
+            ->where('to_user', $this->user->id)
+            ->with(['sender', 'files'])
+            ->first();
     }
 }

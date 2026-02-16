@@ -56,9 +56,16 @@
             <x-secondary-button wire:click="resetMailModal" wire:loading.attr="disabled">
                 Abbrechen
             </x-secondary-button>
-            <x-button wire:click="sendMail" wire:loading.attr="disabled" class="ml-2">
-                Senden
-            </x-button>
+            @php $canSendMail = auth()->user()?->isAdmin(); @endphp
+            @if($canSendMail)
+                <x-button wire:click="sendMail" wire:loading.attr="disabled" class="ml-2">
+                    Senden
+                </x-button>
+            @else
+                <x-button disabled class="ml-2 cursor-not-allowed pointer-events-none opacity-60">
+                    Senden
+                </x-button>
+            @endif
         </x-slot>
     </x-dialog-modal>
 </div>

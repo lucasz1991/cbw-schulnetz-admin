@@ -18,7 +18,7 @@
                         </div>
                         <div>
                             <div class="text-[11px] uppercase tracking-wide text-slate-600">Kurs-Doku Teilnehmer-Signatur</div>
-                            <div class="mt-0.5 text-sm font-semibold text-slate-800">Klassensprecher-Bestäigung</div>
+                            <div class="mt-0.5 text-sm font-semibold text-slate-800">Klassensprecher-Bestätigung</div>
                             @if(!$this->dokuSigned)
                                 <div class="mt-1 text-[11px] text-amber-700">Details sind erst nach Unterschrift verfuegbar.</div>
                             @endif

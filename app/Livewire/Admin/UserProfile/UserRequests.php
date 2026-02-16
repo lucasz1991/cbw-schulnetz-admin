@@ -17,10 +17,7 @@ class UserRequests extends Component
 
     /** Filter & UI */
     public string $search = '';
-    public ?string $status = null;      // pending|approved|rejected|canceled|in_review
     public ?string $type = null;        // absence|makeup|external_makeup|general
-    public ?string $from = null;        // YYYY-MM-DD
-    public ?string $to = null;          // YYYY-MM-DD
     public int $perPage = 10;
 
     /** Sortierung */
@@ -29,10 +26,7 @@ class UserRequests extends Component
 
     protected $queryString = [
         'search'        => ['except' => ''],
-        'status'        => ['except' => null],
         'type'          => ['except' => null],
-        'from'          => ['except' => null],
-        'to'            => ['except' => null],
         'sortField'     => ['except' => 'submitted_at'],
         'sortDirection' => ['except' => 'desc'],
         'perPage'       => ['except' => 10],
@@ -46,10 +40,7 @@ class UserRequests extends Component
     }
 
     public function updatingSearch(): void     { $this->resetPage(); }
-    public function updatingStatus(): void     { $this->resetPage(); }
     public function updatingType(): void       { $this->resetPage(); }
-    public function updatingFrom(): void       { $this->resetPage(); }
-    public function updatingTo(): void         { $this->resetPage(); }
     public function updatingPerPage(): void    { $this->resetPage(); }
     public function updatingSortField(): void  { $this->resetPage(); }
     public function updatingSortDirection(): void { $this->resetPage(); }
@@ -67,46 +58,8 @@ class UserRequests extends Component
     public function resetFilters(): void
     {
         $this->search = '';
-        $this->status = null;
         $this->type = null;
-        $this->from = null;
-        $this->to = null;
         $this->resetPage();
-    }
-
-    public function approve(int $id, ?string $comment = null): void
-    {
-        $req = $this->findForUser($id);
-        if (!$req) return;
-
-        $req->approve($comment);
-        $this->dispatch('toast', ['type' => 'success', 'text' => 'Antrag genehmigt.']);
-        $this->dispatch('refreshUserRequests');
-    }
-
-    public function reject(int $id, ?string $comment = null): void
-    {
-        $req = $this->findForUser($id);
-        if (!$req) return;
-
-        $req->reject($comment);
-        $this->dispatch('toast', ['type' => 'warning', 'text' => 'Antrag abgelehnt.']);
-        $this->dispatch('refreshUserRequests');
-    }
-
-    public function cancel(int $id, ?string $comment = null): void
-    {
-        $req = $this->findForUser($id);
-        if (!$req) return;
-
-        $req->cancel($comment);
-        $this->dispatch('toast', ['type' => 'info', 'text' => 'Antrag storniert.']);
-        $this->dispatch('refreshUserRequests');
-    }
-
-    protected function findForUser(int $id): ?UserRequest
-    {
-        return UserRequest::where('user_id', $this->user->id)->find($id);
     }
 
     protected function baseQuery(): Builder
@@ -114,9 +67,6 @@ class UserRequests extends Component
         return UserRequest::query()
             ->where('user_id', $this->user->id)
             ->when($this->type, fn (Builder $q) => $q->where('type', $this->type))
-            ->when($this->status, fn (Builder $q) => $q->where('status', $this->status))
-            ->when($this->from, fn (Builder $q) => $q->whereDate('submitted_at', '>=', $this->from))
-            ->when($this->to, fn (Builder $q) => $q->whereDate('submitted_at', '<=', $this->to))
             ->when($this->search, function (Builder $q) {
                 $term = '%'.$this->search.'%';
                 $q->where(function (Builder $qq) use ($term) {
