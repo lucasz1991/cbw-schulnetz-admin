@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Courses;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Course;
+use App\Models\CourseDay;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -101,7 +102,6 @@ public function updated($prop): void
    protected function baseQuery()
 {
     $now   = Carbon::now(); 
-    $today = $now->toDateString();
 
     // defensiv: nur filtern, wenn Property existiert
     $contentFilter = property_exists($this, 'contentFilter') ? ($this->contentFilter ?? null) : null;
@@ -170,322 +170,169 @@ public function updated($prop): void
             break;
     }
 
-    // Inhalts-Status-Filter (Allgemein / Dokumentation / Roter Faden / Bestätigungen / Rechnung)
+    // Inhalts-Status-Filter (an Course-Model-States angeglichen)
     if (!empty($contentFilter)) {
-        switch ($contentFilter) {
+        $courseType = addslashes(\App\Models\Course::class);
+        $docDoneStatus = (int) CourseDay::NOTE_STATUS_COMPLETED;
 
-            // ============================================
-            // 🔹 Allgemein (Kombination aller Inhalts-Bereiche)
-            // ============================================
+        $docTotalExpr = "
+            (
+                SELECT COUNT(*)
+                FROM course_days cd
+                WHERE cd.course_id = courses.id
+            )
+        ";
+
+        $docCompletedExpr = "
+            (
+                SELECT COUNT(*)
+                FROM course_days cd
+                WHERE cd.course_id = courses.id
+                  AND cd.note_status = {$docDoneStatus}
+            )
+        ";
+
+        $docHasParticipantSignatureExpr = "
+            EXISTS (
+                SELECT 1
+                FROM files f
+                WHERE f.fileable_type = '{$courseType}'
+                  AND f.fileable_id = courses.id
+                  AND f.type = 'sign_course_doku_participant'
+            )
+        ";
+
+        // 0 = fehlt, 1 = vollständig, 2 = teilweise/ausstehend
+        $docStateExpr = "
+            CASE
+                WHEN {$docTotalExpr} = 0 THEN 0
+                WHEN {$docCompletedExpr} = 0 THEN 0
+                WHEN {$docCompletedExpr} = {$docTotalExpr}
+                     AND {$docHasParticipantSignatureExpr}
+                THEN 1
+                ELSE 2
+            END
+        ";
+
+        $rfStateExpr = "
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM files f
+                    WHERE f.fileable_type = '{$courseType}'
+                      AND f.fileable_id = courses.id
+                      AND f.type = 'roter_faden'
+                ) THEN 1
+                ELSE 0
+            END
+        ";
+
+        $participantsTotalExpr = "
+            (
+                SELECT COUNT(DISTINCT cpe.person_id)
+                FROM course_participant_enrollments cpe
+                WHERE cpe.course_id = courses.id
+                  AND cpe.is_active = 1
+                  AND cpe.deleted_at IS NULL
+            )
+        ";
+
+        $ackTotalExpr = "
+            (
+                SELECT COUNT(DISTINCT cmaa.person_id)
+                FROM course_material_acknowledgements cmaa
+                WHERE cmaa.course_id = courses.id
+                  AND cmaa.acknowledged_at IS NOT NULL
+            )
+        ";
+
+        // 0 = fehlt, 1 = vollständig, 2 = teilweise/ausstehend
+        $ackStateExpr = "
+            CASE
+                WHEN {$participantsTotalExpr} = 0 THEN 0
+                WHEN {$ackTotalExpr} = 0 THEN 0
+                WHEN {$ackTotalExpr} < {$participantsTotalExpr} THEN 2
+                ELSE 1
+            END
+        ";
+
+        $invStateExpr = "
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM files f
+                    WHERE f.fileable_type = '{$courseType}'
+                      AND f.fileable_id = courses.id
+                      AND f.type = 'invoice'
+                ) THEN 1
+                ELSE 0
+            END
+        ";
+
+        switch ($contentFilter) {
             case 'all_ok':
-                // Dokumentation vollständig + roter Faden vorhanden + alle bestätigt
-                $q
-                // Doku: KEIN vergangener Tag ohne Notes
-                ->whereRaw("
-                    NOT EXISTS (
-                        SELECT 1
-                        FROM course_days
-                        WHERE course_days.course_id = courses.id
-                          AND course_days.date <= ?
-                          AND (course_days.notes IS NULL OR course_days.notes = '')
-                    )
-                ", [$today])
-                // Roter Faden: vorhanden
-                ->whereExists(function ($s) {
-                    $s->select(DB::raw(1))
-                      ->from('files')
-                      ->where('files.fileable_type', \App\Models\Course::class)
-                      ->whereColumn('files.fileable_id', 'courses.id')
-                      ->where('files.type', 'roter_faden');
-                })
-                // Bestätigungen: count(acks) == count(teilnehmer)
-                ->whereRaw("
-                    (
-                        SELECT COUNT(DISTINCT cpe.person_id)
-                        FROM course_participant_enrollments cpe
-                        WHERE cpe.course_id = courses.id
-                          AND cpe.is_active = 1
-                          AND cpe.deleted_at IS NULL
-                    ) = (
-                        SELECT COUNT(DISTINCT cmaa.person_id)
-                        FROM course_material_acknowledgements cmaa
-                        WHERE cmaa.course_id = courses.id
-                          AND cmaa.acknowledged_at IS NOT NULL
-                    )
-                ");
+                $q->whereRaw("{$docStateExpr} = 1")
+                  ->whereRaw("{$rfStateExpr} = 1")
+                  ->whereRaw("{$ackStateExpr} = 1");
                 break;
 
             case 'all_missing':
-                // Mindestens EIN Bereich fehlt (Doku fehlt ODER roter Faden fehlt ODER 0 Acks)
-                $q->where(function ($sub) use ($today) {
-                    $sub
-                        // Doku fehlt: es gibt mind. einen vergangenen Tag ohne Notes
-                        ->whereExists(function ($s) use ($today) {
-                            $s->select(DB::raw(1))
-                              ->from('course_days')
-                              ->whereColumn('course_days.course_id', 'courses.id')
-                              ->whereDate('course_days.date', '<=', $today)
-                              ->where(function ($w) {
-                                  $w->whereNull('course_days.notes')
-                                    ->orWhere('course_days.notes', '=' , '');
-                              });
-                        })
-                        // ODER roter Faden fehlt
-                        ->orWhereNotExists(function ($s) {
-                            $s->select(DB::raw(1))
-                              ->from('files')
-                              ->where('files.fileable_type', \App\Models\Course::class)
-                              ->whereColumn('files.fileable_id', 'courses.id')
-                              ->where('files.type', 'roter_faden');
-                        })
-                        // ODER 0 Bestätigungen vorhanden
-                        ->orWhereRaw("
-                            (
-                                SELECT COUNT(DISTINCT cmaa.person_id)
-                                FROM course_material_acknowledgements cmaa
-                                WHERE cmaa.course_id = courses.id
-                                  AND cmaa.acknowledged_at IS NOT NULL
-                            ) = 0
-                        ");
+                $q->where(function ($sub) use ($docStateExpr, $rfStateExpr, $ackStateExpr) {
+                    $sub->whereRaw("{$docStateExpr} = 0")
+                        ->orWhereRaw("{$rfStateExpr} = 0")
+                        ->orWhereRaw("{$ackStateExpr} = 0");
                 });
                 break;
 
             case 'all_partial':
-                // Teilweise vorhanden/fehlend:
-                // (a) Dokumentation teilweise ODER
-                // (b) roter Faden vorhanden, aber Acks nicht vollständig (zwischen 1 und n-1)
-                $q->where(function ($sub) use ($today) {
-                    $sub
-                        // (a) Doku teilweise: es gibt vergangene Tage MIT und OHNE Notes
-                        ->where(function ($s) use ($today) {
-                            $s->whereExists(function ($q1) use ($today) {
-                                $q1->select(DB::raw(1))
-                                   ->from('course_days')
-                                   ->whereColumn('course_days.course_id', 'courses.id')
-                                   ->whereDate('course_days.date', '<=', $today)
-                                   ->whereNotNull('course_days.notes')
-                                   ->where('course_days.notes', '!=', '');
-                            })
-                            ->whereExists(function ($q2) use ($today) {
-                                $q2->select(DB::raw(1))
-                                   ->from('course_days')
-                                   ->whereColumn('course_days.course_id', 'courses.id')
-                                   ->whereDate('course_days.date', '<=', $today)
-                                   ->where(function ($w) {
-                                       $w->whereNull('course_days.notes')
-                                         ->orWhere('course_days.notes', '=' , '');
-                                   });
-                            });
-                        })
-                        // (b) roter Faden vorhanden, aber Acks nur teilweise
-                        ->orWhere(function ($s) {
-                            $s->whereExists(function ($r) {
-                                $r->select(DB::raw(1))
-                                  ->from('files')
-                                  ->where('files.fileable_type', \App\Models\Course::class)
-                                  ->whereColumn('files.fileable_id', 'courses.id')
-                                  ->where('files.type', 'roter_faden');
-                            })
-                            ->whereRaw("
-                                (
-                                  SELECT COUNT(DISTINCT cpe.person_id)
-                                  FROM course_participant_enrollments cpe
-                                  WHERE cpe.course_id = courses.id
-                                    AND cpe.is_active = 1
-                                    AND cpe.deleted_at IS NULL
-                                ) > 0
-                            ")
-                            ->whereRaw("
-                                (
-                                  SELECT COUNT(DISTINCT cmaa.person_id)
-                                  FROM course_material_acknowledgements cmaa
-                                  WHERE cmaa.course_id = courses.id
-                                    AND cmaa.acknowledged_at IS NOT NULL
-                                ) BETWEEN 1 AND (
-                                  SELECT COUNT(DISTINCT cpe2.person_id) - 1
-                                  FROM course_participant_enrollments cpe2
-                                  WHERE cpe2.course_id = courses.id
-                                    AND cpe2.is_active = 1
-                                    AND cpe2.deleted_at IS NULL
-                                )
-                            ");
-                        });
-                });
+                // Teilweise, wenn kein Bereich fehlt und mind. ein Bereich auf "teilweise" steht.
+                $q->whereRaw("{$docStateExpr} IN (1,2)")
+                  ->whereRaw("{$rfStateExpr} = 1")
+                  ->whereRaw("{$ackStateExpr} IN (1,2)")
+                  ->where(function ($sub) use ($docStateExpr, $ackStateExpr) {
+                      $sub->whereRaw("{$docStateExpr} = 2")
+                          ->orWhereRaw("{$ackStateExpr} = 2");
+                  });
                 break;
 
-            // ==========================
-            // Einzelbereiche: Dokumentation
-            // ==========================
             case 'doc_ok':
-                $q->whereExists(function ($s) use ($today) {
-                    $s->select(DB::raw(1))
-                      ->from('course_days')
-                      ->whereColumn('course_days.course_id', 'courses.id')
-                      ->whereDate('course_days.date', '<=', $today);
-                })->whereNotExists(function ($s) use ($today) {
-                    $s->select(DB::raw(1))
-                      ->from('course_days')
-                      ->whereColumn('course_days.course_id', 'courses.id')
-                      ->whereDate('course_days.date', '<=', $today)
-                      ->where(function ($w) {
-                          $w->whereNull('course_days.notes')
-                            ->orWhere('course_days.notes', '=', '');
-                      });
-                });
+                $q->whereRaw("{$docStateExpr} = 1");
                 break;
 
             case 'doc_missing':
-                $q->whereExists(function ($s) use ($today) {
-                    $s->select(DB::raw(1))
-                      ->from('course_days')
-                      ->whereColumn('course_days.course_id', 'courses.id')
-                      ->whereDate('course_days.date', '<=', $today);
-                })->whereNotExists(function ($s) use ($today) {
-                    $s->select(DB::raw(1))
-                      ->from('course_days')
-                      ->whereColumn('course_days.course_id', 'courses.id')
-                      ->whereDate('course_days.date', '<=', $today)
-                      ->whereNotNull('course_days.notes')
-                      ->where('course_days.notes', '!=', '');
-                });
+                $q->whereRaw("{$docStateExpr} = 0");
                 break;
 
             case 'doc_partial':
-                $q->whereExists(function ($s) use ($today) {
-                    $s->select(DB::raw(1))
-                      ->from('course_days')
-                      ->whereColumn('course_days.course_id', 'courses.id')
-                      ->whereDate('course_days.date', '<=', $today)
-                      ->whereNotNull('course_days.notes')
-                      ->where('course_days.notes', '!=', '');
-                })->whereExists(function ($s) use ($today) {
-                    $s->select(DB::raw(1))
-                      ->from('course_days')
-                      ->whereColumn('course_days.course_id', 'courses.id')
-                      ->whereDate('course_days.date', '<=', $today)
-                      ->where(function ($w) {
-                          $w->whereNull('course_days.notes')
-                            ->orWhere('course_days.notes', '=', '');
-                      });
-                });
+                $q->whereRaw("{$docStateExpr} = 2");
                 break;
 
-            // ==========================
-            // Einzelbereiche: Roter Faden
-            // ==========================
             case 'rf_ok':
-                $q->whereExists(function ($s) {
-                    $s->select(DB::raw(1))
-                      ->from('files')
-                      ->where('files.fileable_type', \App\Models\Course::class)
-                      ->whereColumn('files.fileable_id', 'courses.id')
-                      ->where('files.type', 'roter_faden');
-                });
+                $q->whereRaw("{$rfStateExpr} = 1");
                 break;
 
             case 'rf_missing':
-                $q->whereNotExists(function ($s) {
-                    $s->select(DB::raw(1))
-                      ->from('files')
-                      ->where('files.fileable_type', \App\Models\Course::class)
-                      ->whereColumn('files.fileable_id', 'courses.id')
-                      ->where('files.type', 'roter_faden');
-                });
+                $q->whereRaw("{$rfStateExpr} = 0");
                 break;
 
-            // ==========================
-            // Einzelbereiche: Bestätigungen
-            // ==========================
             case 'ack_ok':
-                $q->whereRaw("
-                    (
-                      SELECT COUNT(DISTINCT cpe.person_id)
-                      FROM course_participant_enrollments cpe
-                      WHERE cpe.course_id = courses.id
-                        AND cpe.is_active = 1
-                        AND cpe.deleted_at IS NULL
-                    ) > 0
-                ")->whereRaw("
-                    (
-                      SELECT COUNT(DISTINCT cmaa.person_id)
-                      FROM course_material_acknowledgements cmaa
-                      WHERE cmaa.course_id = courses.id
-                        AND cmaa.acknowledged_at IS NOT NULL
-                    ) = (
-                      SELECT COUNT(DISTINCT cpe2.person_id)
-                      FROM course_participant_enrollments cpe2
-                      WHERE cpe2.course_id = courses.id
-                        AND cpe2.is_active = 1
-                        AND cpe2.deleted_at IS NULL
-                    )
-                ");
+                $q->whereRaw("{$ackStateExpr} = 1");
                 break;
 
             case 'ack_missing':
-                $q->whereRaw("
-                    (
-                      SELECT COUNT(DISTINCT cpe.person_id)
-                      FROM course_participant_enrollments cpe
-                      WHERE cpe.course_id = courses.id
-                        AND cpe.is_active = 1
-                        AND cpe.deleted_at IS NULL
-                    ) > 0
-                ")->whereRaw("
-                    (
-                      SELECT COUNT(DISTINCT cmaa.person_id)
-                      FROM course_material_acknowledgements cmaa
-                      WHERE cmaa.course_id = courses.id
-                        AND cmaa.acknowledged_at IS NOT NULL
-                    ) = 0
-                ");
+                $q->whereRaw("{$ackStateExpr} = 0");
                 break;
 
             case 'ack_partial':
-                $q->whereRaw("
-                    (
-                      SELECT COUNT(DISTINCT cpe.person_id)
-                      FROM course_participant_enrollments cpe
-                      WHERE cpe.course_id = courses.id
-                        AND cpe.is_active = 1
-                        AND cpe.deleted_at IS NULL
-                    ) > 0
-                ")->whereRaw("
-                    (
-                      SELECT COUNT(DISTINCT cmaa.person_id)
-                      FROM course_material_acknowledgements cmaa
-                      WHERE cmaa.course_id = courses.id
-                        AND cmaa.acknowledged_at IS NOT NULL
-                    ) BETWEEN 1 AND (
-                      SELECT COUNT(DISTINCT cpe2.person_id) - 1
-                      FROM course_participant_enrollments cpe2
-                      WHERE cpe2.course_id = courses.id
-                        AND cpe2.is_active = 1
-                        AND cpe2.deleted_at IS NULL
-                    )
-                ");
+                $q->whereRaw("{$ackStateExpr} = 2");
                 break;
 
-            // ==========================
-            // Optional: Rechnung
-            // ==========================
             case 'inv_ok':
-                $q->whereExists(function ($s) {
-                    $s->select(DB::raw(1))
-                      ->from('files')
-                      ->where('files.fileable_type', \App\Models\Course::class)
-                      ->whereColumn('files.fileable_id', 'courses.id')
-                      ->where('files.type', 'invoice');
-                });
+                $q->whereRaw("{$invStateExpr} = 1");
                 break;
 
             case 'inv_missing':
-                $q->whereNotExists(function ($s) {
-                    $s->select(DB::raw(1))
-                      ->from('files')
-                      ->where('files.fileable_type', \App\Models\Course::class)
-                      ->whereColumn('files.fileable_id', 'courses.id')
-                      ->where('files.type', 'invoice');
-                });
+                $q->whereRaw("{$invStateExpr} = 0");
                 break;
         }
     }
