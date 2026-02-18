@@ -5,7 +5,6 @@
         </div>
     @else
         <div x-data="{ signCardOpen: false }" class="relative overflow-hidden rounded-2xl border shadow-sm {{ $this->dokuSigned ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }}">
-
             <button
                 type="button"
                 class="relative w-full p-2 text-left {{ $this->dokuSigned ? 'cursor-pointer' : 'cursor-default' }}"
@@ -20,19 +19,17 @@
                             <div class="text-[11px] uppercase tracking-wide text-slate-800">Baustein-Doku Teilnehmer-Bestätigung</div>
                         </div>
                     </div>
-
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border {{ $this->dokuSigned ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300' }}">
                             <i class="fal {{ $this->dokuSigned ? 'fa-check-circle' : 'fa-clock' }} text-[12px]"></i>
                             <span>{{ $this->dokuSigned ? 'Unterschrieben' : 'Ausstehend' }}</span>
                         </span>
                         @if($this->dokuSigned)
-                             <i class="fal fa-chevron-down text-slate-700 text-base transition-transform" :class="signCardOpen ? 'rotate-180' : ''"></i>
+                            <i class="fal fa-chevron-down text-slate-700 text-base transition-transform" :class="signCardOpen ? 'rotate-180' : ''"></i>
                         @endif
                     </div>
                 </div>
             </button>
-
             <div x-show="signCardOpen" x-collapse x-cloak class="relative border-t {{ $this->dokuSigned ? 'border-emerald-200/70 bg-white/90' : 'border-amber-200/70 bg-white/90' }} p-4 md:p-5 text-xs">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="rounded-xl border border-slate-200 bg-white p-3">
@@ -53,7 +50,6 @@
                             @endif
                         </div>
                     </div>
-
                     <div class="rounded-xl border border-slate-200 bg-white p-3">
                         <div class="text-[11px] uppercase tracking-wide text-slate-400">Signaturdatei</div>
                         @if($this->dokuSignatureFile)
@@ -78,7 +74,6 @@
                 </div>
             </div>
         </div>
-
         <div class="flex items-center justify-between text-xs text-neutral-500 mb-2">
             <span class="font-semibold text-neutral-700">Unterrichtstage</span>
             <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 text-sky-700 border border-sky-100 px-2 py-0.5">
@@ -86,7 +81,6 @@
                 <span>{{ $days->count() }} Einheiten</span>
             </span>
         </div>
-
         <div class="space-y-3">
             @foreach($days as $day)
                 <div
@@ -123,13 +117,11 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="mt-2 sm:mt-0 flex flex-wrap items-center gap-2 text-[11px]">
                             <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] {{ $day['note_status_classes'] }}">
                                 <i class="fal fa-flag text-[11px]"></i>
                                 <span>Doku: {{ $day['note_status_label'] }}</span>
                             </span>
-
                             <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5
                                 {{ $day['has_attendance'] ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-neutral-50 text-neutral-500 border-neutral-200' }}">
                                 <i class="fal fa-user-check text-[11px]"></i>
@@ -137,7 +129,6 @@
                             </span>
                         </div>
                     </button>
-
                     <div x-show="openId === {{ $day['id'] }}" x-collapse x-cloak>
                         <div class="px-4 pb-4 border-t border-dashed border-neutral-200 bg-neutral-50/50">
                             <div class="pt-3 space-y-3">
@@ -150,7 +141,6 @@
                                             <span>Gesamt: {{ $a['total'] }}</span>
                                         </span>
                                     </div>
-
                                     @if($day['has_attendance'])
                                         <div class="flex flex-wrap items-center gap-2 text-[11px]">
                                             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5">
@@ -179,7 +169,6 @@
                                         </div>
                                     @endif
                                 </div>
-
                                 <div class="rounded-xl border border-neutral-100 bg-white p-3 shadow-inner/5">
                                     <div class="flex items-center justify-between mb-3">
                                         <div class="text-[11px] uppercase tracking-wide text-neutral-400">Dokumentation</div>
@@ -188,7 +177,6 @@
                                             <span>{{ $day['note_status_label'] }}</span>
                                         </span>
                                     </div>
-
                                     @if(!empty($day['notes_html']))
                                         <div class="prose prose-sm max-w-none">
                                             {!! $day['notes_html'] !!}
@@ -205,7 +193,6 @@
                 </div>
             @endforeach
         </div>
-
         <livewire:tools.file-pools.file-preview-modal />
     @endif
 </div>
