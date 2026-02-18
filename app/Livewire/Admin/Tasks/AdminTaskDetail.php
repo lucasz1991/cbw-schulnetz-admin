@@ -125,6 +125,42 @@ class AdminTaskDetail extends Component
         ]);
     }
 
+    public function releaseTask(): void
+    {
+        if (! $this->taskId) return;
+
+        $task = AdminTask::findOrFail($this->taskId);
+
+        $isAdmin = (Auth::user()?->role === 'admin');
+        $isAssignee = ((int) $task->assigned_to === (int) Auth::id());
+
+        if (! $task->assigned_to) {
+            return;
+        }
+
+        if ((int) $task->status !== AdminTask::STATUS_IN_PROGRESS) {
+            return;
+        }
+
+        if (! $isAdmin && ! $isAssignee) {
+            return;
+        }
+
+        $task->release();
+
+        $this->viewMode = 'task';
+        $this->task = $task->fresh(['creator', 'assignedAdmin', 'context']);
+
+        // Existing listener in list uses this event to refresh.
+        $this->dispatch('taskAssigned');
+
+        $this->dispatch('showAlert', [
+            'type'  => 'success',
+            'title' => 'Zurückgegeben',
+            'text'  => 'Aufgabe wurde wieder freigegeben.',
+        ]);
+    }
+
     /* ============================================================
      *  ReportBook-Kontext: Ausbilder-Prüfung + Signatur
      * ============================================================ */

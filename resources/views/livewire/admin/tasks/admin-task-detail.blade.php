@@ -170,6 +170,27 @@
                     </x-ui.buttons.button-basic>
                 @endif
 
+                {{-- Zurückgeben (wieder freigeben) --}}
+                @if(
+                    !is_null($task->assigned_to) &&
+                    (int) $task->status === (int) \App\Models\AdminTask::STATUS_IN_PROGRESS &&
+                    (int) $task->status !== (int) \App\Models\AdminTask::STATUS_COMPLETED &&
+                    (
+                        (int) $task->assigned_to === (int) $currentUserId ||
+                        Auth::user()->role == "admin"
+                    )
+                )
+                    <x-ui.buttons.button-basic
+                        :mode="'secondary'"
+                        :size="'sm'"
+                        wire:click="releaseTask"
+                        class="flex items-center gap-1"
+                    >
+                        <i class="fal fa-user-minus text-sm"></i>
+                        Zurückgeben
+                    </x-ui.buttons.button-basic>
+                @endif
+
                 
             </div>
             

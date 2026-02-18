@@ -201,4 +201,17 @@ class AdminTask extends Model
         $this->completed_at = now();
         $this->save();
     }
+
+    /** Aufgabe wieder freigeben (zurück in "Offen") */
+    public function release(): void
+    {
+        if ($this->status === self::STATUS_COMPLETED) {
+            return;
+        }
+
+        $this->assigned_to  = null;
+        $this->status       = self::STATUS_OPEN;
+        $this->completed_at = null;
+        $this->save();
+    }
 }
