@@ -17,7 +17,7 @@
                             <i class="fal fa-signature text-sm"></i>
                         </div>
                         <div>
-                            <div class="text-[11px] uppercase tracking-wide text-slate-800">Baustein-Doku Klassensprecher-Bestätigung</div>
+                            <div class="text-[11px] uppercase tracking-wide text-slate-800">Baustein-Doku Teilnehmer-Bestätigung</div>
                         </div>
                     </div>
 
@@ -36,7 +36,7 @@
             <div x-show="signCardOpen" x-collapse x-cloak class="relative border-t {{ $this->dokuSigned ? 'border-emerald-200/70 bg-white/90' : 'border-amber-200/70 bg-white/90' }} p-4 md:p-5 text-xs">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="rounded-xl border border-slate-200 bg-white p-3">
-                        <div class="text-[11px] uppercase tracking-wide text-slate-400">Klassensprecher / Unterzeichner</div>
+                        <div class="text-[11px] uppercase tracking-wide text-slate-400">Teilnehmer / Unterzeichner</div>
                         <div class="mt-1.5 text-slate-800">
                             @if($this->classRepresentativePerson)
                                 <x-user.public-info :person="$this->classRepresentativePerson" />
