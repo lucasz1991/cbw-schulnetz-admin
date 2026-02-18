@@ -40,10 +40,7 @@
         >
         </div>
     </div>
-
-    <!-- WICHTIG: min-w-0 auf diese Spalte -->
     <div class="flex flex-col min-w-0" title="{{ $title }}">
-        <!-- truncate funktioniert jetzt -->
          <div class="px-1">
              <div class=" font-semibold truncate">
                  {{ $title }}
@@ -102,114 +99,104 @@
 {{-- 4: Aktivitäten (Teilnehmer & Exporte) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
     <div class="flex gap-2 items-center pr-8">
-        {{-- Teilnehmer-Badge --}}
-        <div
-            class="relative h-max inline-flex items-center gap-1 px-1 py-1 rounded bg-blue-50 text-blue-700 border border-blue-300 mr-2"
-            title="Teilnehmer"
-        >
-            <i class="fal fa-users fa-lg"></i>
-            <span
-                class="absolute -top-2 -right-2 flex items-center justify-center
-                    min-w-4 h-4 text-[10px] font-semibold bg-white text-blue-700 border border-blue-200 p-[2px]
-                    rounded-full shadow-sm"
-            >
-                {{ $item->participants_count ?? 0 }}
-            </span>
-        </div>
-
-@php
-    $exportActions = [
-        [
-            'can'   => $item->canExportDokuPdf(),
-            'title' => 'Dokumentation',
-            'icon'  => 'fal fa-chalkboard-teacher fa-lg',
-            'badge' => $item->documentation_icon_html,
-            'wire'  => "exportDokuPdf({$item->id})",
-        ],
-        [
-            'can'   => $item->canExportRedThreadPdf(),
-            'title' => 'Roter Faden',
-            'icon'  => 'fal fa-file-pdf fa-lg',
-            'badge' => $item->red_thread_icon_html,
-            'wire'  => "exportRedThreadPdf({$item->id})",
-        ],
-        [
-            'can'   => $item->canExportMaterialConfirmationsPdf(),
-            'title' => 'Bildungsmittel-Bestätigungen',
-            'icon'  => 'fal fa-file-signature fa-lg',
-            'badge' => $item->participants_confirmations_icon_html,
-            'wire'  => "exportMaterialConfirmationsPdf({$item->id})",
-        ],
-        [
-            'can'   => $item->canExportInvoicePdf(),
-            'title' => 'Rechnung',
-            'icon'  => 'fal fa-money-check-alt fa-lg',
-            'badge' => $item->invoice_icon_html,
-            'wire'  => "exportInvoicePdf({$item->id})",
-        ],
-    ];
-@endphp
-
-@foreach($exportActions as $action)
-    <div wire:key="export-action-{{ $action['title'] }}-{{ $item->id }}">
-        @if($action['can'])
-            {{-- Klickbar: mit Dropdown + Download-Button --}}
-            <x-ui.dropdown.anchor-dropdown
-                align="right"
-                width="40"
-                dropdownClasses="mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
-                contentClasses="bg-white"
-                :overlay="false"
-                :trap="false"
-                :scrollOnOpen="false"
-                :offset="6"
-            >
-                {{-- Trigger: Icon + Badge --}}
-                <x-slot name="trigger">
+        @php
+            $exportActions = [
+                [
+                    'can'   => $item->canExportAttendancePdf(),
+                    'title' => 'Anwesenheit',
+                    'icon'  => 'fal fa-clipboard-list-check fa-lg',
+                    'badge' => $item->attendance_icon_html,
+                    'wire'  => "exportAttendancePdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportDokuPdf(),
+                    'title' => 'Dokumentation',
+                    'icon'  => 'fal fa-chalkboard-teacher fa-lg',
+                    'badge' => $item->documentation_icon_html,
+                    'wire'  => "exportDokuPdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportRedThreadPdf(),
+                    'title' => 'Roter Faden',
+                    'icon'  => 'fal fa-file-pdf fa-lg',
+                    'badge' => $item->red_thread_icon_html,
+                    'wire'  => "exportRedThreadPdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportMaterialConfirmationsPdf(),
+                    'title' => 'Bildungsmittel-Bestätigungen',
+                    'icon'  => 'fal fa-file-signature fa-lg',
+                    'badge' => $item->participants_confirmations_icon_html,
+                    'wire'  => "exportMaterialConfirmationsPdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportExamResultsPdf(),
+                    'title' => 'Pruefungsergebnisse',
+                    'icon'  => 'fal fa-clipboard-check fa-lg',
+                    'badge' => $item->exam_results_icon_html,
+                    'wire'  => "exportExamResultsPdf({$item->id})",
+                ],
+                [
+                    'can'   => $item->canExportInvoicePdf(),
+                    'title' => 'Rechnung',
+                    'icon'  => 'fal fa-money-check-alt fa-lg',
+                    'badge' => $item->invoice_icon_html,
+                    'wire'  => "exportInvoicePdf({$item->id})",
+                ],
+            ];
+        @endphp
+        @foreach($exportActions as $action)
+            <div wire:key="export-action-{{ $action['title'] }}-{{ $item->id }}">
+                @if($action['can'])
+                    <x-ui.dropdown.anchor-dropdown
+                        align="right"
+                        width="40"
+                        dropdownClasses="mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+                        contentClasses="bg-white"
+                        :overlay="false"
+                        :trap="false"
+                        :scrollOnOpen="false"
+                        :offset="6"
+                    >
+                        <x-slot name="trigger">
+                            <div
+                                title="{{ $action['title'] }}"
+                                class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2 cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition"
+                            >
+                                <i class="{{ $action['icon'] }}"></i>
+                                <div class="absolute -top-2 -right-2 bg-white/70 rounded-full aspect-square p-[2px]">
+                                    {!! $action['badge'] !!}
+                                </div>
+                            </div>
+                        </x-slot>
+                        <x-slot name="content">
+                            <div class="py-1 text-xs text-gray-700">
+                                <button
+                                    type="button"
+                                    wire:click="{{ $action['wire'] }}"
+                                    wire:loading.attr="disabled"
+                                    wire:target="{{ $action['wire'] }}"
+                                    class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm disabled:opacity-60 disabled:cursor-wait"
+                                >
+                                    <i class="fal fa-download text-[14px] text-gray-500" wire:loading.remove wire:target="{{ $action['wire'] }}"></i>
+                                    <i class="fal fa-spinner fa-spin text-[14px] text-blue-500" wire:loading wire:target="{{ $action['wire'] }}"></i>
+                                    <span>{{ $action['title'] }}</span>
+                                </button>
+                            </div>
+                        </x-slot>
+                    </x-ui.dropdown.anchor-dropdown>
+                @else
                     <div
                         title="{{ $action['title'] }}"
-                        class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-700 border border-gray-300 mr-2 cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition"
+                        class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-400 border border-gray-200 mr-2 cursor-not-allowed opacity-60"
                     >
                         <i class="{{ $action['icon'] }}"></i>
                         <div class="absolute -top-2 -right-2 bg-white/70 rounded-full aspect-square p-[2px]">
                             {!! $action['badge'] !!}
                         </div>
                     </div>
-                </x-slot>
-    
-                {{-- Dropdown-Inhalt: Download-Button --}}
-                <x-slot name="content">
-                    <div class="py-1 text-xs text-gray-700">
-                        <button
-                            type="button"
-                            wire:click="{{ $action['wire'] }}"
-                            wire:loading.attr="disabled"
-                            wire:target="{{ $action['wire'] }}"
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50 text-sm disabled:opacity-60 disabled:cursor-wait"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500" wire:loading.remove wire:target="{{ $action['wire'] }}"></i>
-                            <i class="fal fa-spinner fa-spin text-[14px] text-blue-500" wire:loading wire:target="{{ $action['wire'] }}"></i>
-                            <span>{{ $action['title'] }}</span>
-                        </button>
-                    </div>
-                </x-slot>
-            </x-ui.dropdown.anchor-dropdown>
-        @else
-            {{-- Nicht klickbar: wie bisher, ohne Dropdown --}}
-            <div
-                title="{{ $action['title'] }}"
-                class="relative inline-flex items-center gap-1 px-1 py-1 rounded bg-gray-50 text-gray-400 border border-gray-200 mr-2 cursor-not-allowed opacity-60"
-            >
-                <i class="{{ $action['icon'] }}"></i>
-                <div class="absolute -top-2 -right-2 bg-white/70 rounded-full aspect-square p-[2px]">
-                    {!! $action['badge'] !!}
-                </div>
+                @endif
             </div>
-        @endif
-    </div>
-@endforeach
-
+        @endforeach
     </div>
 </div>
-
-

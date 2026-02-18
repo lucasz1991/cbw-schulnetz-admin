@@ -477,6 +477,78 @@ class Course extends Model
         return $this->renderAssetIcon('Dozenten Rechnung', $this->invoiceState());
     }
 
+    public function attendanceState(): int
+    {
+        $days = $this->days()
+            ->get(['id', 'attendance_data']);
+
+        if ($days->isEmpty()) {
+            return 0;
+        }
+
+        $participantIds = DB::table('course_participant_enrollments')
+            ->where('course_id', $this->id)
+            ->whereNull('deleted_at')
+            ->where('is_active', true)
+            ->distinct()
+            ->pluck('person_id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+
+        if (empty($participantIds)) {
+            return 0;
+        }
+
+        $expectedPerDay = count($participantIds);
+        $fullDays = 0;
+        $partialDays = 0;
+
+        foreach ($days as $day) {
+            $map = Arr::get($day->attendance_data ?? [], 'participants', []);
+
+            $trackedForDay = 0;
+            foreach ($participantIds as $pid) {
+                if (is_array($map[$pid] ?? null)) {
+                    $trackedForDay++;
+                }
+            }
+
+            if ($trackedForDay === $expectedPerDay) {
+                $fullDays++;
+                continue;
+            }
+
+            if ($trackedForDay > 0) {
+                $partialDays++;
+            }
+        }
+
+        if ($fullDays === $days->count()) {
+            return 1;
+        }
+
+        if ($fullDays === 0 && $partialDays === 0) {
+            return 0;
+        }
+
+        return 2;
+    }
+
+    public function getAttendanceIconHtmlAttribute(): string
+    {
+        return $this->renderAssetIcon('Anwesenheit', $this->attendanceState());
+    }
+
+    public function examResultsState(): int
+    {
+        return $this->results()->exists() ? 1 : 0;
+    }
+
+    public function getExamResultsIconHtmlAttribute(): string
+    {
+        return $this->renderAssetIcon('Pruefungsergebnisse', $this->examResultsState());
+    }
+
 
 
     // ---- STATUS: Icon/Badge-Meta ----------------------------------------------
@@ -601,7 +673,7 @@ protected function sanitizePdfData($value)
     {
         // Du willst sie bewusst ausnehmen – hier könntest du auch immer true machen,
         // oder minimal prüfen, ob überhaupt Tage existieren.
-        return $this->days()->exists();
+        return $this->attendanceState() > 0;
     }
 
     public function canExportDokuPdf(): bool
@@ -635,7 +707,7 @@ protected function sanitizePdfData($value)
 public function canExportExamResultsPdf(): bool
 {
     // Export nur sinnvoll, wenn es überhaupt Ergebnisse gibt
-    return $this->results()->exists();
+    return $this->examResultsState() > 0;
 }
 
 
@@ -1652,3 +1724,4 @@ public function createExamResultsPdfForPreview(): ?string
 
 
 }
+

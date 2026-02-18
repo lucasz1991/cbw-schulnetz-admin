@@ -69,40 +69,48 @@ class AdminConfig extends Component
             'description' => 'Erinnerung, wenn ein Berichtsheft nicht vollständig ausgefüllt wurde. 2 Wochen nach Kursende, wenn noch fehlende Einträge vorhanden sind.',
             'default' => false,
         ],
+        'lecturer_module_documentation_missing' => [
+            'label' => 'Dozenten Baustein-Dokumentation fehlt',
+            'description' => 'Automatische Nachricht, wenn innerhalb eines laufenden Bausteins Tageseinträge in der Dozenten-Dokumentation fehlen (Freitag, max. 2x).',
+            'default' => false,
+        ],
+        'rote_faden_missing' => [
+            'label' => 'Dozenten Roter Faden fehlt',
+            'description' => 'Automatische Nachricht, wenn zum Kursstart kein Roter Faden hinterlegt ist (Dienstag in der ersten Unterrichtswoche, einmalig).',
+            'default' => false,
+        ],
+        'attendance_proof_missing' => [
+            'label' => 'Anwesenheitsnachweis fehlt',
+            'description' => 'Automatische Nachricht, wenn Anwesenheiten für Teilnehmer fehlen oder nicht gesetzt sind (alle 2 Tage bis vollständig).',
+            'default' => false,
+        ],
+        'exam_results_missing_by_lecturer' => [
+            'label' => 'Prüfungsergebnisse fehlen vom Dozenten',
+            'description' => 'Automatische Nachricht, wenn nach Bausteinende keine vollständigen Ergebnisse vorliegen (Montag nach Kursende, einmalig).',
+            'default' => false,
+        ],
     ];
 
 
     // User-Notifications: Vorschlaege (sichtbar, aber nicht aktivierbar)
     public $userEmailNotificationSuggestions = [
-        'lecturer_module_documentation_missing' => [
-            'label' => 'Dozenten Baustein-Dokumentation fehlt',
-            'description' => 'Automatische Nachricht, wenn fuer einen Baustein die Dozenten-Dokumentation fehlt.',
-        ],
-        'rote_faden_missing' => [
-            'label' => 'Dozenten Roter Faden fehlt',
-            'description' => 'Automatische Nachricht, wenn der rote Faden fuer einen Kurs fehlt.',
-        ],
-        'attendance_proof_missing' => [
-            'label' => 'Anwesenheitsnachweis fehlt',
-            'description' => 'Automatische Nachricht, wenn fuer einen Baustein kein Anwesenheitsnachweis vorliegt.',
-        ],
-        'exam_results_missing_by_lecturer' => [
-            'label' => 'Pruefungsergebnisse fehlen vom Dozenten',
-            'description' => 'Automatische Nachricht, wenn nach einer Pruefung noch keine Ergebnisse durch den Dozenten eingetragen wurden.',
-        ],
         'lecturer_module_invoice_missing' => [
             'label' => 'Dozenten Baustein Rechnung fehlt',
             'description' => 'Automatische Nachricht, wenn fuer einen abgeschlossenen Baustein noch keine Dozenten-Rechnung hinterlegt wurde.',
         ],
         'participant_education_material_confirmation_missing' => [
-            'label' => 'Bildungsmittel-Bestaetigung fehlt (Teilnehmer)',
-            'description' => 'Automatische Erinnerung an Teilnehmer, wenn die Bestaetigung zu den Bildungsmitteln noch aussteht.',
+            'label' => 'Bildungsmittel-Bestätigung fehlt (Teilnehmer)',
+            'description' => 'Automatische Erinnerung an Teilnehmer, wenn die Bestätigung zu den Bildungsmitteln noch aussteht.',
         ],
     ];
 
     // User-Notifications: Werte (nur bools; werden geladen/gespeichert)
     public $userEmailNotifications = [
         'reminder_missing_report_book' => false,
+        'lecturer_module_documentation_missing' => false,
+        'rote_faden_missing' => false,
+        'attendance_proof_missing' => false,
+        'exam_results_missing_by_lecturer' => false,
     ];
 
     // ------------------------------------------------------------------

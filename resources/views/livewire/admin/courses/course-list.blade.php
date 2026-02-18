@@ -1,5 +1,5 @@
 <div class="px-2" wire:loading.class="pointer-events-none cursor-wait">
-        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
+    <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
         <div class="flex">
             <div class="flex-shrink-0">
                 <svg class="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 23.625 23.625" fill="currentColor" aria-hidden="true">
@@ -21,7 +21,7 @@
         <span class="ml-2 bg-white text-sky-600 text-xs shadow border border-sky-200 font-bold px-2 py-1 flex items-center justify-center rounded-full h-7 leading-none">
             {{ $coursesTotal }}
         </span>
-</div>
+    </div>
     <div class="flex justify-between my-4 space-x-2">
         <div class="flex items-center gap-4">
             <x-ui.buttons.button-basic 
@@ -33,61 +33,50 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
                 </svg>
             </x-ui.buttons.button-basic >
-{{-- Bulk Actions via x-dropdown --}}
-@php
-    $isDisabled = count($selectedCourses) === 0;
-@endphp
+            @php
+                $isDisabled = count($selectedCourses) === 0;
+            @endphp
+            <x-dropdown align="left">
+                <x-slot name="trigger">
+                    <button
+                        type="button"
+                        @class([
+                            'text-sm border px-3 py-1 rounded-lg relative flex items-center justify-center bg-gray-100',
+                            'cursor-not-allowed opacity-50' => $isDisabled,
+                            'cursor-pointer' => !$isDisabled,
+                        ])
+                        @if($isDisabled) disabled @endif
+                    >
+                        <svg class="w-4 h-4 text-gray-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5.005 11.19V12l6.998 4.042L19 12v-.81M5 16.15v.81L11.997 21l6.998-4.042v-.81M12.003 3 5.005 7.042l6.998 4.042L19 7.042 12.003 3Z"/>
+                        </svg>
 
-<x-dropdown align="left" >
-    {{-- Trigger --}}
-    <x-slot name="trigger">
-        <button
-            type="button"
-            @class([
-                'text-sm border px-3 py-1 rounded-lg relative flex items-center justify-center bg-gray-100',
-                'cursor-not-allowed opacity-50' => $isDisabled,
-                'cursor-pointer' => !$isDisabled,
-            ])
-            @if($isDisabled) disabled @endif
-        >
-            <svg class="w-4 h-4 text-gray-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                 width="24" height="24" fill="none" viewBox="0 0 24 24">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M5.005 11.19V12l6.998 4.042L19 12v-.81M5 16.15v.81L11.997 21l6.998-4.042v-.81M12.003 3 5.005 7.042l6.998 4.042L19 7.042 12.003 3Z"/>
-            </svg>
-
-            @if(!$isDisabled)
-                <span class="ml-2 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    {{ count($selectedCourses) }}
-                </span>
-            @endif
-        </button>
-    </x-slot>
-
-    {{-- Content --}}
-    <x-slot name="content">
-            <x-dropdown-link href="#" wire:click.prevent="removeSelectedCourses" class="hover:bg-red-100">
-                <i class="far fa-align-slash mr-2"></i>
-                Auswahl entfernen
-            </x-dropdown-link>
-            <x-dropdown-link href="#" wire:click.prevent="$dispatch('openCourseExportModal', [{{ json_encode($selectedCourses) }}])" class="hover:bg-green-100">
-                <i class="far fa-download mr-2"></i>
-                Exportieren
-            </x-dropdown-link>
-    </x-slot>
-</x-dropdown>
+                        @if(!$isDisabled)
+                            <span class="ml-2 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                {{ count($selectedCourses) }}
+                            </span>
+                        @endif
+                    </button>
+                </x-slot>
+                <x-slot name="content">
+                        <x-dropdown-link href="#" wire:click.prevent="removeSelectedCourses" class="hover:bg-red-100">
+                            <i class="far fa-align-slash mr-2"></i>
+                            Auswahl entfernen
+                        </x-dropdown-link>
+                        <x-dropdown-link href="#" wire:click.prevent="$dispatch('openCourseExportModal', [{{ json_encode($selectedCourses) }}])" class="hover:bg-green-100">
+                            <i class="far fa-download mr-2"></i>
+                            Exportieren
+                        </x-dropdown-link>
+                </x-slot>
+            </x-dropdown>
             </div>
-
         <div class="flex items-center space-x-2">
-
-
-            {{-- Suchfeld --}}
             <x-tables.search-field 
                 resultsCount="{{ $courses->count() }}"
                 wire:model.live="search"
             />
-
-            {{-- 🟢 Status-Filter --}}
             <div class="relative">
                 <select 
                     wire:model.live="active"
@@ -99,8 +88,6 @@
                     <option value="finished">abgeschlossene</option>
                 </select>
             </div>
-
-            {{-- Hier ein Select feld für die Termin_id s der Course  --}}
             <div class="relative">
             <x-ui.dropdown.anchor-dropdown
                 align="right"
@@ -112,7 +99,6 @@
                 :scrollOnOpen="false"
                 :offset="6"
             >
-                {{-- Trigger --}}
                 <x-slot name="trigger">
                     <x-ui.buttons.button-basic
                         type="button"
@@ -136,12 +122,8 @@
                         <i class="fal fa-angle-down ml-1 text-xs"></i>
                     </x-ui.buttons.button-basic>
                 </x-slot>
-
-                {{-- Inhalt --}}
                 <x-slot name="content">
                     <div class="py-1 text-sm text-gray-700 max-h-80 overflow-y-auto">
-
-                        {{-- Option: alle Termine --}}
                         <button
                             type="button"
                             wire:click="$set('selectedTerm', '')"
@@ -156,8 +138,6 @@
                             </div>
                         </button>
                         <div class="border-t border-gray-100 my-1"></div>
-                        
-                        {{-- Termine-Loop --}}
                         @foreach($terms as $term)
                             <button
                                 type="button"
@@ -172,7 +152,6 @@
                                         <span class="font-medium">
                                             {{ $term->name }}
                                         </span>
-
                                         <div class="hidden group-hover/termselectoption:inline-flex">
                                             <x-ui.badge.badge
                                                 :color="'blue'"
@@ -181,7 +160,6 @@
                                             </x-ui.badge.badge>
                                         </div>
                                     </div>
-
                                     <span class="text-xs text-gray-500">
                                         {{ $term->start }}
                                         &ndash;
@@ -193,10 +171,7 @@
                     </div>
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>
-
             </div>
-            
-            {{-- Inhalts-Status Filter --}}
             <div class="relative">
               <select
                 wire:model.live="contentFilter"
@@ -234,7 +209,6 @@
                 </optgroup>
               </select>
             </div>
-            {{-- PPer page --}}
             <div class="relative">
                 <select 
                     wire:model.live="perPage"
@@ -244,17 +218,10 @@
                     <option value="30">30 pro Seite</option>
                     <option value="50">50 pro Seite</option>
                     <option value="100">100 pro Seite</option>
-
                 </select> 
             </div>
-
-
-
         </div>
-
-
     </div>
-
     <div class="w-full">
         <x-tables.table
             :columns="[
@@ -271,13 +238,10 @@
             :sort-by="$sortBy ?? null"
             :sort-dir="$sortDir ?? 'asc'"
         />
-
         <div class="py-4">
             {{ $courses->links() }}
         </div>
-
     </div>
-
     <livewire:admin.courses.course-export-modal  />
     <livewire:tools.file-pools.file-preview-modal />
 </div>
