@@ -98,7 +98,7 @@
 
 {{-- 4: Aktivitäten (Teilnehmer & Exporte) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
-    <div class="flex gap-2 items-center pr-8">
+    <div class="flex gap-1 items-center pr-8">
         @php
             $exportActions = [
                 [
