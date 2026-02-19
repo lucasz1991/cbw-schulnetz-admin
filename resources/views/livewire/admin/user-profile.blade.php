@@ -355,34 +355,13 @@
             </x-ui.accordion.tab-panel>
 
         <x-ui.accordion.tab-panel for="userCourses">
-            @if(auth()->user()?->role === 'admin')
                 <livewire:admin.user-profile.user-courses :user="$user" :key="'user-courses-'.$user->id" />
-            @else
-                <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                    <i class="fad fa-info-circle mr-2"></i>
-                    Dieses Modul befindet sich noch in Entwicklung.
-                </div>
-            @endif
         </x-ui.accordion.tab-panel>
         <x-ui.accordion.tab-panel for="userMessages">
-            @if(auth()->user()?->role === 'admin')
                 <livewire:admin.user-profile.user-messages :user="$user" :key="'user-messages-'.$user->id" />
-            @else
-                <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                    <i class="fad fa-info-circle mr-2"></i>
-                    Dieses Modul befindet sich noch in Entwicklung.
-                </div>
-            @endif
         </x-ui.accordion.tab-panel>
         <x-ui.accordion.tab-panel for="userRequests">
-            @if(auth()->user()?->role === 'admin')
                 <livewire:admin.user-profile.user-requests :user="$user" :key="'user-requests-'.$user->id" />
-            @else
-                <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                    <i class="fad fa-info-circle mr-2"></i>
-                    Dieses Modul befindet sich noch in Entwicklung.
-                </div>
-            @endif
         </x-ui.accordion.tab-panel>
     </x-ui.accordion.tabs>
 
