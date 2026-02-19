@@ -103,16 +103,7 @@
                 </div>
 
                 <div class="px-4 md:px-5 pb-4 md:pb-5">
-                    {{-- <livewire:admin.dashboard.courses-focus :autoRefresh="$autoRefresh" /> --}}
-                    <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4">
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-2 text-sm text-gray-700">
-                                <i class="fal fa-layer-group text-gray-400"></i>
-                                <span>Modul folgt: <span class="font-semibold">admin.dashboard.courses-focus</span></span>
-                            </div>
-                            <span class="text-xs text-gray-500">Platzhalter</span>
-                        </div>
-                    </div>
+                    <livewire:admin.dashboard.courses-focus :autoRefresh="$autoRefresh" />
                 </div>
             </div>
 
@@ -133,16 +124,7 @@
                 </div>
 
                 <div class="px-4 md:px-5 pb-4 md:pb-5">
-                    {{-- <livewire:admin.dashboard.open-jobs :autoRefresh="$autoRefresh" /> --}}
-                    <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4">
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-2 text-sm text-gray-700">
-                                <i class="fal fa-layer-group text-gray-400"></i>
-                                <span>Modul folgt: <span class="font-semibold">admin.dashboard.open-jobs</span></span>
-                            </div>
-                            <span class="text-xs text-gray-500">Platzhalter</span>
-                        </div>
-                    </div>
+                    <livewire:admin.dashboard.open-jobs :autoRefresh="$autoRefresh" />
                 </div>
             </div>
 
@@ -168,16 +150,7 @@
                 </div>
 
                 <div class="px-4 md:px-5 pb-4 md:pb-5">
-                    {{-- <livewire:admin.dashboard.alerts :autoRefresh="$autoRefresh" /> --}}
-                    <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4">
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-2 text-sm text-gray-700">
-                                <i class="fal fa-layer-group text-gray-400"></i>
-                                <span>Modul folgt: <span class="font-semibold">admin.dashboard.alerts</span></span>
-                            </div>
-                            <span class="text-xs text-gray-500">Platzhalter</span>
-                        </div>
-                    </div>
+                    <livewire:admin.dashboard.alerts :autoRefresh="$autoRefresh" />
                 </div>
             </div>
 
