@@ -43,9 +43,11 @@ class Safety extends Component
                       ->whereIn('users.role', ['staff']);
             })
             ->when($this->search, function ($query) {
-                $query->where('activity_log.description', 'like', '%' . $this->search . '%')
-                ->orWhere('activity_log.causer_type', 'like', '%' . $this->search . '%')
-                ->orWhere('users.name', 'like', '%' . $this->search . '%'); 
+                $query->where(function ($searchQuery) {
+                    $searchQuery->where('activity_log.description', 'like', '%' . $this->search . '%')
+                        ->orWhere('activity_log.causer_type', 'like', '%' . $this->search . '%')
+                        ->orWhere('users.name', 'like', '%' . $this->search . '%');
+                });
             })
             ->orderBy('activity_log.created_at', 'desc')
             ->paginate($this->perPage);
