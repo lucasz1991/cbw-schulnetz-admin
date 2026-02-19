@@ -549,6 +549,16 @@ class Course extends Model
         return $this->renderAssetIcon('Pruefungsergebnisse', $this->examResultsState());
     }
 
+    public function courseRatingsState(): int
+    {
+        return $this->ratings()->exists() ? 1 : 0;
+    }
+
+    public function getCourseRatingsIconHtmlAttribute(): string
+    {
+        return $this->renderAssetIcon('Baustein Bewertung', $this->courseRatingsState());
+    }
+
 
 
     // ---- STATUS: Icon/Badge-Meta ----------------------------------------------
@@ -1337,7 +1347,7 @@ public function exportExamResultsPdf(): ?StreamedResponse
      */
     public function canExportCourseRatingsPdf(): bool
     {
-        return $this->ratings()->exists();
+        return $this->courseRatingsState() > 0;
     }
 
     /**

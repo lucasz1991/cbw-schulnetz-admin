@@ -103,292 +103,200 @@
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>
     </div>
-    <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
+    @php
+        $status = $this->status;
+        $badge = match($status) {
+            'planned'  => ['bg' => 'bg-sky-100',     'text' => 'text-sky-800',     'label' => 'Geplant'],
+            'active'   => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-800', 'label' => 'Aktiv'],
+            'finished' => ['bg' => 'bg-indigo-100',  'text' => 'text-indigo-800',  'label' => 'Abgeschlossen'],
+            default    => ['bg' => 'bg-slate-100',   'text' => 'text-slate-700',    'label' => 'Unbekannt'],
+        };
 
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <h1 class="text-xl font-semibold">{{ $course->title ?? 'Kurs' }}</h1>
-                <div class="mt-1 text-sm text-gray-500">{{ $course->course_short_name }}</div>
-                <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+        $resourceCards = [
+            [
+                'label' => 'Dokumentation',
+                'icon' => 'fal fa-chalkboard-teacher',
+                'badge' => $course->documentation_icon_html,
+                'can' => $this->canExportDoku,
+                'action' => 'exportDokuPdf',
+            ],
+            [
+                'label' => 'Anwesenheit',
+                'icon' => 'fal fa-clipboard-list-check',
+                'badge' => $course->attendance_icon_html,
+                'can' => $this->canExportAttendance,
+                'action' => 'exportAttendancePdf',
+            ],
+            [
+                'label' => 'Roter Faden',
+                'icon' => 'fal fa-file-pdf',
+                'badge' => $course->red_thread_icon_html,
+                'can' => $this->canExportRedThread,
+                'action' => 'exportRedThreadPdf',
+            ],
+            [
+                'label' => 'Material-Bestaetigungen',
+                'icon' => 'fal fa-file-signature',
+                'badge' => $course->participants_confirmations_icon_html,
+                'can' => $this->canExportMaterialConfirmations,
+                'action' => 'exportMaterialConfirmationsPdf',
+            ],
+            [
+                'label' => 'Pruefungsergebnisse',
+                'icon' => 'fal fa-clipboard-check',
+                'badge' => $course->exam_results_icon_html,
+                'can' => $this->canExportExamResults,
+                'action' => 'exportExamResultsPdf',
+            ],
+            [
+                'label' => 'Baustein-Bewertung',
+                'icon' => 'fal fa-star',
+                'badge' => $course->course_ratings_icon_html,
+                'can' => $this->canExportCourseRatings,
+                'action' => 'exportCourseRatingsPdf',
+            ],
+            [
+                'label' => 'Dozenten-Rechnung',
+                'icon' => 'fal fa-money-check-alt',
+                'badge' => $course->invoice_icon_html,
+                'can' => $this->canExportInvoice,
+                'action' => 'exportInvoicePdf',
+            ],
+        ];
+    @endphp
+
+    <section class="rounded-3xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div class="min-w-0">
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                    <i class="fal fa-layer-group text-[11px]"></i>
+                    <span>Bausteinprofil</span>
+                </div>
+
+                <h1 class="mt-3 truncate text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">{{ $course->title ?? 'Kurs' }}</h1>
+                <p class="mt-1 text-sm text-slate-500">{{ $course->course_short_name }}</p>
+
+                <div class="mt-4 flex flex-wrap items-center gap-1.5 text-xs">
                     @if($course->klassen_id)
-                        <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">Klasse: {{ $course->klassen_id }}</span>
+                        <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700">Klasse {{ $course->klassen_id }}</span>
                     @endif
+
                     @if($course->termin_id)
-                        <span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700">Termin: {{ $course->termin_id }}</span>
+                        <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700">Termin {{ $course->termin_id }}</span>
                     @endif
+
                     @if($course->room)
-                        <span class="px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700">Raum {{ $course->room }}</span>
-                    @endif 
-    
-                    {{-- Zeitraum --}}
-                    <span class="px-2 py-0.5 rounded border border-green-200 bg-green-50 text-green-700">
-                        {{ optional($course->planned_start_date)->locale('de')->isoFormat('ll') ?? '—' }}
-                        –
-                        {{ optional($course->planned_end_date)->locale('de')->isoFormat('ll') ?? '—' }}
+                        <span class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">Raum {{ $course->room }}</span>
+                    @endif
+
+                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">
+                        {{ optional($course->planned_start_date)->locale('de')->isoFormat('ll') ?? '-' }}
+                        bis
+                        {{ optional($course->planned_end_date)->locale('de')->isoFormat('ll') ?? '-' }}
                     </span>
-                    @php
-                        $status = $this->status;
-                        $badge = match($status) {
-                            'planned'  => ['bg' => 'bg-sky-50',     'text' => 'text-sky-700',     'label' => 'Geplant'],
-                            'active'   => ['bg' => 'bg-green-50',   'text' => 'text-green-700',   'label' => 'Aktiv'],
-                            'finished' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'label' => 'Abgeschlossen'],
-                            default    => ['bg' => 'bg-gray-50',    'text' => 'text-gray-600',    'label' => '—'],
-                        };
-                    @endphp
-                    <span class="px-2 py-0.5 rounded border border-gray-200 {{ $badge['bg'] }} {{ $badge['text'] }}">{{ $badge['label'] }}</span>
-                    @if($course->is_active)
-                        <span class="px-2 py-0.5 rounded border border-lime-200 bg-lime-50 text-lime-700">aktiv</span>
-                    @else
-                        <span class="px-2 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-600">inaktiv</span>
-                    @endif
                 </div>
             </div>
-        </div>
-    </div> 
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {{-- Kasten 1: Tutor + Teilnehmer + Termine --}}
-    <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
-        <div class="flex items-center justify-between text-xs text-neutral-500 mb-2">
-            <span class="font-semibold text-neutral-700">Baustein Überblick</span>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 border border-slate-200">
-                <i class="fal fa-hashtag text-[11px]"></i>
-                <span class="text-[11px]">ID {{ $course->id }}</span>
-            </span>
-        </div>
-
-        {{-- Tutor --}}
-        <div class="flex items-start gap-3">
-            <div class="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-sky-50 border border-sky-100">
-                <i class="fal fa-user-tie text-sky-600"></i>
+            <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
+                <span class="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold {{ $badge['bg'] }} {{ $badge['text'] }}">{{ $badge['label'] }}</span>
+                @if($course->is_active)
+                    <span class="rounded-full border border-lime-200 bg-lime-50 px-2.5 py-1 text-xs font-semibold text-lime-700">Aktiv</span>
+                @else
+                    <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">Inaktiv</span>
+                @endif
+                <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">ID {{ $course->id }}</span>
             </div>
-            <div class="flex-1">
-                <div class="text-[11px] uppercase tracking-wide text-neutral-500">Tutor</div>
-                <div class="font-medium text-sm">
-                    @if($course->tutor)
-                        <x-user.public-info :person="$course->tutor" />
-                    @else
-                        <span class="text-neutral-400">Noch nicht zugewiesen</span>
-                    @endif
-                </div>
+        </div>
+    </section>
 
-                {{-- Teilnehmer & Termine als kleine Stats --}}
-                <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                    <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <section class="xl:col-span-1 rounded-3xl border border-slate-200 bg-white p-5 md:p-6">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Baustein Ueberblick</h2>
+                <i class="fal fa-info-circle text-slate-300"></i>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div class="flex items-start gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-sky-700">
+                        <i class="fal fa-user-tie text-sm"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-[11px] uppercase tracking-wide text-slate-500">Tutor</div>
+                        <div class="mt-1 truncate text-sm font-semibold text-slate-800">
+                            @if($course->tutor)
+                                <x-user.public-info :person="$course->tutor" />
+                            @else
+                                <span class="text-slate-400">Noch nicht zugewiesen</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+                <div class="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-blue-800">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold">Teilnehmer</span>
                         <i class="fal fa-users text-[13px]"></i>
-                        <span class="font-semibold text-[12px]">
-                            {{ (int)($course->participants_count ?? 0) }}
-                        </span>
-                        <span class="text-[11px]">Teilnehmer</span>
                     </div>
+                    <div class="mt-2 text-xl font-bold leading-none">{{ (int)($course->participants_count ?? 0) }}</div>
+                </div>
 
-                    <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-emerald-800">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold">Tage</span>
                         <i class="fal fa-calendar-day text-[13px]"></i>
-                        <span class="font-semibold text-[12px]">
-                            {{ (int)($course->dates_count ?? 0) }}
-                        </span>
-                        <span class="text-[11px]">Unterrichtstage</span>
                     </div>
+                    <div class="mt-2 text-xl font-bold leading-none">{{ (int)($course->dates_count ?? 0) }}</div>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    {{-- Kasten 2: Indikatoren (Doku, Roter Faden, Bestätigungen, Rechnung) --}}
-    <div class="p-4 rounded-2xl border border-neutral-200 bg-white">
-        <div class="flex items-center justify-between text-xs text-neutral-500 mb-2">
-            <span class="font-semibold text-neutral-700">Unterlagen & Status</span>
-            <i class="fal fa-info-circle text-neutral-400" title="Status relevanter Kursunterlagen"></i>
-        </div>
-
-<div class="mt-1 grid grid-cols-2 gap-3 text-xs">
-
-    {{-- Dokumentation --}}
-    <div
-        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
-    >
-        {{-- Icon + Label --}}
-        <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                <i class="fal fa-chalkboard-teacher text-[13px] text-slate-700"></i>
-            </span>
-            <span class="text-[11px] leading-snug">Dokumentation</span>
-        </div>
-
-        {{-- Status Icon --}}
-        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
-            {!! $course->documentation_icon_html !!}
-        </div>
-
-        {{-- Download Button --}}
-        @if($this->canExportDoku)
-        <button
-            type="button"
-            wire:click="exportDokuPdf"
-            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-primary-100 text-primary-700 
-                   hover:bg-primary-200
-                   cursor-pointer shadow-sm"
-        >
-            <i class="fal fa-download text-[14px]"></i>
-        </button>
-        @else
-            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-red-100 text-red-700 
-                   hover:bg-red-200
-                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
-                    <i class="fal fa-circle-exclamation text-[14px]"></i>
+        <section class="xl:col-span-2 rounded-3xl border border-slate-200 bg-white p-3.5">
+            <div class="mb-2.5 flex items-center justify-between">
+                <h2 class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Unterlagen und Status</h2>
             </div>
-        @endif
-    </div>
 
+            <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                @foreach($resourceCards as $card)
+                    <article class="group rounded-xl border border-slate-200 bg-slate-50/70 px-2.5 py-2">
+                        <div class="flex items-center gap-2">
+                            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700">
+                                <i class="{{ $card['icon'] }} text-[11px]"></i>
+                            </span>
 
+                            <div class="min-w-0 flex-1">
+                                <div class="truncate text-[11px] font-semibold text-slate-800">{{ $card['label'] }}</div>
+                            </div>
 
-    {{-- Roter Faden --}}
-    <div
-        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
-    >
-        <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                <i class="fal fa-file-pdf text-[13px] text-slate-700"></i>
-            </span>
-            <span class="text-[11px] leading-snug">Roter Faden</span>
-        </div>
+                            <div class="shrink-0 rounded-full border border-slate-200 bg-white px-1 py-0.5">
+                                {!! $card['badge'] !!}
+                            </div>
 
-        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
-            {!! $course->red_thread_icon_html !!}
-        </div>
-        @if($this->canExportRedThread)
-        <button
-            type="button"
-            wire:click="exportRedThreadPdf"
-            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-primary-100 text-primary-700 
-                   hover:bg-primary-200
-                   cursor-pointer shadow-sm"
-        >
-            <i class="fal fa-download text-[14px]"></i>
-        </button>
-                @else
-            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-red-100 text-red-700 
-                   hover:bg-red-200
-                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
-                    <i class="fal fa-circle-exclamation text-[14px]"></i>
+                            @if($card['can'])
+                                <button
+                                    type="button"
+                                    wire:click="{{ $card['action'] }}"
+                                    class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+                                    title="{{ $card['label'] }} herunterladen"
+                                >
+                                    <i class="fal fa-download text-[10px]"></i>
+                                </button>
+                            @else
+                                <span
+                                    class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-700"
+                                    title="{{ $card['label'] }} nicht verfuegbar"
+                                >
+                                    <i class="fal fa-minus text-[10px]"></i>
+                                </span>
+                            @endif
+                        </div>
+                    </article>
+                @endforeach
             </div>
-        @endif
+        </section>
     </div>
-
-
-
-    {{-- Materialbestätigungen --}}
-    <div
-        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
-    >
-        <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                <i class="fal fa-file-signature text-[13px] text-slate-700"></i>
-            </span>
-            <span class="text-[11px] leading-snug">Bildungsmittel Bestätigungen</span>
-        </div>
-
-        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
-            {!! $course->participants_confirmations_icon_html !!}
-        </div>
-        @if($this->canExportMaterialConfirmations)
-        <button
-            type="button"
-            wire:click="exportMaterialConfirmationsPdf"
-            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-primary-100 text-primary-700 
-                   hover:bg-primary-200
-                   cursor-pointer shadow-sm"
-        >
-            <i class="fal fa-download text-[14px]"></i>
-        </button>
-                @else
-            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-red-100 text-red-700 
-                   hover:bg-red-200
-                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
-                    <i class="fal fa-circle-exclamation text-[14px]"></i>
-            </div>
-        @endif
-    </div>
-
-
-
-    {{-- Dozenten-Rechnung --}}
-    <div
-        class="relative group/box flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-gray-50 px-2 py-2"
-    >
-        <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-50">
-                <i class="fal fa-money-check-alt text-[13px] text-slate-700"></i>
-            </span>
-            <span class="text-[11px] leading-snug">Dozenten-Rechnung</span>
-        </div>
-
-        <div class="shrink-0 transition-opacity duration-150 group-hover/box:opacity-0">
-            {!! $course->invoice_icon_html !!}
-        </div>
-        @if($this->canExportInvoice)
-        <button
-            type="button"
-            wire:click="exportInvoicePdf"
-            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-primary-100 text-primary-700 
-                   hover:bg-primary-200
-                   cursor-pointer shadow-sm"
-        >
-            <i class="fal fa-download text-[14px]"></i>
-        </button>
-                @else
-            <div            class="absolute right-2 top-1/2 -translate-y-1/2 
-                   opacity-0 group-hover/box:opacity-100
-                   transition-opacity duration-150 
-                   flex items-center justify-center
-                   h-7 w-7 rounded-full
-                   bg-red-100 text-red-700 
-                   hover:bg-red-200
-                   cursor-not-allowed shadow-sm" title="Download nicht möglich">
-                    <i class="fal fa-circle-exclamation text-[14px]"></i>
-            </div>
-        @endif
-    </div>
-
-</div>
-
-    </div>
-</div>
 
 
     @if($course->description)
