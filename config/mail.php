@@ -103,6 +103,8 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'super_admin' => env('SUPER_ADMIN_MAIL'),
+
     /*
     |--------------------------------------------------------------------------
     | Markdown Mail Settings

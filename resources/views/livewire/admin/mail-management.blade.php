@@ -1,88 +1,190 @@
-<div>
-    <div class="mb-4 flex flex-wrap justify-between gap-4">
-        <div class="mb-6 max-w-md">
-            <h1 class="text-2xl font-bold text-gray-700">Mail's</h1>
-            <p class="text-gray-500">Es gibt insgesamt {{ $mails->total() }} Mails.</p>
+<div class="space-y-5">
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 px-5 py-5">
+            <div>
+                <h1 class="text-2xl font-semibold tracking-tight text-slate-800">Mail Management</h1>
+                <p class="mt-1 text-sm text-slate-600">{{ $mails->total() }} Eintraege im Versandprotokoll</p>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Super Admin</p>
+                <p class="font-semibold">{{ config('mail.super_admin') ?: 'nicht gesetzt' }}</p>
+            </div>
         </div>
     </div>
 
-    <!-- Tabellenüberschrift -->
-    <div class="grid grid-cols-12 bg-gray-100 p-2 font-semibold text-gray-700 border-b border-gray-300">
-        <div class="col-span-1">
-            <button wire:click="sortByField('id')" class="text-left flex items-center">
-                ID
-                @if ($sortBy === 'id')
-                    <span class="ml-2 text-xl">
-                        <svg class="w-4 h-4 ml-2 transition-transform transform" style="transform: rotate({{ $sortDirection === 'asc' ? '0deg' : '180deg' }});" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19 9-7 7-7-7" />
-                        </svg>
-                    </span>
-                @endif
-            </button>
+    @if (session()->has('message'))
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {{ session('message') }}
         </div>
-        <div class="col-span-3">
-            Datum
-        </div>
-        <div class="col-span-3">
-            Anzahl Empfänger
-        </div>
-        <div class="col-span-3">
-            Status
-        </div>
-        <div class="col-span-2">Aktionen</div>
-    </div>
+    @endif
 
-    <!-- Mails -->
-    <div>
-        @foreach ($mails as $mail)
-            <div x-data="{ open: false }" class="border-b">
-                <!-- Tabellenzeile -->
-                <div @click="open = !open" class="cursor-pointer hover:bg-gray-100 grid grid-cols-12 items-center p-2 text-left"  @click.away="open = false">
-                    <div class="col-span-1">{{ $mail->id }}</div>
-                    <div class="col-span-3">{{ $mail->created_at->format('d.m.Y H:i') }}</div>
-                    <div class="col-span-3">{{ count($mail->recipients) }} Empfänger</div>
-                    <div class="col-span-3">
-                        @if ($mail->status)
-                            <span class="text-green-600 font-semibold">Gesendet</span>
-                        @else
-                            <span class="text-red-600 font-semibold">Nicht gesendet</span>
-                        @endif
-                    </div>
-                    <div class="col-span-2 flex gap-2">
-                        <button wire:click="resendMail({{ $mail->id }})" class="text-blue-500 fill-blue-500  hover:underline">
-                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160 352 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l111.5 0c0 0 0 0 0 0l.4 0c17.7 0 32-14.3 32-32l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1L16 432c0 17.7 14.3 32 32 32s32-14.3 32-32l0-35.1 17.6 17.5c0 0 0 0 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.8c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352l34.4 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L48.4 288c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z"/></svg>
+    @if (session()->has('error'))
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="hidden grid-cols-12 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600 md:grid">
+            <div class="col-span-1">
+                <button wire:click="sortByField('id')" class="inline-flex items-center gap-1">
+                    ID
+                    @if ($sortBy === 'id')
+                        <span>{{ $sortDirection === 'asc' ? '^' : 'v' }}</span>
+                    @endif
+                </button>
+            </div>
+            <div class="col-span-2">
+                <button wire:click="sortByField('created_at')" class="inline-flex items-center gap-1">
+                    Datum
+                    @if ($sortBy === 'created_at')
+                        <span>{{ $sortDirection === 'asc' ? '^' : 'v' }}</span>
+                    @endif
+                </button>
+            </div>
+            <div class="col-span-2">Versandart</div>
+            <div class="col-span-2">Empfaenger</div>
+            <div class="col-span-2">
+                <button wire:click="sortByField('status')" class="inline-flex items-center gap-1">
+                    Status
+                    @if ($sortBy === 'status')
+                        <span>{{ $sortDirection === 'asc' ? '^' : 'v' }}</span>
+                    @endif
+                </button>
+            </div>
+            <div class="col-span-3">Aktionen</div>
+        </div>
+
+        @forelse ($mails as $mail)
+            @php
+                $type = strtolower((string) ($mail->type ?? ''));
+                $isMessageOnly = $type === 'message';
+                $isMailOnly = $type === 'mail';
+                $typeLabel = $isMessageOnly ? 'Nachricht' : ($isMailOnly ? 'E-Mail' : 'Nachricht + E-Mail');
+                $typeClass = $isMessageOnly
+                    ? 'bg-amber-100 text-amber-700 border-amber-200'
+                    : ($isMailOnly ? 'bg-sky-100 text-sky-700 border-sky-200' : 'bg-violet-100 text-violet-700 border-violet-200');
+                $uniqueRecipients = collect($mail->recipients ?? [])
+                    ->filter(fn ($recipient) => is_array($recipient))
+                    ->unique(fn ($recipient) => ((int) ($recipient['user_id'] ?? 0)) . '|' . strtolower((string) ($recipient['email'] ?? '')))
+                    ->values();
+                $linkRaw = (string) ($mail->content['link'] ?? '');
+            @endphp
+
+            <div x-data="{ open: false }" @click.away="open = false" class="border-t border-slate-100 first:border-t-0">
+                <div class="px-4 py-3 hover:bg-slate-50">
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
+                        <button @click="open = !open" class="text-left text-sm font-semibold text-slate-800 md:col-span-1">
+                            #{{ $mail->id }}
                         </button>
+
+                        <button @click="open = !open" class="text-left text-sm text-slate-600 md:col-span-2">
+                            {{ $mail->created_at->format('d.m.Y H:i') }}
+                        </button>
+
+                        <button @click="open = !open" class="text-left md:col-span-2">
+                            <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $typeClass }}">
+                                {{ $typeLabel }}
+                            </span>
+                        </button>
+
+                        <button @click="open = !open" class="text-left text-sm text-slate-600 md:col-span-2">
+                            {{ $uniqueRecipients->count() }} Empfaenger
+                        </button>
+
+                        <button @click="open = !open" class="text-left md:col-span-2">
+                            @if ($mail->status)
+                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Gesendet</span>
+                            @else
+                                <span class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">Offen</span>
+                            @endif
+                        </button>
+
+                        <div class="flex flex-wrap gap-2 md:col-span-3 md:justify-end">
+                            <button
+                                wire:click.stop="resendMail({{ $mail->id }})"
+                                class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                            >
+                                Erneut senden
+                            </button>
+                            <button
+                                wire:click.stop="sendMessageToSuperAdmin({{ $mail->id }})"
+                                class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
+                            >
+                                SuperAdmin Test
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Collapse für Mail-Details -->
-                <div x-show="open" x-collapse x-cloak class="bg-gray-50 p-4">
-                    <h3 class="text-lg font-bold mb-2">Mail-Details</h3>
-                    <p><strong>Betreff:</strong> {{ $mail->content['subject'] }}</p>
-                    <p><strong>Nachricht:</strong> {{ $mail->content['body'] }}</p>
-                    <p><strong>Link:</strong> <a href="{{ $mail->content['link'] }}" class="text-blue-500 underline">{{ $mail->content['link'] }}</a></p>
-                    
-                    <!-- Liste der Empfänger -->
-                    <h4 class="text-lg font-bold mt-4">Empfänger</h4>
-                    <ul class="list-disc pl-5 max-h-40 overflow-y-auto border-t border-gray-300 pt-2">
-                        @foreach ($mail->recipients as $recipient)
-                            <li class="py-1">
-                                {{ $recipient['email'] }} 
-                                @if ($recipient['status'])
-                                    <span class="text-green-500">(Gesendet)</span>
+                <div x-show="open" x-collapse x-cloak class="border-t border-slate-100 bg-slate-50 px-4 py-4">
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                        <div class="rounded-xl border border-slate-200 bg-white p-4">
+                            <p class="text-xs uppercase tracking-wide text-slate-500">Betreff</p>
+                            <p class="mt-1 text-sm font-medium text-slate-800">{{ $mail->content['subject'] ?? '-' }}</p>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-white p-4">
+                            <p class="text-xs uppercase tracking-wide text-slate-500">Versandart</p>
+                            <p class="mt-1 text-sm font-medium text-slate-800">{{ $typeLabel }}</p>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-200 bg-white p-4">
+                            <p class="text-xs uppercase tracking-wide text-slate-500">Link</p>
+                            @if ($linkRaw !== '')
+                                @if (str_contains($linkRaw, '<'))
+                                    <div class="prose prose-sm mt-1 max-w-none text-slate-700">{!! $linkRaw !!}</div>
+                                @elseif (filter_var($linkRaw, FILTER_VALIDATE_URL))
+                                    <a href="{{ $linkRaw }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-block truncate text-sm text-blue-600 underline">{{ $linkRaw }}</a>
                                 @else
-                                    <span class="text-red-500">(Nicht gesendet)</span>
+                                    <p class="mt-1 text-sm text-slate-700">{{ $linkRaw }}</p>
                                 @endif
-                            </li>
-                        @endforeach
-                    </ul>
+                            @else
+                                <p class="mt-1 text-sm text-slate-500">Kein Link</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                        <p class="text-xs uppercase tracking-wide text-slate-500">Nachricht</p>
+                        <div class="prose prose-sm mt-2 max-w-none text-slate-700">
+                            {!! (string) ($mail->content['body'] ?? '') !!}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                        <h4 class="text-sm font-semibold text-slate-800">Empfaenger</h4>
+                        <ul class="mt-3 max-h-44 space-y-2 overflow-y-auto">
+                            @foreach ($uniqueRecipients as $recipient)
+                                @php
+                                    $recipientUserId = (int) ($recipient['user_id'] ?? 0);
+                                    $recipientUser = $recipientUserId > 0 ? ($recipientUsers[$recipientUserId] ?? null) : null;
+                                @endphp
+                                <li class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                                    <div class="min-w-0 pr-3">
+                                        @if ($recipientUser)
+                                            <x-user.public-info :user="$recipientUser" :size="8" />
+                                        @else
+                                            <span class="truncate text-slate-700">{{ $recipient['email'] ?? 'unbekannt' }}</span>
+                                        @endif
+                                    </div>
+                                    @if (!empty($recipient['status']))
+                                        <span class="text-xs font-semibold text-emerald-600">Gesendet</span>
+                                    @else
+                                        <span class="text-xs font-semibold text-rose-600">Nicht gesendet</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            <div class="px-4 py-8 text-center text-sm text-slate-500">Keine Mails vorhanden.</div>
+        @endforelse
     </div>
 
-    <!-- Pagination -->
-    <div class="mt-4">
+    <div>
         {{ $mails->links() }}
     </div>
 </div>
