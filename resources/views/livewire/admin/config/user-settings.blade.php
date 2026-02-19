@@ -33,6 +33,7 @@
             </div>
         </x-slot>
     </x-settings-collapse>
+    @if(Auth::user()->role == "admin" || Auth::user()->current_team_id === 2)
 <x-settings-collapse>
     <x-slot name="trigger">
         Benutzer General Passwort
@@ -92,6 +93,7 @@
         </div>
     </x-slot>
 </x-settings-collapse>
+    @endif
 
     @if ($errors->any())
         <div class="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
