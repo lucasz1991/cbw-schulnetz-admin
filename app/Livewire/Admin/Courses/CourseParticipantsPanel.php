@@ -24,9 +24,9 @@ class CourseParticipantsPanel extends Component
     }
 
     /**
-     * Baut die Datenstruktur für das Teilnehmer-Panel:
-     * - Materialbestätigung
-     * - Prüfungsergebnis
+     * Baut die Datenstruktur fuer das Teilnehmer-Panel:
+     * - Materialbestaetigung
+     * - Pruefungsergebnisse (alle Eintraege pro Teilnehmer)
      * - Kursbewertung (genau 1 Rating pro User & Kurs)
      */
     protected function buildRows(): void
@@ -38,15 +38,15 @@ class CourseParticipantsPanel extends Component
             'ratings',
         ]);
 
-        // Materialbestätigungen pro Person
+        // Materialbestaetigungen pro Person
         $acks = $this->course->materialAcknowledgements
             ->sortByDesc('acknowledged_at')
             ->groupBy('person_id');
 
-        // Prüfungsresultate pro Person
+        // Pruefungsresultate pro Person (alle Eintraege, neuester zuerst)
         $resultsByPerson = $this->course->results
             ->sortByDesc('updated_at')
-            ->keyBy('person_id');
+            ->groupBy('person_id');
 
         // EIN Rating pro User -> direkt keyBy('user_id')
         /** @var Collection<int,CourseRating> $ratingsByUser */
@@ -59,18 +59,37 @@ class CourseParticipantsPanel extends Component
             ->values()
             ->map(function ($person) use ($acks, $resultsByPerson, $ratingsByUser) {
 
-                // Materialbestätigung
+                // Materialbestaetigung
                 $ackList         = $acks->get($person->id);
                 $latestAck       = $ackList?->first();
                 $hasConfirmation = (bool) $latestAck;
                 $confirmedAt     = $latestAck?->acknowledged_at;
 
-                // Prüfungsresultat (CourseResult)
+                // Pruefungsresultate
+                /** @var Collection<int, CourseResult> $personResults */
+                $personResults = ($resultsByPerson->get($person->id) ?? collect())->values();
+
                 /** @var CourseResult|null $courseResult */
-                $courseResult = $resultsByPerson->get($person->id);
+                $courseResult = $personResults->first();
                 [$examLabel, $examState] = $this->examMetaFromCourseResult($courseResult);
 
-                // Kurs-Rating über user_id
+                $examEntries = $personResults->map(function (CourseResult $result, int $index) {
+                    $resultText = is_string($result->result) ? trim($result->result) : $result->result;
+                    $statusText = is_string($result->status) ? trim($result->status) : $result->status;
+
+                    return [
+                        'id'               => $result->id,
+                        'result'           => $resultText,
+                        'status'           => $statusText,
+                        'updated_at'       => $result->updated_at,
+                        'is_latest'        => $index === 0,
+                        'is_result_filled' => is_string($resultText)
+                            ? $resultText !== ''
+                            : ($resultText !== null),
+                    ];
+                });
+
+                // Kurs-Rating ueber user_id
                 $userId = $person->user_id ?? null;
 
                 /** @var CourseRating|null $rating */
@@ -79,17 +98,19 @@ class CourseParticipantsPanel extends Component
                 $ratingAt  = $rating?->created_at;
 
                 return [
-                    'person'            => $person,
+                    'person'             => $person,
 
-                    'has_confirmation'  => $hasConfirmation,
-                    'confirmation_at'   => $confirmedAt,
+                    'has_confirmation'   => $hasConfirmation,
+                    'confirmation_at'    => $confirmedAt,
 
-                    'exam_label'        => $examLabel,
-                    'exam_state'        => $examState,
+                    'exam_label'         => $examLabel,
+                    'exam_state'         => $examState,
+                    'exam_entries'       => $examEntries,
+                    'exam_entries_count' => $examEntries->count(),
 
-                    'rating'            => $rating,
-                    'rating_avg'        => $ratingAvg,
-                    'rating_at'         => $ratingAt,
+                    'rating'             => $rating,
+                    'rating_avg'         => $ratingAvg,
+                    'rating_at'          => $ratingAt,
                 ];
             });
     }
@@ -103,9 +124,13 @@ class CourseParticipantsPanel extends Component
             return [null, null];
         }
 
-        $label = $result->result ?? null;
+        $label = $result->result;
 
-        if (!$label) {
+        if (is_string($label)) {
+            $label = trim($label);
+        }
+
+        if ($label === null || $label === '') {
             return [null, null];
         }
 

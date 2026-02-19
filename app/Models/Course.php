@@ -541,7 +541,48 @@ class Course extends Model
 
     public function examResultsState(): int
     {
-        return $this->results()->exists() ? 1 : 0;
+        $participantIds = $this->participants()
+            ->select('persons.id')
+            ->pluck('persons.id');
+
+        $participantsCount = $participantIds->count();
+
+        if ($participantsCount === 0) {
+            return 0;
+        }
+
+        $latestResultsByPerson = $this->results()
+            ->whereIn('person_id', $participantIds)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->groupBy('person_id')
+            ->map(fn ($group) => $group->first());
+
+        $setResultsCount = $latestResultsByPerson
+            ->filter(function ($result) {
+                $value = $result->result ?? null;
+
+                if ($value === null) {
+                    return false;
+                }
+
+                if (is_string($value)) {
+                    return trim($value) !== '';
+                }
+
+                return true;
+            })
+            ->count();
+
+        if ($setResultsCount === 0) {
+            return 0;
+        }
+
+        if ($setResultsCount >= $participantsCount) {
+            return 1;
+        }
+
+        return 2;
     }
 
     public function getExamResultsIconHtmlAttribute(): string
