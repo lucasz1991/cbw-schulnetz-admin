@@ -1,5 +1,4 @@
-<div class="space-y-5" wire:loading.class="cursor-wait"
-     @if($autoRefresh) wire:poll.60s="$refresh" @endif>
+<div class="space-y-5" wire:loading.class="cursor-wait">
 
     {{-- Header (funktional, ohne Titel/Text) --}}
     <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -171,7 +170,7 @@
                         </div>
 
                         <div class="mt-4">
-                            <livewire:admin.charts.active-users :height="220" />
+                            <livewire:admin.charts.active-users :height="220" wire:key="dashboard-active-users-chart" />
                         </div>
                     </div>
                 </div>
