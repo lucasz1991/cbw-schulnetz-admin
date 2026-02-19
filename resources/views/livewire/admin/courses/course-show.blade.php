@@ -32,7 +32,9 @@
                         <button
                             type="button"
                             wire:click="exportAttendancePdf"
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50"
+                            @if(! $this->canExportAttendance) disabled @endif
+                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
+                                {{ $this->canExportAttendance ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
                         >
                             <i class="fal fa-download text-[14px] text-gray-500"></i>
                             <span>Anwesenheit</span>
