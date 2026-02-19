@@ -9,7 +9,7 @@ class OpenJobs extends Component
 {
     public bool $autoRefresh = true;
 
-    /** @var array<int, \App\Models\AdminTask> */
+    /** @var array<int, array<string, mixed>> */
     public array $jobs = [];
 
     public int $limit = 6;
@@ -36,6 +36,18 @@ class OpenJobs extends Component
             ->orderByDesc('created_at')
             ->limit($this->limit)
             ->get()
+            ->map(function (AdminTask $job) {
+                return [
+                    'task_type_text' => $job->task_type_text,
+                    'context_text' => $job->context_text,
+                    'status_text' => $job->status_text,
+                    'priority_text' => $job->priority_text,
+                    'assigned_admin_name' => $job->assignedAdmin?->name,
+                    'due_at' => $job->due_at?->format('d.m.Y H:i'),
+                    'is_overdue' => $job->due_at ? $job->due_at->isPast() : false,
+                ];
+            })
+            ->values()
             ->all();
     }
 }

@@ -103,7 +103,7 @@
                 </div>
 
                 <div class="px-4 md:px-5 pb-4 md:pb-5">
-                    <livewire:admin.dashboard.courses-focus :autoRefresh="$autoRefresh" />
+                    <livewire:admin.dashboard.courses-focus :autoRefresh="$autoRefresh" wire:key="dashboard-courses-focus" />
                 </div>
             </div>
 
@@ -124,7 +124,7 @@
                 </div>
 
                 <div class="px-4 md:px-5 pb-4 md:pb-5">
-                    <livewire:admin.dashboard.open-jobs :autoRefresh="$autoRefresh" />
+                    <livewire:admin.dashboard.open-jobs :autoRefresh="$autoRefresh" wire:key="dashboard-open-jobs" />
                 </div>
             </div>
 
@@ -150,7 +150,7 @@
                 </div>
 
                 <div class="px-4 md:px-5 pb-4 md:pb-5">
-                    <livewire:admin.dashboard.alerts :autoRefresh="$autoRefresh" />
+                    <livewire:admin.dashboard.alerts :autoRefresh="$autoRefresh" wire:key="dashboard-alerts" />
                 </div>
             </div>
 
