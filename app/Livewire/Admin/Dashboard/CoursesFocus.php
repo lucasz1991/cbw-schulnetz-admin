@@ -22,6 +22,8 @@ class CoursesFocus extends Component
 
     public function render()
     {
+        $this->loadCourses();
+
         return view('livewire.admin.dashboard.courses-focus');
     }
 
@@ -84,4 +86,3 @@ class CoursesFocus extends Component
         return 'Kurs ' . $klassenId . $termin;
     }
 }
-

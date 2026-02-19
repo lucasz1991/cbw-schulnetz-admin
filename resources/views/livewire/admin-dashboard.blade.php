@@ -10,12 +10,8 @@
         <div class="relative p-3 md:p-4">
             <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 
-                {{-- LEFT: KPI-Chips (Platzhalter bis Widget fertig) --}}
                 <div class="min-w-0">
-                    {{-- <livewire:admin.dashboard.header-kpis :autoRefresh="$autoRefresh" /> --}}
                     <div class="flex flex-wrap items-center gap-2">
-
-                        {{-- Chip --}} 
                         <div class="group inline-flex items-center gap-2.5 px-3 py-2 rounded-full border border-gray-200 bg-white/80 shadow-sm hover:bg-white transition">
                             <span class="w-9 h-9 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center">
                                 <i class="fal fa-user-plus text-teal-600"></i>

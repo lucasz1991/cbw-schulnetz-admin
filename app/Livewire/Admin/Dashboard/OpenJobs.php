@@ -22,6 +22,8 @@ class OpenJobs extends Component
 
     public function render()
     {
+        $this->loadJobs();
+
         return view('livewire.admin.dashboard.open-jobs');
     }
 

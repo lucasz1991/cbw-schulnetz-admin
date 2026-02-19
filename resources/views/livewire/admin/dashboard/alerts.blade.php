@@ -1,4 +1,4 @@
-﻿<div class="space-y-2" @if($autoRefresh) wire:poll.120s="loadAlerts" @endif>
+﻿<div class="space-y-2" @if($autoRefresh) wire:poll.120s="$refresh" @endif>
     @forelse($alerts as $alert)
         <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-3">
             <div class="flex items-start gap-3">
@@ -40,4 +40,5 @@
         </div>
     @endforelse
 </div>
+
 

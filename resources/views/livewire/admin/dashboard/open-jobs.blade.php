@@ -1,4 +1,4 @@
-﻿<div class="space-y-3" @if($autoRefresh) wire:poll.120s="loadJobs" @endif>
+﻿<div class="space-y-3" @if($autoRefresh) wire:poll.120s="$refresh" @endif>
     <div class="rounded-xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white">
         <div class="divide-y divide-gray-100">
             @forelse($jobs as $job)
@@ -46,4 +46,5 @@
         </a>
     </div>
 </div>
+
 

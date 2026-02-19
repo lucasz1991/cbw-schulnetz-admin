@@ -26,6 +26,8 @@ class Alerts extends Component
 
     public function render()
     {
+        $this->loadAlerts();
+
         return view('livewire.admin.dashboard.alerts');
     }
 
