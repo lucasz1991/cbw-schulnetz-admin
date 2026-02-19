@@ -2,13 +2,15 @@
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-4 px-5 py-5">
             <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-slate-800">Mail Management</h1>
+                <h1 class="text-2xl font-semibold tracking-tight text-slate-800">Nachrichten & E-Mails</h1>
                 <p class="mt-1 text-sm text-slate-600">{{ $mails->total() }} Eintraege im Versandprotokoll</p>
             </div>
+            @if(Auth::user()->isAdmin())
             <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
                 <p class="text-xs uppercase tracking-wide text-slate-500">Super Admin</p>
                 <p class="font-semibold">{{ config('mail.super_admin') ?: 'nicht gesetzt' }}</p>
             </div>
+            @endif
         </div>
     </div>
 
@@ -107,12 +109,14 @@
                             >
                                 Erneut senden
                             </button>
+                            @if(Auth::user()->isAdmin())
                             <button
                                 wire:click.stop="sendMessageToSuperAdmin({{ $mail->id }})"
                                 class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
                             >
                                 SuperAdmin Test
                             </button>
+                            @endif
                         </div>
                     </div>
                 </div>
