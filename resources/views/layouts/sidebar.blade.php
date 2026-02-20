@@ -50,7 +50,7 @@
                                 <span>{{ __('base.appointments') }}</span>
                             </a>
                         </li>
-                        @if(Auth::user()->role == "admin" )
+                        @if(Auth::user()->role == "admin" || Auth::user()->current_team_id === 2)
                             <li>
                                 <a href="{{ route('admin.mails') }}"  class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                     <i data-feather="mail" fill="#545a6d33"></i>
