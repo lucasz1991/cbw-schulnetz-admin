@@ -1,3 +1,4 @@
+<div class="">
 <div class="px-2 space-y-4">
 
     {{-- Hinweis-Banner im Stil der Course-Liste --}}
@@ -115,6 +116,11 @@
             <x-ui.buttons.button-basic wire:click="openCreate">
                 + Neuer Mitarbeiter
             </x-ui.buttons.button-basic>
+            @if(Auth::user()->isAdmin())
+            <x-ui.buttons.button-basic wire:click="openTeamRbacModal">
+                Teams & Rechte
+            </x-ui.buttons.button-basic>
+            @endif
         </div>
     </div>
 
@@ -141,6 +147,8 @@
     </div>
 
     {{-- Modal mounten --}}
-    <livewire:admin.employees.employee-form-modal :key="'employee-form-modal'" />
-
+    
+</div>
+<livewire:admin.employees.employee-form-modal :key="'employee-form-modal'" />
+<livewire:admin.employees.team-rbac-modal :key="'employee-team-rbac-modal'" />
 </div>

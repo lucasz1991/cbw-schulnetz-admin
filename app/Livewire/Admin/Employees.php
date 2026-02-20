@@ -70,6 +70,11 @@ class Employees extends Component
         $this->dispatch('open-employee-form', id: $id)->to(\App\Livewire\Admin\Employees\EmployeeFormModal::class);
     }
 
+    public function openTeamRbacModal(): void
+    {
+        $this->dispatch('open-team-rbac-modal')->to(\App\Livewire\Admin\Employees\TeamRbacModal::class);
+    }
+
     // Beispiel-Bulk-Aktionen (Platzhalter)
     public function exportSelected(): void
     {
