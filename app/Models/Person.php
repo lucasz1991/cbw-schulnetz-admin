@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\ApiUpdates\PersonApiUpdate;
 use App\Models\CourseResult;
 use App\Models\CourseRating;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class Person extends Model
 {
