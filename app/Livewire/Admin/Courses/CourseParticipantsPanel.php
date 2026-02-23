@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Courses;
 
 use Livewire\Component;
 use App\Models\Course;
+use App\Models\Person;
 use App\Models\CourseResult;
 use App\Models\CourseRating;
 use Illuminate\Support\Collection;
@@ -152,6 +153,27 @@ class CourseParticipantsPanel extends Component
         };
 
         return [$label, $state];
+    }
+
+    public function triggerPersonApiUpdate(int $personId): void
+    {
+        $person = Person::find($personId);
+
+        if (! $person) {
+            $this->dispatch('showAlert', 'Person nicht gefunden.', 'error');
+            return;
+        }
+
+        try {
+            $person->apiupdate();
+            $this->dispatch('showAlert', 'Person API Update wurde gestartet.', 'success');
+        } catch (\Throwable $e) {
+            \Log::error('Person API Update konnte nicht gestartet werden.', [
+                'person_id' => $personId,
+                'error' => $e->getMessage(),
+            ]);
+            $this->dispatch('showAlert', 'Person API Update konnte nicht gestartet werden.', 'error');
+        }
     }
 
     public function render()

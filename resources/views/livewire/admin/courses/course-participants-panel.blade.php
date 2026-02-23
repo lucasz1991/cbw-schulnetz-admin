@@ -45,7 +45,25 @@
                         <tr class="hover:bg-neutral-50/60">
                             {{-- Teilnehmer --}}
                             <td class="px-3 py-2 align-top">
-                                <x-user.public-info :person="$p" />
+                                <div class="flex items-start justify-between gap-2">
+                                    <x-user.public-info :person="$p" />
+                                    @if(Auth::user()->isAdmin())
+                                    <x-dropdown align="right" width="48">
+                                        <x-slot name="trigger">
+                                            <button type="button" class="text-center px-2 py-1 text-lg font-semibold bg-white hover:bg-gray-100 rounded-lg border border-gray-200">
+                                                &#x22EE;
+                                            </button>
+                                        </x-slot>
+
+                                        <x-slot name="content">
+                                            <x-dropdown-link href="#" wire:click.prevent="triggerPersonApiUpdate({{ (int) $p->id }})" class="hover:bg-blue-100">
+                                                <i class="far fa-sync mr-2"></i>
+                                                Person API Update starten
+                                            </x-dropdown-link>
+                                        </x-slot>
+                                    </x-dropdown>
+                                    @endif
+                                </div>
                             </td>
 
                             {{-- Materialbestätigung --}}
