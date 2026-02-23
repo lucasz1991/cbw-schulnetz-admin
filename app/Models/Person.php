@@ -88,11 +88,44 @@ class Person extends Model
         static::created(function ($person) {
             $person->apiupdate();
         });
+
+        
+        static::retrieved(function (Person $person) {
+            // nur sinnvoll, wenn mit User verknüpft
+            if (empty($person->user_id) || !empty($person->programdata)) {
+                return;
+            }
+
+            static::dispatchApiUpdateIfNotThrottled($person, 'retrieved');
+        });
     }
 
     public function apiupdate()
     {
         PersonApiUpdate::dispatch($this->id);
+    }
+
+        protected static function dispatchApiUpdateIfNotThrottled(Person $person, string $source): void
+    {
+        if (empty($person->user_id) || empty($person->id) || !empty($person->programdata)) {
+            return;
+        }
+
+        $cacheKey = "person_apiupdate_cooldown:{$person->id}";
+
+        // add() legt den Key nur an, wenn er noch nicht existiert
+        $payload = [
+            'last'   => now()->toDateTimeString(),
+            'source' => $source,
+        ];
+
+        // Wenn Key bereits existiert -> wir sind im Cooldown -> nichts tun
+        if (! Cache::add($cacheKey, $payload, now()->addMinutes(self::API_UPDATE_COOLDOWN_MINUTES))) {
+            return;
+        }
+
+        // Außerhalb des Cooldowns: Job dispatchen
+        PersonApiUpdate::dispatch($person->id);
     }
 
     public function user()
