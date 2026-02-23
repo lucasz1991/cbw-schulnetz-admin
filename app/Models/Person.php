@@ -17,6 +17,8 @@ class Person extends Model
     use HasFactory;
 
     protected $table = 'persons';
+    
+    public const API_UPDATE_COOLDOWN_MINUTES = 30;
 
     protected $fillable = [
         'user_id',
