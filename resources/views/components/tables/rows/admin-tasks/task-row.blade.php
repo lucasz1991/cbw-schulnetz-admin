@@ -2,18 +2,13 @@
 @props(['item'])
 
 @php
-    /** @var \App\Models\AdminTask $task */
     $task = $item;
-
-    // Kurzhelfer pro Spaltenindex (aus deinem Table-Setup)
     $hc = fn($i) => $hideClass($columnsMeta[$i]['hideOn'] ?? 'none');
-
-    $id          = $task->id;
-    $typeText    = $task->task_type_text ?? '—';
-    $description = $task->description ?: 'Keine Beschreibung angegeben.';
-    $contextText = $task->context_text ?? null;
-    $contextDesc = $task->context_description ?? null;
-
+    $id            = $task->id;
+    $typeText      = $task->task_type_text ?? '—';
+    $description   = $task->description ?: 'Keine Beschreibung angegeben.';
+    $contextText   = $task->context_text ?? null;
+    $contextDesc   = $task->context_description ?? null;
     $creatorName   = $task->creator?->name ?? 'Unbekannt';
     $assignedName  = $task->assignedAdmin?->name ?? 'Niemand';
     $createdAtLbl  = $task->created_at?->format('d.m.Y H:i');
@@ -61,8 +56,6 @@
     </div>
 </div>
 
-
-
 {{-- 3: Ersteller --}}
 <div
     class="px-2 py-2 {{ $hc(3) }} cursor-pointer"
@@ -78,11 +71,7 @@
     </div>
 </div>
 
-
-
-
-
-{{-- 6: Status --}}
+{{-- 4: Status --}}
 <div
     class="px-2 py-2 flex items-center justify-end gap-2 {{ $hc(6) }} cursor-pointer"
     wire:click="$dispatch('openAdminTaskDetail',[ { taskId: {{ $task->id }}  }])"
@@ -99,5 +88,4 @@
         <span class="mr-1 text-xs">{{ $task->status_icon }}</span>
         {{ $task->status_text }}
     </span>
-
 </div>
