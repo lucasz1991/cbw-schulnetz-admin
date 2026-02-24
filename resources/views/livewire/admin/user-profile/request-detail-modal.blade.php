@@ -126,7 +126,7 @@
 
                         <div class="flex justify-end pt-1">
                             <button wire:click="delete"
-                                    onclick="return confirm('Antrag wirklich löschen?')"
+                                    wire:confirm="Möchten Sie diesen Antrag wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden."
                                     class="rounded-md border px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">
                                 Löschen
                             </button>
