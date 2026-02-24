@@ -66,6 +66,9 @@
         $confirmAt  = $row['confirmation_at'];
         $examLabel  = $row['exam_label'];
         $examState  = $row['exam_state'];
+        $examStatusLabel = $row['exam_status_label'] ?? null;
+        $examStatusClass = $row['exam_status_class'] ?? null;
+        $examStatusIcon  = $row['exam_status_icon'] ?? null;
 
         /** @var \App\Models\CourseRating|null $rating */
         $rating     = $row['rating'] ?? null;
@@ -119,26 +122,37 @@
 
                             {{-- Prüfungsergebnis --}}
                             <td class="px-3 py-2 align-top">
-                                @if($examLabel)
-                                    @php
-                                        $examClasses = match($examState) {
-                                            'passed'  => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                            'failed'  => 'bg-red-50 text-red-700 border-red-200',
-                                            default   => 'bg-slate-50 text-slate-700 border-slate-200',
-                                        };
+                                @if($examLabel || $examStatusLabel)
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        @if($examStatusLabel)
+                                            <div class="inline-flex items-center gap-2 rounded-full border px-2 py-0.5 text-[11px] {{ $examStatusClass }}">
+                                                <i class="{{ $examStatusIcon }} text-[11px] shrink-0"></i>
+                                                <span>{{ $examStatusLabel }}</span>
+                                            </div>
+                                        @endif
 
-                                        $icon = match($examState) {
-                                            'passed'  => 'fal fa-check-circle',
-                                            'failed'  => 'fal fa-times-circle',
-                                            default   => 'fal fa-clipboard-check',
-                                        };
-                                    @endphp
+                                        @if($examLabel)
+                                            @php
+                                                $examClasses = match($examState) {
+                                                    'passed'  => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                    'failed'  => 'bg-red-50 text-red-700 border-red-200',
+                                                    default   => 'bg-slate-50 text-slate-700 border-slate-200',
+                                                };
 
-                                    <div class="inline-flex max-w-full items-center gap-2 rounded-full border px-2 py-0.5 text-[11px] {{ $examClasses }}">
-                                        <i class="{{ $icon }} text-[11px] shrink-0"></i>
-                                        <span class="truncate max-w-[180px]">
-                                            {{ $examLabel }}
-                                        </span>
+                                                $icon = match($examState) {
+                                                    'passed'  => 'fal fa-check-circle',
+                                                    'failed'  => 'fal fa-times-circle',
+                                                    default   => 'fal fa-clipboard-check',
+                                                };
+                                            @endphp
+
+                                            <div class="inline-flex max-w-full items-center gap-2 rounded-full border px-2 py-0.5 text-[11px] {{ $examClasses }}">
+                                                <i class="{{ $icon }} text-[11px] shrink-0"></i>
+                                                <span class="truncate max-w-[180px]">
+                                                    {{ $examLabel }}
+                                                </span>
+                                            </div>
+                                        @endif
                                     </div>
                                 @else
                                     <div class="inline-flex items-center gap-2 rounded-full bg-neutral-50 text-neutral-500 border border-neutral-200 px-2 py-0.5 text-[11px]">

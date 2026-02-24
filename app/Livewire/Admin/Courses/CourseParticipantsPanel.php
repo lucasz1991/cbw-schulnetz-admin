@@ -76,6 +76,7 @@ class CourseParticipantsPanel extends Component
                 /** @var CourseResult|null $courseResult */
                 $courseResult = $personResults->first();
                 [$examLabel, $examState] = $this->examMetaFromCourseResult($courseResult);
+                [$examStatusCode, $examStatusLabel, $examStatusClass, $examStatusIcon] = $this->examStatusMeta($courseResult);
 
                 $examEntries = $personResults->map(function (CourseResult $result, int $index) {
                     $resultText = is_string($result->result) ? trim($result->result) : $result->result;
@@ -109,6 +110,10 @@ class CourseParticipantsPanel extends Component
 
                     'exam_label'         => $examLabel,
                     'exam_state'         => $examState,
+                    'exam_status_code'   => $examStatusCode,
+                    'exam_status_label'  => $examStatusLabel,
+                    'exam_status_class'  => $examStatusClass,
+                    'exam_status_icon'   => $examStatusIcon,
                     'exam_entries'       => $examEntries,
                     'exam_entries_count' => $examEntries->count(),
 
@@ -138,10 +143,11 @@ class CourseParticipantsPanel extends Component
             return [null, null];
         }
 
-        // Status-Text mit in die Heuristik packen
-        $lower = mb_strtolower(trim(
-            ($result->result ?? '') . ' ' . ($result->status ?? '')
-        ));
+        if (is_numeric($label)) {
+            return [$label . ' Punkte', 'neutral'];
+        }
+
+        $lower = mb_strtolower((string) $label);
 
         $state = match (true) {
             str_contains($lower, 'bestanden'),
@@ -156,6 +162,50 @@ class CourseParticipantsPanel extends Component
         };
 
         return [$label, $state];
+    }
+
+    protected function examStatusMeta(?CourseResult $result): array
+    {
+        if (! $result) {
+            return [null, null, null, null];
+        }
+
+        $statusCode = $this->normalizeExamStatus($result->status, $result->result);
+
+        if ($statusCode === null) {
+            return [null, null, null, null];
+        }
+
+        return match ($statusCode) {
+            '+' => ['+', 'Teilgenommen', 'bg-emerald-50 text-emerald-700 border-emerald-200', 'fal fa-check-circle'],
+            '-' => ['-', 'Nicht teilgenommen', 'bg-amber-50 text-amber-700 border-amber-200', 'fal fa-user-slash'],
+            'V' => ['V', 'Betrugsversuch', 'bg-red-50 text-red-700 border-red-200', 'fal fa-ban'],
+            default => [null, null, null, null],
+        };
+    }
+
+    protected function normalizeExamStatus(mixed $status, mixed $result): ?string
+    {
+        $raw = is_string($status) ? trim($status) : '';
+        $lower = mb_strtolower($raw);
+
+        if ($raw === 'V' || in_array($lower, ['v', 'betrug', 'betrugsversuch'], true)) {
+            return 'V';
+        }
+
+        if ($raw === '-' || in_array($lower, ['-', 'nicht_teilgenommen', 'nicht teilgenommen', 'nt', 'not_participated', '3'], true)) {
+            return '-';
+        }
+
+        if ($raw === '+' || in_array($lower, ['+', 'teilgenommen', 'an prüfung teilgenommen', 'bestanden', 'passed', '1'], true)) {
+            return '+';
+        }
+
+        if ($result !== null && $result !== '') {
+            return '+';
+        }
+
+        return null;
     }
 
     public function triggerPersonApiUpdate(int $personId): void
