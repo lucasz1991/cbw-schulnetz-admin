@@ -169,6 +169,7 @@
                 $personDisplayName = trim($lastName . ', ' . $firstName, ' ,');
                 $displayName = $personDisplayName !== '' ? $personDisplayName : ($user->name ?? '-');
                 $legacyUserName = $user->name ?? '';
+                $lastActivityDateTime = $user->lastActivityDateTime();
             @endphp
             <div class="grid grid-cols-12 items-center p-2 border text-left hover:bg-blue-100 text-sm">
                 <div class="col-span-5 font-bold pl-1 cursor-pointer flex items-center justify-between"  wire:click="toggleUserSelection({{ $user->id }})" x-on:dblclick="window.location='{{ route('admin.user-profile', ['userId' => $user->id]) }}'">
@@ -190,7 +191,7 @@
                         @else
                             <span class="h-2 w-2 rounded-full bg-red-300" title="Offline"></span>
                         @endif
-                        <div class="text-xs font-medium text-gray-500">{{ $user->lastActivityDateTime() ? $user->lastActivityDateTime()->diffForHumans() : 'Vor langer Zeit' }}    
+                        <div class="text-xs font-medium text-gray-500">{{ $lastActivityDateTime ? $lastActivityDateTime->diffForHumans() : 'Vor langer Zeit' }}
                 </div>
                     </div>
                     <div class="mx-5  text-gray-600 text-xs px-2 py-0.5 rounded-full {{ ucfirst($user->role) == 'Tutor' ? 'bg-blue-100' : 'bg-green-100' }}">
