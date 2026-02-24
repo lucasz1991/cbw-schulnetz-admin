@@ -203,6 +203,12 @@ class User extends Authenticatable
             ->exists();
     }
 
+    public function lastActivityDateTime()
+    {
+        $lastActivity = $this->activities()->latest()->first();
+        return $lastActivity ? $lastActivity->created_at : null;
+    }
+
     public function getBaseProfilePhotoUrlAttribute(): string
     {
         // 1) Kein Foto? → ui-avatars

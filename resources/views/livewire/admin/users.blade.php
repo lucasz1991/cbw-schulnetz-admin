@@ -190,6 +190,8 @@
                         @else
                             <span class="h-2 w-2 rounded-full bg-red-300" title="Offline"></span>
                         @endif
+                        <div class="text-xs font-medium text-gray-500">{{ $user->lastActivityDateTime() ? $user->lastActivityDateTime()->diffForHumans() : 'Vor langer Zeit' }}    
+                </div>
                     </div>
                     <div class="mx-5  text-gray-600 text-xs px-2 py-0.5 rounded-full {{ ucfirst($user->role) == 'Tutor' ? 'bg-blue-100' : 'bg-green-100' }}">
                         <span class="text-xs font-normal {{ ucfirst($user->role) == 'Tutor' ? 'text-blue-600' : 'text-green-600' }}">{{ ucfirst($user->role) == 'Tutor' ? 'Dozent' : 'Teilnehmer' }}</span>
