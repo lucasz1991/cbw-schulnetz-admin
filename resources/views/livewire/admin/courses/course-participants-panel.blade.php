@@ -8,6 +8,7 @@
             <div class="text-xs text-neutral-500">
                 Teilnehmer – Bildungsmittel-Bestätigungen, Prüfungsergebnisse & Kursbewertungen
             </div>
+            @if(Auth::user()->isAdmin())
             <x-dropdown align="right" width="56">
                 <x-slot name="trigger">
                     <button
@@ -35,6 +36,7 @@
                     </button>
                 </x-slot>
             </x-dropdown>
+            @endif
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
