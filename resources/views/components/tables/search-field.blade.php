@@ -6,7 +6,7 @@
     $hasResults = $resultsCount > 0;
 @endphp
 <div 
-    x-data="{ focused: false, value: '' }" 
+    x-data="{ focused: false, value: @entangle($attributes->wire('model')) }" 
     x-cloak 
     class="relative"
     @click.away="focused = false"
@@ -25,7 +25,6 @@
             type="text" 
             placeholder="Search..." 
             x-model="value"
-            @input.live="value = $event.target.value"
             {{ $attributes->merge(['class' => 'w-full px-2 py-1 text-base focus:ring-none bg-transparent border-none ring-none']) }}
             :class="(focused || value.length > 0) ? 'w-full' : 'hidden'"
         />
@@ -33,8 +32,7 @@
         <div x-show="value.length > 0" x-cloak>
             <button 
                 type="button"
-                @click="value = ''; $refs.searchInput.focus() ; focused = false"
-                wire:click.prevent="$set('search', '')"
+                @click="value = ''; $refs.searchInput.focus(); focused = false"
                 class="flex items-center justify-center w-[30px] h-[30px] text-gray-400 hover:text-gray-500 cursor-pointer"
             >
                 ✕
