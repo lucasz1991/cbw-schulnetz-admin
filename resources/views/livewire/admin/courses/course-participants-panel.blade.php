@@ -4,8 +4,37 @@
             Keine Teilnehmer vorhanden.
         </div>
     @else
-        <div class="text-xs text-neutral-500 mb-1">
-            Teilnehmer – Bildungsmittel-Bestätigungen, Prüfungsergebnisse & Kursbewertungen
+        <div class="mb-1 flex items-center justify-between gap-3">
+            <div class="text-xs text-neutral-500">
+                Teilnehmer – Bildungsmittel-Bestätigungen, Prüfungsergebnisse & Kursbewertungen
+            </div>
+            <x-dropdown align="right" width="56">
+                <x-slot name="trigger">
+                    <button
+                        type="button"
+                        class="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+                        wire:loading.attr="disabled"
+                        wire:target="deleteAllCourseResults"
+                    >
+                        <i class="fal fa-ellipsis-v text-[11px]"></i>
+                        <span>Aktionen</span>
+                    </button>
+                </x-slot>
+
+                <x-slot name="content">
+                    <button
+                        type="button"
+                        wire:click="deleteAllCourseResults"
+                        wire:loading.attr="disabled"
+                        wire:target="deleteAllCourseResults"
+                        onclick="if(!confirm('Alle bestehenden Prüfungsergebnisse dieses Kurses löschen?')) event.stopImmediatePropagation();"
+                        class="flex w-full items-center gap-2 px-4 py-2 text-sm text-left text-red-700 hover:bg-red-50 disabled:opacity-60"
+                    >
+                        <i class="fal fa-trash-alt"></i>
+                        <span>Prüfungsergebnisse löschen ({{ $examResultsCount }})</span>
+                    </button>
+                </x-slot>
+            </x-dropdown>
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white">

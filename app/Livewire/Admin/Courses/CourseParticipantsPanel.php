@@ -12,6 +12,7 @@ use Illuminate\Support\Collection;
 class CourseParticipantsPanel extends Component
 {
     public Course $course;
+    public int $examResultsCount = 0;
 
     /** @var \Illuminate\Support\Collection<int, array> */
     public Collection $rows;
@@ -32,12 +33,14 @@ class CourseParticipantsPanel extends Component
      */
     protected function buildRows(): void
     {
-        $this->course->loadMissing([
+        $this->course->load([
             'participants',
             'materialAcknowledgements',
             'results',
             'ratings',
         ]);
+
+        $this->examResultsCount = $this->course->results->count();
 
         // Materialbestaetigungen pro Person
         $acks = $this->course->materialAcknowledgements
@@ -173,6 +176,34 @@ class CourseParticipantsPanel extends Component
                 'error' => $e->getMessage(),
             ]);
             $this->dispatch('showAlert', 'Person API Update konnte nicht gestartet werden.', 'error');
+        }
+    }
+
+    public function deleteAllCourseResults(): void
+    {
+        try {
+            $deleted = CourseResult::query()
+                ->where('course_id', $this->course->id)
+                ->delete();
+
+            $this->buildRows();
+
+            $this->dispatch(
+                'showAlert',
+                "Prüfungsergebnisse gelöscht: {$deleted}",
+                'success'
+            );
+        } catch (\Throwable $e) {
+            \Log::error('Pruefungsergebnisse konnten nicht geloescht werden.', [
+                'course_id' => $this->course->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->dispatch(
+                'showAlert',
+                'Prüfungsergebnisse konnten nicht gelöscht werden.',
+                'error'
+            );
         }
     }
 
