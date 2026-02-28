@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 
 class Safety extends Component
 { 
