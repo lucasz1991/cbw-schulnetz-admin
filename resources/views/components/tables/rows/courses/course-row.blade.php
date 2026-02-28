@@ -138,12 +138,13 @@
                     'wire'  => "exportExamResultsPdf({$item->id})",
                 ],
                 [
-                    'can'   => $item->canExportInvoicePdf(),
+                    'can'   => $item->canExportInvoicePdf() && Gate::allows('invoices.view'),
                     'title' => 'Rechnung',
                     'icon'  => 'fal fa-money-check-alt fa-lg',
                     'badge' => $item->invoice_icon_html,
                     'wire'  => "exportInvoicePdf({$item->id})",
                 ],
+
             ];
         @endphp
         @foreach($exportActions as $action)
