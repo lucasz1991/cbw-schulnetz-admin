@@ -6,6 +6,7 @@ use App\Models\ExamAppointment;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Gate;
 
 class ExamAppointmentsManagement extends Component
 {
@@ -49,6 +50,7 @@ class ExamAppointmentsManagement extends Component
     // ------------------------------
     public function mount(): void
     {
+        Gate::authorize('manage.appointments');
         $this->tab = in_array($this->tab, ['intern', 'extern'], true) ? $this->tab : 'intern';
     }
 

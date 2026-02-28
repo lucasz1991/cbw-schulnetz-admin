@@ -45,7 +45,6 @@ class RbacCatalog
             'Kursverwaltung' => [
                 ['key' => 'courses.view', 'label' => 'Kurse anzeigen'],
                 ['key' => 'courses.export', 'label' => 'Kurse exportieren'],
-                ['key' => 'documents.view', 'label' => 'Dokumente anzeigen'],
                 ['key' => 'invoices.view', 'label' => 'Rechnungen anzeigen'],
             ],
             'Jobs' => [

@@ -30,6 +30,7 @@
                                     '/',
                                     'admin/user/*',
                                     'admin/courses/*',  
+                                    'admin/mails',
                                 ];
                                 $useBox = !request()->is($excludedUrls);
                             @endphp

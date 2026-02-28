@@ -99,6 +99,7 @@
 {{-- 4: Aktivitäten (Teilnehmer & Exporte) --}}
 <div class="px-2 py-1 text-xs {{ $hc(4) }}">
     <div class="flex gap-1 items-center pr-8">
+        @can('courses.export')
         @php
             $exportActions = [
                 [
@@ -198,5 +199,6 @@
                 @endif
             </div>
         @endforeach
+        @endcan
     </div>
 </div>

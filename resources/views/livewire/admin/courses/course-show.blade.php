@@ -5,6 +5,7 @@
             <x-back-button />
         </div>
         {{-- rechte Buttons --}}
+        @can('courses.export')
         <x-ui.dropdown.anchor-dropdown
                 align="right"
                 width="48"
@@ -29,81 +30,41 @@
 
                 <x-slot name="content">
                     <div class="py-1 text-sm text-gray-700">
-                        <button
-                            type="button"
-                            wire:click="exportAttendancePdf"
-                            @if(! $this->canExportAttendance) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportAttendance ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                        <x-dropdown-link wire:click.prevent="exportAttendancePdf" >
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Anwesenheit</span>
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="exportDokuPdf"
-                            @if(! $this->canExportDoku) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportDoku ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                        </x-dropdown-link>
+                        <x-dropdown-link wire:click.prevent="exportDokuPdf" >
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Dokumentation</span>
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="exportMaterialConfirmationsPdf"
-                            @if(! $this->canExportMaterialConfirmations) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportMaterialConfirmations ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                        </x-dropdown-link>
+                        <x-dropdown-link wire:click.prevent="exportMaterialConfirmationsPdf">
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Bildungsmittel-Bestät.</span>
-                        </button>
+                        </x-dropdown-link>
 
 
-                        <button
-                            type="button"
-                            wire:click="exportRedThreadPdf"
-                            @if(! $this->canExportRedThread) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportRedThread ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                        <x-dropdown-link wire:click.prevent="exportRedThreadPdf" >
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Roter Faden</span>
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="exportExamResultsPdf"
-                            @if(! $this->canExportExamResults) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportExamResults ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                        </x-dropdown-link>
+                        <x-dropdown-link wire:click.prevent="exportExamResultsPdf" >
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Prüfungsergebnisse</span>
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="exportCourseRatingsPdf"
-                            @if(! $this->canExportCourseRatings) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportCourseRatings ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                        </x-dropdown-link>
+                        <x-dropdown-link wire:click.prevent="exportCourseRatingsPdf" >
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Baustein-Bewertung</span>
-                        </button>
-                                                <button
-                            type="button"
-                            wire:click="exportInvoicePdf"
-                            @if(! $this->canExportInvoice) disabled @endif
-                            class="flex w-full items-center gap-2 px-3 py-2 hover:bg-gray-50
-                                {{ $this->canExportInvoice ? '' : 'opacity-40 cursor-not-allowed pointer-events-none' }}"
-                        >
-                            <i class="fal fa-download text-[14px] text-gray-500"></i>
+                        </x-dropdown-link>
+                        
+                        <x-dropdown-link wire:click.prevent="exportInvoicePdf" :can="'invoices.view'">
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Dozenten-Rechnung</span>
-                        </button>
+                        </x-dropdown-link>
                     </div>
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>
+        @endcan
     </div>
     @php
         $status = $this->status;
@@ -161,11 +122,11 @@
                 'label' => 'Dozenten-Rechnung',
                 'icon' => 'fal fa-money-check-alt',
                 'badge' => $course->invoice_icon_html,
-                'can' => $this->canExportInvoice,
+                'can' => $this->canExportInvoice && Gate::allows('invoices.view'),
                 'action' => 'exportInvoicePdf',
             ],
-        ];
-    @endphp
+            ];
+            @endphp
 
     <section class="rounded-3xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -260,7 +221,7 @@
                 <h2 class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Unterlagen und Status</h2>
             </div>
 
-            <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2 @cannot('courses.export') opacity-50 cursor-not-allowed @endcannot" >
                 @foreach($resourceCards as $card)
                     <article class="group rounded-xl border border-slate-200 bg-slate-50/70 px-2.5 py-2">
                         <div class="flex items-center gap-2">

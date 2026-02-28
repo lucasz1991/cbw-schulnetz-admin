@@ -17,6 +17,11 @@ class Safety extends Component
 
     protected $queryString = ['search', 'perPage'];
 
+    public function mount(): void
+    {
+        Gate::authorize('safety.view');
+    }
+
     public function updatingSearch()
     {
         $this->resetPage();

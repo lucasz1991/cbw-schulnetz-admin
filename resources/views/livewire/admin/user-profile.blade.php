@@ -87,10 +87,10 @@
     {{-- Tabs: ersetzt dein bisheriges Tab-Menü + Content-Blöcke --}}
     <x-ui.accordion.tabs
         :tabs="[
-            'userDetails' => ['label' => 'Details',   'icon' => 'fad fa-id-card'],
-            'userCourses'     => ['label' => 'Bausteine', 'icon' => 'fad fa-book-open'],
-            'userMessages'     => ['label' => 'Nachrichten', 'icon' => 'fad fa-envelope'],
-            'userRequests'     => ['label' => 'Anträge', 'icon' => 'fad fa-paper-plane'],
+            'userDetails'  => ['label' => 'Details',     'icon' => 'fad fa-id-card'],
+            'userCourses'  => ['label' => 'Bausteine',   'icon' => 'fad fa-book-open'],
+            'userMessages' => ['label' => 'Nachrichten', 'icon' => 'fad fa-envelope'],
+            'userRequests' => ['label' => 'Anträge',     'icon' => 'fad fa-paper-plane'],
         ]"
         :collapseAt="'md'"
         default="userDetails"

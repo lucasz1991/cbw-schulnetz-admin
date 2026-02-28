@@ -111,9 +111,9 @@
                             Enthält die Prüfungs Ergebnisse.
                         </div>
                     </div>
-        
+                    @can('invoices.view')
                     {{-- Dozenten-Rechnung  --}}
-                    <div class="text-sm">
+                    <div class="text-sm" >
                         <x-ui.forms.toggle-button 
                             model="includeTutorData"
                             label="Dozenten-Rechnung"
@@ -122,6 +122,7 @@
                             Enthält die Dozenten-Rechnung.
                         </div>
                     </div>
+                    @endcan
                 </div>
         
                 @error('courseIds')

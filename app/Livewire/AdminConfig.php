@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Gate;
 
 class AdminConfig extends Component
 {
@@ -129,6 +130,7 @@ class AdminConfig extends Component
 
     public function mount(): void
     {
+        Gate::authorize('settings.manage');
         $this->loadSettings();
     }
 

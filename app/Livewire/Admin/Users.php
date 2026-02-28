@@ -12,6 +12,9 @@ use App\Models\Mail;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
 
+use Illuminate\Support\Facades\Gate;
+
+
 class Users extends Component
 {
     use WithPagination, WithoutUrlPagination; 
@@ -30,6 +33,11 @@ class Users extends Component
     public $userTypeFilter = '';
 
     protected $queryString = ['search', 'sortBy', 'sortDirection', 'userTypeFilter'];
+
+    public function mount(): void
+    {
+        Gate::authorize('users.view');
+    }
 
     public function updatingSearch()
     {

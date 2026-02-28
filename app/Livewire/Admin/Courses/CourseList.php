@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Gate;
 
 class CourseList extends Component
 {
@@ -68,6 +69,7 @@ protected $queryString = [
 
     public function mount(): void
     {
+        Gate::authorize('courses.view');
         $this->coursesTotal = Course::where('planned_start_date', '>=', $this->from)->count();
         $this->terms = $this->loadTermOptionsFromCourses();
     }

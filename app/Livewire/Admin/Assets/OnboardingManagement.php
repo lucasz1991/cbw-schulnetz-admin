@@ -9,6 +9,7 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Gate;
 
 class OnboardingManagement extends Component
 {
@@ -45,6 +46,12 @@ class OnboardingManagement extends Component
      * Erlaubt: mp4, wav, pdf
      */
     public array $fileUploads = [];
+
+
+    public function mount(): void
+    {
+        Gate::authorize('manage.onboarding');
+    }
 
     public function updatedFileUploads(): void
     {

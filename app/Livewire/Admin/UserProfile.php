@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Mail;
+use Illuminate\Support\Facades\Gate;
 
 class UserProfile extends Component
 {
@@ -21,6 +22,7 @@ class UserProfile extends Component
 
     public function mount($userId)
     {
+        Gate::authorize('users.profiles.view');
         $this->userId = $userId;
         $this->loadUser();
     }

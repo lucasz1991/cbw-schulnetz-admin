@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Gate;
 
 class CourseExportModal extends Component
 {
@@ -20,12 +21,12 @@ class CourseExportModal extends Component
     /**
      * Export-Optionen (passen zu den Toggle-Buttons im Blade)
      */
-    public bool $includeDocumentation = true; // Dozenten-Dokumentationen
-    public bool $includeRedThread     = true; // Roter Faden
-    public bool $includeParticipants  = true; // Teilnehmer Bildungsmittel Bestätigungen
-    public bool $includeAttendance    = true; // Anwesenheitslisten
-    public bool $includeExamResults   = true; // Prüfungs-Ergebnisse
-    public bool $includeTutorData     = true; // Dozenten-Rechnung
+    public bool $includeDocumentation = false; // Dozenten-Dokumentationen
+    public bool $includeRedThread     = false; // Roter Faden
+    public bool $includeParticipants  = false; // Teilnehmer Bildungsmittel Bestätigungen
+    public bool $includeAttendance    = false; // Anwesenheitslisten
+    public bool $includeExamResults   = false; // Prüfungs-Ergebnisse
+    public bool $includeTutorData     = false; // Dozenten-Rechnung
 
     /** ZIP-Option */
     public bool $asZip = true;
@@ -42,6 +43,8 @@ class CourseExportModal extends Component
 
     public function open(array $courseIds = []): void
     {
+        Gate::authorize('courses.export');
+
         $this->resetValidation();
 
         $this->courseIds = $courseIds;
@@ -63,7 +66,7 @@ class CourseExportModal extends Component
         $this->includeParticipants  = true;
         $this->includeAttendance    = true;
         $this->includeExamResults   = true;
-        $this->includeTutorData     = true;
+        $this->includeTutorData     = Gate::allows('invoices.view'); // Dozenten-Rechnung nur standardmäßig, wenn Berechtigung besteht
 
         $this->asZip = true;
 

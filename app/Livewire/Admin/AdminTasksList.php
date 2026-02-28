@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\AdminTask;
 use App\Models\ReportBook;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class AdminTasksList extends Component
 {
@@ -33,6 +34,11 @@ class AdminTasksList extends Component
 
     public function mount(): void
     {
+        // Berechtigung prüfen, damit niemand ohne Rechte die Seite sieht (und damit auch nicht die Query ausführt)
+        // Die eigentlichen Aktionen (z.B. Task abschließen) müssen natürlich auch noch mit Policies gesichert werden
+        // Aber hiermit verhindern wir schonmal den Zugriff auf die Seite und die Daten für Unberechtigte
+        Gate::authorize('jobs.view');
+        $this->filterStatus = AdminTask::STATUS_OPEN;
     }
 
     /*

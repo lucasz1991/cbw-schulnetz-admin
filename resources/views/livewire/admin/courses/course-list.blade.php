@@ -65,7 +65,7 @@
                             <i class="far fa-align-slash mr-2"></i>
                             Auswahl entfernen
                         </x-dropdown-link>
-                        <x-dropdown-link href="#" wire:click.prevent="$dispatch('openCourseExportModal', [{{ json_encode($selectedCourses) }}])" class="hover:bg-green-100">
+                        <x-dropdown-link href="#" wire:click.prevent="$dispatch('openCourseExportModal', [{{ json_encode($selectedCourses) }}])" class="hover:bg-green-100" :can="'courses.export'">
                             <i class="far fa-download mr-2"></i>
                             Exportieren
                         </x-dropdown-link>
