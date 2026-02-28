@@ -27,6 +27,7 @@ class CourseExportModal extends Component
     public bool $includeAttendance    = false; // Anwesenheitslisten
     public bool $includeExamResults   = false; // Prüfungs-Ergebnisse
     public bool $includeTutorData     = false; // Dozenten-Rechnung
+    public bool $includeCourseRatings = false; // Kursbewertungen
 
     /** ZIP-Option */
     public bool $asZip = true;
@@ -67,6 +68,7 @@ class CourseExportModal extends Component
         $this->includeAttendance    = true;
         $this->includeExamResults   = true;
         $this->includeTutorData     = Gate::allows('invoices.view'); // Dozenten-Rechnung nur standardmäßig, wenn Berechtigung besteht
+        $this->includeCourseRatings   = Gate::allows('courses.ratings.view'); // Kursbewertungen nur standardmäßig, wenn Berechtigung besteht
 
         $this->asZip = true;
 
@@ -97,6 +99,7 @@ class CourseExportModal extends Component
             'includeAttendance'    => $this->includeAttendance,
             'includeExamResults'   => $this->includeExamResults,
             'includeTutorData'     => $this->includeTutorData,
+            'includeCourseRatings' => $this->includeCourseRatings,
             'asZip'                => $this->asZip,
             'exportName'           => $this->exportName,
         ];
@@ -107,6 +110,11 @@ class CourseExportModal extends Component
             $response = $course->exportAll($settings);
         } else {
             $response = $this->exportMultipleAll($courses, $settings);
+        }
+
+        if (! $response) {
+            $this->dispatch('toast', type: 'error', message: 'Keine exportierbaren Dokumente für die Auswahl gefunden.');
+            return;
         }
 
         try {
@@ -151,7 +159,6 @@ class CourseExportModal extends Component
 
             // nutzt die generateExportAllZipFile()-Methode am Course
             $courseZipPath = $course->generateExportAllZipFile($perCourseSettings);
-
             if ($courseZipPath && file_exists($courseZipPath)) {
                 $entryName = $perCourseSettings['exportName'] . '.zip'; // schöner Dateiname im ZIP
                 $zip->addFile($courseZipPath, $entryName);
@@ -184,7 +191,7 @@ class CourseExportModal extends Component
         $zipPath = $this->generateExportMultipleAllZipFile($courses, $settings);
 
         if (! $zipPath || ! file_exists($zipPath)) {
-            abort(404, 'Für die ausgewählten Bausteine gibt es keine exportierbaren Dokumente.');
+            return null;
         }
 
         $exportBaseName = $settings['exportName']

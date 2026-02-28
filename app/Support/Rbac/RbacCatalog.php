@@ -35,7 +35,8 @@ class RbacCatalog
             ],
             'Benutzer' => [
                 ['key' => 'users.view', 'label' => 'Benutzer anzeigen'],
-                ['key' => 'users.profiles.view', 'label' => 'Profile anzeigen'],
+                ['key' => 'users.edit', 'label' => 'Benutzer bearbeiten'],
+                ['key' => 'users.profiles.view', 'label' => 'Profile anzeigen'], 
             ],
             'Benutzer - Nachrichten' => [
                 ['key' => 'users.messages.view', 'label' => 'Nachrichten anzeigen'],

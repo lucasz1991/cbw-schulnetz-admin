@@ -32,7 +32,7 @@
                 <button wire:click="sortByField('id')" class="inline-flex items-center gap-1">
                     ID
                     @if ($sortBy === 'id')
-                        <span>{{ $sortDirection === 'asc' ? '^' : 'v' }}</span>
+                        <span><i class="fa fa-chevron-up {{ $sortDirection === 'asc' ? 'rotate-180' : '' }}" aria-hidden="true"></i></span>
                     @endif
                 </button>
             </div>
@@ -40,7 +40,7 @@
                 <button wire:click="sortByField('created_at')" class="inline-flex items-center gap-1">
                     Datum
                     @if ($sortBy === 'created_at')
-                        <span>{{ $sortDirection === 'asc' ? '^' : 'v' }}</span>
+                        <span><i class="fa fa-chevron-up {{ $sortDirection === 'asc' ? 'rotate-180' : '' }}" aria-hidden="true"></i></span>
                     @endif
                 </button>
             </div>
@@ -50,7 +50,7 @@
                 <button wire:click="sortByField('status')" class="inline-flex items-center gap-1">
                     Status
                     @if ($sortBy === 'status')
-                        <span>{{ $sortDirection === 'asc' ? '^' : 'v' }}</span>
+                        <span><i class="fa fa-chevron-up {{ $sortDirection === 'asc' ? 'rotate-180' : '' }}" aria-hidden="true"></i></span>
                     @endif
                 </button>
             </div>

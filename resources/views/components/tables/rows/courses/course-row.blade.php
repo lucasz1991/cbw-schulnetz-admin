@@ -138,6 +138,13 @@
                     'wire'  => "exportExamResultsPdf({$item->id})",
                 ],
                 [
+                    'can'   => $item->canExportCourseRatingsPdf(),
+                    'title' => 'Kursbewertungen',
+                    'icon'  => 'fal fa-star fa-lg',
+                    'badge' => $item->course_ratings_icon_html,
+                    'wire'  => "exportCourseRatingsPdf({$item->id})",
+                ],
+                [
                     'can'   => $item->canExportInvoicePdf() && Gate::allows('invoices.view'),
                     'title' => 'Rechnung',
                     'icon'  => 'fal fa-money-check-alt fa-lg',

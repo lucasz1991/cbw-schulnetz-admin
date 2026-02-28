@@ -24,7 +24,7 @@
     </div>
     <div class="mb-4 flex flex-wrap  justify-between gap-4">
         <div class="mb-6 max-w-md">
-            <h1 class="text-2xl font-bold text-gray-700">Benutzer</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Benutzer</h1>
             <p class="text-gray-500">Es gibt insgesamt {{ $users->total() }} Benutzer.</p>
         </div>
         <div class="">
@@ -47,7 +47,7 @@
                 >
                     <option value="">alle</option>
                     <option value="tutor">Dozenten</option>
-                    <option value="guest">Teilnehmer</option>
+                    <option value="guest">Teilnehmer</option> 
                 </select>
             </div>
         </div>

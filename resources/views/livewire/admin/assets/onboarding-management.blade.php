@@ -241,34 +241,35 @@
     wire:key="onboarding-management-root"
 >
     <div>
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div class="min-w-0">
-                <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-xl bg-secondary text-white grid place-items-center">
-                        <i class="fas fa-film text-sm"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-lg font-semibold text-gray-900 truncate">Onboarding</div>
+        <div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 shadow-sm  px-5 py-5">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-secondary text-white grid place-items-center">
+                            <i class="fas fa-film text-sm"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-lg font-semibold text-gray-900 truncate">Onboarding</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <button
-                    type="button"
-                    wire:click="create"
-                    class="inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white hover:bg-secondary-dark focus:outline-none focus:ring-2 focus:ring-gray-900/30"
-                >
-                    <i class="fas fa-plus text-xs"></i>
-                    Neue Datei
-                </button>
+                <div class="flex items-center gap-2">
+                    <button
+                        type="button"
+                        wire:click="create"
+                        class="inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white hover:bg-secondary-dark focus:outline-none focus:ring-2 focus:ring-gray-900/30"
+                    >
+                        <i class="fas fa-plus text-xs"></i>
+                        Neue Datei
+                    </button>
+                </div>
             </div>
         </div>
 
         {{-- Table --}}
-        <div class="mt-6 overflow-hidden rounded-2xl ring-1 ring-gray-200">
-            <div class="overflow-x-auto bg-white">
-                <table class="min-w-full divide-y divide-gray-200">
+        <div class="mt-6">
+            <div class="overflow-x-auto bg-white  rounded-2xl shadow-lg">
+                <table class="min-w-full">
                     <thead class="bg-gray-50">
                         <tr class="text-left text-xs font-semibold text-gray-600">
                             <th class="px-4 py-3">Titel</th>
@@ -379,7 +380,7 @@
                 </table>
             </div>
 
-            <div class="border-t border-gray-200 px-4 py-4">
+            <div class="mt-4">
                 {{ $videos->links() }}
             </div>
         </div>

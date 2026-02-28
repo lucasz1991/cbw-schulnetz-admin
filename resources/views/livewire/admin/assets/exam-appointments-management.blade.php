@@ -21,40 +21,42 @@
     }"
 >
     {{-- Header (im Stil vom Onboarding) --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="min-w-0">
-            <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-secondary text-white grid place-items-center">
-                    <i class="fas fa-calendar-check text-sm"></i>
-                </div>
-                <div class="min-w-0">
-                    <div class="text-lg font-semibold text-gray-900 truncate">Pruefungsverwaltung</div>
-                    <div class="text-xs text-gray-500">Termine & Zertifizierungen</div>
+    <div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 shadow-sm  px-5 py-5">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-secondary text-white grid place-items-center">
+                        <i class="fas fa-calendar-check text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-lg font-semibold text-gray-900 truncate">Pruefungsverwaltung</div>
+                        <div class="text-xs text-gray-500">Termine & Zertifizierungen</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 w-full sm:w-auto">
-            <div class="relative w-full sm:w-72">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                    <i class="fas fa-search text-xs"></i>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 w-full sm:w-auto">
+                <div class="relative w-full sm:w-72">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fas fa-search text-xs"></i>
+                    </div>
+                    <input
+                        type="text"
+                        wire:model.live.debounce.300ms="search"
+                        placeholder="Suchen (Raum, Datum, Name)"
+                        class="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                    />
                 </div>
-                <input
-                    type="text"
-                    wire:model.live.debounce.300ms="search"
-                    placeholder="Suchen (Raum, Datum, Name)"
-                    class="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-                />
-            </div>
 
-            <button
-                type="button"
-                wire:click="create"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white hover:bg-secondary-dark focus:outline-none focus:ring-2 focus:ring-gray-900/30"
-            >
-                <i class="fas fa-plus text-xs"></i>
-                Neu
-            </button>
+                <button
+                    type="button"
+                    wire:click="create"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-semibold text-white hover:bg-secondary-dark focus:outline-none focus:ring-2 focus:ring-gray-900/30"
+                >
+                    <i class="fas fa-plus text-xs"></i>
+                    Neu
+                </button>
+            </div>
         </div>
     </div>
 
@@ -83,14 +85,9 @@
 
     {{-- Interne Termine (Tab) --}}
     <section class="space-y-3" x-show="tab === 'intern'" x-cloak x-transition.opacity>
-        <div class="flex items-end justify-between gap-3">
-            <div>
-                <div class="text-sm font-semibold text-gray-900">Termine</div>
-            </div>
-        </div>
 
-        <div class="rounded-2xl ring-1 ring-gray-200">
-            <div class="bg-white">
+        <div class="">
+            <div class="bg-white overflow-hidden rounded-2xl ring-1 ring-gray-200 shadow-lg">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50">
                         <tr class="text-left text-xs font-semibold text-gray-600">
@@ -162,7 +159,7 @@
             </div>
 
             {{-- Separate Pagination: intern --}}
-            <div class="border-t border-gray-200 bg-gray-50 px-4 py-3">
+            <div class="mt-4">
                 {{ $internAppointments->appends(['tab' => 'intern', 'page_extern' => request('page_extern')])->links() }}
             </div>
         </div>
@@ -170,12 +167,9 @@
 
     {{-- Externe Termine (Tab) --}}
     <section class="space-y-3" x-show="tab === 'extern'" x-cloak x-transition.opacity>
-        <div>
-            <div class="text-sm font-semibold text-gray-900">Zertifizierungen</div>
-        </div>
 
-        <div class="rounded-2xl ring-1 ring-gray-200">
-            <div class="bg-white">
+        <div class="">
+            <div class="bg-white overflow-hidden rounded-2xl ring-1 ring-gray-200 shadow-lg">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50">
                         <tr class="text-left text-xs font-semibold text-gray-600">
@@ -260,7 +254,7 @@
             </div>
 
             {{-- Separate Pagination: extern --}}
-            <div class="border-t border-gray-200 bg-gray-50 px-4 py-3">
+            <div class="mt-4">
                 {{ $externAppointments->appends(['tab' => 'extern', 'page_intern' => request('page_intern')])->links() }}
             </div>
         </div>

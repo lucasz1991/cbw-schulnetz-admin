@@ -1591,6 +1591,7 @@ public function generateExportAllZipFile(array $settings = []): ?string
     $includeAttendance    = $settings['includeAttendance']    ?? true;
     $includeExamResults   = $settings['includeExamResults']   ?? true;
     $includeTutorData     = $settings['includeTutorData']     ?? true;
+    $includeCourseRatings = $settings['includeCourseRatings'] ?? true;
 
     // Vorab prüfen, ob überhaupt irgendwas exportierbar ist
     $hasAny =
@@ -1599,7 +1600,8 @@ public function generateExportAllZipFile(array $settings = []): ?string
         ($includeParticipants  && $this->canExportMaterialConfirmationsPdf())  ||
         ($includeTutorData     && $this->canExportInvoicePdf())                ||
         ($includeRedThread     && $this->canExportRedThreadPdf())              ||
-        ($includeExamResults   && $this->canExportExamResultsPdf());
+        ($includeExamResults   && $this->canExportExamResultsPdf())            ||
+        ($includeCourseRatings && $this->canExportCourseRatingsPdf());
 
     if (! $hasAny) {
         return null;
@@ -1674,6 +1676,16 @@ public function generateExportAllZipFile(array $settings = []): ?string
         }
     }
 
+    // Kursbewertungen
+    if ($includeCourseRatings && $this->canExportCourseRatingsPdf()) {
+        $path = $this->generateCourseRatingsPdfFile();
+        if ($path && file_exists($path)) {
+            $zip->addFile($path, 'Kursbewertungen.pdf');
+            $tempFiles[] = $path;
+            $addedAny    = true;
+        }
+    }
+
     $zip->close();
 
     // Temp-PDFs nach dem Packen direkt löschen – sie stecken jetzt im ZIP
@@ -1697,7 +1709,7 @@ public function exportAll(array $settings = []): ?StreamedResponse
     $zipPath = $this->generateExportAllZipFile($settings);
 
     if (! $zipPath || ! file_exists($zipPath)) {
-        abort(404, 'Für diesen Baustein gibt es keine exportierbaren Dokumente.');
+        return null;
     }
 
     return response()->streamDownload(function () use ($zipPath) {
@@ -1769,6 +1781,12 @@ public function createRedThreadPdfForPreview(): ?string
 public function createExamResultsPdfForPreview(): ?string
 {
     $tmpPath = $this->generateExamResultsPdfFile();
+    return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
+}
+
+public function createCourseRatingsPdfForPreview(): ?string
+{
+    $tmpPath = $this->generateCourseRatingsPdfFile();
     return $this->storeTempFileForPreview($tmpPath, 'tmp/cospy', 'pdf');
 }
 

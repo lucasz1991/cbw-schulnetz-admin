@@ -1,6 +1,7 @@
 <div
     wire:target="export"
     wire:loading.class="pointer-events-none cursor-not-allowed"
+
 >
 
     <x-dialog-modal wire:model="showModal" >
@@ -11,7 +12,7 @@
         </x-slot>
     
         <x-slot name="content">
-            <div wire:loading.class="opacity-50 blur cursor-not-allowed">
+            <div wire:loading.class="opacity-50 blur cursor-not-allowed" wire:target="export">
 
                 {{-- Kurzinfo --}}
                 <div class="mb-4 text-sm text-gray-600 space-y-1">
@@ -111,6 +112,17 @@
                             Enthält die Prüfungs Ergebnisse.
                         </div>
                     </div>
+                    @can('courses.ratings.view')
+                    <div class="text-sm">
+                        <x-ui.forms.toggle-button 
+                            model="includeCourseRatings"
+                            label="Kursbewertungen"
+                        />
+                        <div class="ml-12 text-xs text-gray-500 mt-1">
+                            Enthält die Kursbewertungen.
+                        </div>
+                    </div>
+                    @endcan                                    
                     @can('invoices.view')
                     {{-- Dozenten-Rechnung  --}}
                     <div class="text-sm" >

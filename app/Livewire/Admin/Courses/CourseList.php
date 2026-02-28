@@ -559,6 +559,26 @@ public function exportExamResultsPdf($courseId): void
     );
 }
 
+public function exportCourseRatingsPdf($courseId): void
+{
+    $course = Course::findOrFail($courseId);
+
+    $relPath = $course->createCourseRatingsPdfForPreview();
+    if (! $relPath) {
+        $this->dispatch('showAlert', 'Keine Kursbewertungen vorhanden.', 'error');
+        return;
+    }
+
+    $filename = sprintf('Kursbewertungen_%s.pdf', $course->klassen_id ?: $course->id);
+
+    $this->dispatch('filepreview:open',
+        disk: 'local',
+        path: $relPath,
+        name: $filename,
+        deleteOnClose: true
+    );
+}
+
 
     public function exportCourse($courseId): ?StreamedResponse
     {
