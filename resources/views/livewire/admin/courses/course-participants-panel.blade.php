@@ -52,9 +52,11 @@
                         <th class="px-3 py-2 text-left font-semibold w-56">
                             Prüfungsergebnisse
                         </th>
+                        @can('courses.ratings.view')
                         <th class="px-3 py-2 text-left font-semibold w-48">
                             Kursbewertung
                         </th>
+                        @endcan
                     </tr>
                 </thead>
 
@@ -162,30 +164,31 @@
                                 @endif
                             </td>
 
+                            @can('courses.ratings.view')
+                                {{-- Kursbewertung --}}
+                                <td class="px-3 py-2 align-top">
+                                    @if($rating && $ratingAvg !== null)
+                                        @php
+                                            $rounded = number_format($ratingAvg, 1, ',', '.');
+                                        @endphp
 
-        {{-- Kursbewertung --}}
-        <td class="px-3 py-2 align-top">
-            @if($rating && $ratingAvg !== null)
-                @php
-                    $rounded = number_format($ratingAvg, 1, ',', '.');
-                @endphp
-
-                <div
-                    class="inline-flex items-center gap-2 rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[11px]"
-                    @if($ratingAt)
-                        title="Zuletzt bewertet am {{ $ratingAt->format('d.m.Y H:i') }}"
-                    @endif
-                >
-                    <i class="fal fa-star-half-alt text-[11px]"></i>
-                    <span>{{ $rounded }} / 5</span>
-                </div>
-            @else
-                <div class="inline-flex items-center gap-2 rounded-full bg-neutral-50 text-neutral-500 border border-neutral-200 px-2 py-0.5 text-[11px]">
-                    <i class="fal fa-minus-circle text-[11px]"></i>
-                    <span>keine Bewertung</span>
-                </div>
-            @endif
-        </td>
+                                        <div
+                                            class="inline-flex items-center gap-2 rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[11px]"
+                                            @if($ratingAt)
+                                                title="Zuletzt bewertet am {{ $ratingAt->format('d.m.Y H:i') }}"
+                                            @endif
+                                        >
+                                            <i class="fal fa-star-half-alt text-[11px]"></i>
+                                            <span>{{ $rounded }} / 5</span>
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center gap-2 rounded-full bg-neutral-50 text-neutral-500 border border-neutral-200 px-2 py-0.5 text-[11px]">
+                                            <i class="fal fa-minus-circle text-[11px]"></i>
+                                            <span>keine Bewertung</span>
+                                        </div>
+                                    @endif
+                                </td>
+                            @endcan
                         </tr>
                     @endforeach
                 </tbody>
