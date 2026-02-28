@@ -72,8 +72,8 @@
                 </div>
             </div>
 
-            <div class="text-center">
-                <div class=" rounded-full bg-gray-100/80 px-3 py-1 text-xs font-medium text-gray-700">
+            <div class="flex justify-center pt-2">
+                <div class="w-max rounded-full bg-gray-100/80 px-3 py-1 text-xs font-medium text-gray-700">
                     <i class="far fa-clock mr-1"></i>
                     Zuletzt online: {{ $user->lastActivityDateTime() ? $user->lastActivityDateTime()->diffForHumans() : 'Vor langer Zeit' }}    
                 </div>
