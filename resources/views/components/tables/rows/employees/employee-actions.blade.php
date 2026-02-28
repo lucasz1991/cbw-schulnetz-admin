@@ -7,18 +7,18 @@
 
     <x-slot name="content">
         {{-- Details: normale Navigation --}}
-        <x-dropdown-link wire:click.prevent="openEdit({{ $item->id }})">
+        <x-dropdown-link wire:click.prevent="openEdit({{ $item->id }})" :can="'employees.create'">
             <i class="far fa-pen mr-2"></i>
             Bearbeiten
         </x-dropdown-link>
 
         @if ($item->status)
-            <x-dropdown-link wire:click.prevent="deactivateUser({{ $item->id }})" class="hover:bg-yellow-100">
+            <x-dropdown-link wire:click.prevent="deactivateUser({{ $item->id }})" :can="'employees.create'" class="hover:bg-yellow-100">
                 <i class="far fa-pause-circle mr-2"></i>
                 Deaktivieren
             </x-dropdown-link>
         @else
-            <x-dropdown-link wire:click.prevent="activateUser({{ $item->id }})" class="hover:bg-green-100">
+            <x-dropdown-link wire:click.prevent="activateUser({{ $item->id }})" :can="'employees.create'" class="hover:bg-green-100">
                 <i class="far fa-play-circle mr-2"></i>
                 Aktivieren
             </x-dropdown-link>

@@ -24,7 +24,7 @@
                     @endforelse
                 </div>
 
-                <div class="border border-gray-200 rounded-lg p-3 bg-white max-h-[440px] overflow-y-auto">
+                <div class="border border-gray-200 rounded-lg p-3 bg-white">
                     @if($selectedTeamId)
                         <div class="flex items-center justify-between mb-3">
                             <div class="text-sm font-medium text-gray-800">
@@ -42,8 +42,8 @@
                             </div>
                         </div>
 
-                        <div class="border border-gray-100 rounded-lg p-3 mb-3">
-                            <div class="font-semibold text-gray-800 mb-2">Berechtigungen</div>
+                        <div class="font-semibold text-gray-800 mb-2">Berechtigungen</div>
+                        <div class="border border-gray-100 rounded-lg p-3 mb-3  max-h-[440px] overflow-y-auto scroll-container">
                             <div class="grid grid-cols-1 gap-3">
                                 @foreach($permissionGroups as $groupLabel => $permissions)
                                     <div class="border border-gray-100 rounded-lg p-2">

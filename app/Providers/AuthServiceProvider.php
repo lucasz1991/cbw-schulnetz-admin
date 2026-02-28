@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Auth\UserAuthProvider;
+use App\Support\Rbac\RbacCatalog;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Auth;
-use App\Auth\UserAuthProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,20 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        Gate::before(static function ($user): ?bool {
+            if (! $user) {
+                return null;
+            }
+
+            return $user->isAdmin() ? true : null;
+        });
+
+        foreach (RbacCatalog::allPermissions() as $permission) {
+            Gate::define($permission, static function ($user) use ($permission): bool {
+                return $user->hasRbacPermission($permission);
+            });
+        }
 
         Auth::provider('user_auth', function ($app, array $config) {
             return new UserAuthProvider($app['hash'], $config['model']);

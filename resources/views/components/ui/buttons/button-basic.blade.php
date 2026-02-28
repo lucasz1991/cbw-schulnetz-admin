@@ -1,4 +1,4 @@
-@props(['mode' => 'basic', 'size' => 'md'])
+@props(['mode' => 'basic', 'size' => 'md', 'can' => true])
 @php
 
 $modeClasses = match ($mode) {
@@ -25,13 +25,35 @@ $sizeClasses = match ($size) {
     '2xl' => 'px-7 py-5 text-2xl',
 };
 
- $classes = $modeClasses . ' ' . $sizeClasses;
- $classes .=  ' transition-all duration-100 inline-flex items-center justify-center text-center border rounded-lg shadow  ';
+if (is_string($can) && $can !== '') {
+    $isAllowed = auth()->check() && auth()->user()->can($can);
+} else {
+    $isAllowed = (bool) $can;
+}
+
+$isDeniedByCan = ! $isAllowed;
+$isDisabled = isset($attributes['disabled']) || $isDeniedByCan;
+
+$classes = $modeClasses . ' ' . $sizeClasses;
+$classes .= ' transition-all duration-100 inline-flex items-center justify-center text-center border rounded-lg shadow';
+
+if ($isDisabled) {
+    $classes .= ' opacity-80 cursor-not-allowed';
+}
+
+$title = $isDeniedByCan
+    ? 'Keine Berechtigung fuer diese Aktion'
+    : $attributes->get('title');
+
+$attributesWithoutTitle = $attributes->except('title');
 
 @endphp
 
 @if (isset($attributes['href']))
-    <a {!! $attributes->merge(['class' => $classes]) !!} x-data="{ isClicked: false }" 
+    <a {!! $attributesWithoutTitle->merge(['class' => $classes]) !!}
+        @if($title) title="{{ $title }}" @endif
+        @if($isDisabled) aria-disabled="true" tabindex="-1" @endif
+        x-data="{ isClicked: false }" 
         @click="isClicked = true; setTimeout(() => isClicked = false, 100)"
         style="transform:scale(1);"
         :style="isClicked ? 'transform:scale(0.9);' : ''"
@@ -39,7 +61,10 @@ $sizeClasses = match ($size) {
         {{ $slot }}
     </a>
 @else
-    <button {!! $attributes->merge(['class' => $classes]) !!} x-data="{ isClicked: false }" 
+    <button {!! $attributesWithoutTitle->merge(['class' => $classes]) !!}
+        @if($title) title="{{ $title }}" @endif
+        @if($isDisabled) disabled @endif
+        x-data="{ isClicked: false }" 
         @click="isClicked = true; setTimeout(() => isClicked = false, 100)"
         style="transform:scale(1);"
         :style="isClicked ? 'transform:scale(0.9);' : ''">

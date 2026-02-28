@@ -109,6 +109,18 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function hasRbacPermission(string $permission): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $team = $this->currentTeam;
+        $permissions = is_array($team?->rbac_permissions) ? $team->rbac_permissions : [];
+
+        return (bool) ($permissions[$permission] ?? false);
+    }
+
     public function isActive(): bool
     {
         return $this->status;

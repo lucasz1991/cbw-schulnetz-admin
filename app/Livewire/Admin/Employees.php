@@ -2,10 +2,11 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\Team;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\User;
-use App\Models\Team;
 
 class Employees extends Component
 {
@@ -24,16 +25,32 @@ class Employees extends Component
     public string $sortDir = 'desc';
     public int $perPage = 15;
 
-    // Zähler (Anzeige)
+    // Zaehler (Anzeige)
     public int $employeesTotal = 0;
 
     protected $listeners = [
         'employeeSaved' => '$refresh',
     ];
 
-    public function updatingSearch(){ $this->resetPage(); }
-    public function updatingTeamId(){ $this->resetPage(); }
-    public function updatingPerPage(){ $this->resetPage(); }
+    public function mount(): void
+    {
+        Gate::authorize('employees.view');
+    }
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTeamId()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
 
     public function sort($col)
     {
@@ -57,16 +74,18 @@ class Employees extends Component
 
     public function currentIds(): array
     {
-        return $this->employees->pluck('id')->map(fn($i)=>(int)$i)->all();
+        return $this->employees->pluck('id')->map(fn ($i) => (int) $i)->all();
     }
 
     public function openCreate(): void
     {
+        Gate::authorize('employees.create');
         $this->dispatch('open-employee-form')->to(\App\Livewire\Admin\Employees\EmployeeFormModal::class);
     }
 
     public function openEdit(int $id): void
     {
+        Gate::authorize('employees.create');
         $this->dispatch('open-employee-form', id: $id)->to(\App\Livewire\Admin\Employees\EmployeeFormModal::class);
     }
 
@@ -79,21 +98,24 @@ class Employees extends Component
     public function exportSelected(): void
     {
         // TODO: Export-Logik
-        $this->dispatch('swal:toast', type:'info', title:'Export', text:'Export vorbereitet.');
+        $this->dispatch('swal:toast', type: 'info', title: 'Export', text: 'Export vorbereitet.');
     }
+
     public function clearSelection(): void
     {
         $this->selectedEmployees = [];
         $this->selectAll = false;
     }
 
-        public function activateUser($userId)
+    public function activateUser($userId)
     {
+        Gate::authorize('employees.create');
+
         $user = User::find($userId);
 
-        if ($user && !$user->status) {
-                $user->update(['status' => true]);
-                $this->dispatch('showAlert', 'Benutzer erfolgreich aktiviert.', 'success');
+        if ($user && ! $user->status) {
+            $user->update(['status' => true]);
+            $this->dispatch('showAlert', 'Benutzer erfolgreich aktiviert.', 'success');
         } else {
             $this->dispatch('showAlert', 'Benutzer ist bereits aktiv.', 'info');
         }
@@ -101,52 +123,49 @@ class Employees extends Component
 
     public function deactivateUser($userId)
     {
+        Gate::authorize('employees.create');
+
         $user = User::find($userId);
 
         if ($user && $user->status) {
-                $user->update(['status' => false]);
-                $this->dispatch('showAlert', 'Benutzer erfolgreich deaktiviert.', 'success');
+            $user->update(['status' => false]);
+            $this->dispatch('showAlert', 'Benutzer erfolgreich deaktiviert.', 'success');
         } else {
             $this->dispatch('showAlert', 'Benutzer ist bereits inaktiv.', 'info');
         }
     }
 
-public function getEmployeesProperty()
-{
-    $allowedRoles = ['admin','staff'];
+    public function getEmployeesProperty()
+    {
+        $allowedRoles = ['admin', 'staff'];
 
-    $base = User::query()
-        ->with('currentTeam')
-        ->whereIn('role', $allowedRoles)
-        ->where('current_team_id', '!=', 1) // 👈 User mit Team-ID 1 ausschließen
-        ->when($this->search, fn($q) =>
-            $q->where(function($qq){
-                $s = '%'.$this->search.'%';
-                $qq->where('name','like',$s)
-                   ->orWhere('email','like',$s)
-                   ->orWhere('id',$this->search);
-            })
-        )
-        ->when($this->teamId, fn($q) =>
-            $q->whereHas('teams', fn($qq) => $qq->where('teams.id', $this->teamId))
-        );
+        $base = User::query()
+            ->with('currentTeam')
+            ->whereIn('role', $allowedRoles)
+            ->where('current_team_id', '!=', 1)
+            ->when($this->search, fn ($q) => $q->where(function ($qq) {
+                $s = '%' . $this->search . '%';
+                $qq->where('name', 'like', $s)
+                    ->orWhere('email', 'like', $s)
+                    ->orWhere('id', $this->search);
+            }))
+            ->when($this->teamId, fn ($q) => $q->whereHas('teams', fn ($qq) => $qq->where('teams.id', $this->teamId)));
 
-    // Gesamtanzahl vor Pagination
-    $this->employeesTotal = (clone $base)->count();
+        // Gesamtanzahl vor Pagination
+        $this->employeesTotal = (clone $base)->count();
 
-    return $base->orderBy($this->sortBy, $this->sortDir)
-        ->paginate($this->perPage);
-}
-
+        return $base->orderBy($this->sortBy, $this->sortDir)
+            ->paginate($this->perPage);
+    }
 
     public function render()
     {
-$teams = Team::where('id', '!=', 1)
-    ->orderBy('name')
-    ->get(['id', 'name']);        // wichtig: $employees via accessor, damit currentIds() funktioniert
+        $teams = Team::where('id', '!=', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
         $employees = $this->employees;
 
-        return view('livewire.admin.employees', compact('employees','teams'))
+        return view('livewire.admin.employees', compact('employees', 'teams'))
             ->layout('layouts.master');
     }
 }

@@ -104,14 +104,14 @@
                     </select> 
                 </div>
                 {{-- Neuer Mitarbeiter --}}
-                <x-ui.buttons.button-basic wire:click="openCreate" size="sm">
-                    + Neuer Mitarbeiter
+                <x-ui.buttons.button-basic wire:click="openCreate" size="sm" :can="'employees.create'" title="Neuen Mitarbeiter anlegen">
+                    <i class="far fa-plus mr-2"></i>
+                    Neuer Mitarbeiter
                 </x-ui.buttons.button-basic>
-                @if(Auth::user()->isAdmin())
-                <x-ui.buttons.button-basic wire:click="openTeamRbacModal" size="sm">
+                <x-ui.buttons.button-basic wire:click="openTeamRbacModal" size="sm" :can="'roles.manage'" title="Zentrale Rechtevergabe pro Team mit genau einem Rechteset je Team.">
+                    <i class="far fa-shield-alt mr-2"></i>
                     Teams & Rechte
                 </x-ui.buttons.button-basic>
-                @endif
             </div>
         </div>
         {{-- Tabelle im gleichen Pattern wie Courses --}}

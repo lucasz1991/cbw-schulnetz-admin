@@ -32,7 +32,7 @@
 
                 <div class="space-y-1">
                     <x-ui.forms.label value="Team"/>
-                    <x-ui.forms.select wire:model.live.defer="primary_team_id" placeholder="-- bitte waehlen --">
+                    <x-ui.forms.select wire:model.live.defer="primary_team_id" placeholder="-- bitte wählen --">
                         @foreach($teams as $t)
                             <option value="{{ $t->id }}">{{ $t->name }}</option>
                         @endforeach
@@ -56,11 +56,11 @@
     </x-slot>
 
     <x-slot name="footer">
-        <x-ui.buttons.button-basic wire:click="close" class="mr-2">
+        <x-ui.buttons.button-basic wire:click="close" class="mr-2" size="sm">
             <i class="far fa-times mr-2"></i>
             Schliessen
         </x-ui.buttons.button-basic>
-        <x-ui.buttons.button-basic wire:click="save" wire:loading.attr="disabled">
+        <x-ui.buttons.button-basic wire:click="save" wire:loading.attr="disabled" size="sm">
             <i class="fal fa-save mr-2" wire:loading.remove wire:target="save"></i>
             <i class="fal fa-spinner fa-spin mr-2 text-blue-500" wire:loading wire:target="save"></i>
             Speichern

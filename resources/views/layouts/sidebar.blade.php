@@ -8,90 +8,118 @@
                         <span data-key="t-dashboard">{{ __('base.dashboard') }}</span>
                     </a>
                 </li>
-                @if(Auth::user()->current_team_id <= 2 )
+
+                @canany(['settings.manage', 'employees.view'])
                     <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">{{ __('base.system_administration') }}</li>
-                    <li>
-                        <a href="{{ route('admin.config') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                            <i data-feather="settings" fill="#545a6d33"></i>
-                            <span data-key="t-config">{{ __('base.settings') }}</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.employees') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                            <i data-feather="users" fill="#545a6d33"></i>
-                            <span data-key="t-employees">{{ __('base.employees') }}</span>
-                        </a>
-                    </li>
-                    @if(Auth::user()->role == "admin" )
+
+                    @can('settings.manage')
                         <li>
-                            <a href="{{ route('admin.webcontentmanager') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <a href="{{ route('admin.config') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                <i data-feather="settings" fill="#545a6d33"></i>
+                                <span data-key="t-config">{{ __('base.settings') }}</span>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @can('employees.view')
+                        <li>
+                            <a href="{{ route('admin.employees') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                <i data-feather="users" fill="#545a6d33"></i>
+                                <span data-key="t-employees">{{ __('base.employees') }}</span>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @if(Auth::user()->role == 'admin')
+                        <li>
+                            <a href="{{ route('admin.webcontentmanager') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                 <i data-feather="grid" fill="#545a6d33"></i>
                                 <span data-key="t-webcontentmanager">Web Inhalte</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('admin.safety') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <a href="{{ route('admin.safety') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
                                 <i data-feather="activity" fill="#545a6d33"></i>
                                 <span data-key="t-safety">Aktivitäten</span>
                             </a>
                         </li>
                     @endif
-                @endif
-                <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">{{ __('base.management') }}</li>
-                <li>
-                    <a href="javascript: void(0);" aria-expanded="false" class="block :rtl:pr-10 py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear nav-menu hover:text-blue-500 ">
-                        <i data-feather="sliders" fill="#545a6d33"></i>
-                        <span data-key="t-auth" >{{ __('base.administration') }}</span>
-                    </a>
-                    <ul>
+                @endcanany
+
+                @canany(['manage.appointments', 'manage.messages', 'manage.onbording', 'users.view', 'courses.view', 'jobs.view'])
+                    <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">{{ __('base.management') }}</li>
+
+                    @canany(['manage.appointments', 'manage.messages', 'manage.onbording'])
                         <li>
-                            <a href="{{ route('admin.assets.exam-appointments') }}" class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                                <i data-feather="edit-3" fill="#545a6d33"></i>
-                                <span>{{ __('base.appointments') }}</span>
+                            <a href="javascript: void(0);" aria-expanded="false" class="block :rtl:pr-10 py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear nav-menu hover:text-blue-500 ">
+                                <i data-feather="sliders" fill="#545a6d33"></i>
+                                <span data-key="t-auth">{{ __('base.administration') }}</span>
+                            </a>
+                            <ul>
+                                @can('manage.appointments')
+                                    <li>
+                                        <a href="{{ route('admin.assets.exam-appointments') }}" class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                            <i data-feather="edit-3" fill="#545a6d33"></i>
+                                            <span>{{ __('base.appointments') }}</span>
+                                        </a>
+                                    </li>
+                                @endcan
+
+                                @can('manage.messages')
+                                    <li>
+                                        <a href="{{ route('admin.mails') }}" class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                            <i data-feather="mail" fill="#545a6d33"></i>
+                                            <span data-key="t-mails">Nachrichten</span>
+                                        </a>
+                                    </li>
+                                @endcan
+
+                                @can('manage.onbording')
+                                    <li>
+                                        <a href="{{ route('admin.assets.onboarding') }}" class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                            <i data-feather="video" fill="#545a6d33"></i>
+                                            <span data-key="t-video">{{ __('base.onboarding') }}</span>
+                                        </a>
+                                    </li>
+                                @endcan
+                            </ul>
+                        </li>
+                    @endcanany
+
+                    @can('users.view')
+                        <li>
+                            <a href="{{ route('admin.users') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                <i data-feather="users" fill="#545a6d33"></i>
+                                <span data-key="t-users">{{ __('base.users') }}</span>
                             </a>
                         </li>
-                        @if(Auth::user()->role == "admin" || Auth::user()->current_team_id === 2)
-                            <li>
-                                <a href="{{ route('admin.mails') }}"  class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                                    <i data-feather="mail" fill="#545a6d33"></i>
-                                    <span data-key="t-mails">Nachrichten</span>
-                                </a>
-                            </li>
-                        @endif
+                    @endcan
+
+                    @can('courses.view')
                         <li>
-                            <a href="{{ route('admin.assets.onboarding') }}"  class="pl-[52.8px] pr-6 py-[6.4px] block text-[13.5px]  font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                                <i data-feather="video" fill="#545a6d33"></i>
-                                <span data-key="t-video">{{ __('base.onboarding') }}</span>
+                            <a href="{{ route('courses.index') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                <i data-feather="book" fill="#545a6d33"></i>
+                                <span data-key="t-users">{{ __('base.blocks') }}</span>
                             </a>
                         </li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="{{ route('admin.users') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                        <i data-feather="users" fill="#545a6d33"></i>
-                        <span data-key="t-users">{{ __('base.users') }}</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('courses.index') }}"   class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                        <i data-feather="book" fill="#545a6d33"></i>
-                        <span data-key="t-users">{{ __('base.blocks') }}</span>
-                    </a>
-                </li>
-                @if(Auth::user()->role == "admin"  || Auth::user()->current_team_id === 6 || Auth::user()->current_team_id === 2)
-                    <li>
-                        <a href="{{ route('admin.tasks.index') }}"   class=" block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
-                            <i data-feather="list" fill="#545a6d33"></i>
-                            <span data-key="t-users">
-                                <div class="inline-flex items-center">
-                                    {{ __('base.jobs') }}
-                                    <x-navigation.open-tasks-counter />
-                                </div>
-                            </span>
-                        </a>
-                    </li>
-                @endif
-                @if(Auth::user()->role == "admin")
+                    @endcan
+
+                    @can('jobs.view')
+                        <li>
+                            <a href="{{ route('admin.tasks.index') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                                <i data-feather="list" fill="#545a6d33"></i>
+                                <span data-key="t-users">
+                                    <div class="inline-flex items-center">
+                                        {{ __('base.jobs') }}
+                                        <x-navigation.open-tasks-counter />
+                                    </div>
+                                </span>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
+
+                @if(Auth::user()->role == 'admin')
                     <li class="px-5 py-3 text-xs font-medium text-gray-500 cursor-default leading-[18px] group-data-[sidebar-size=sm]:hidden block" data-key="t-menu">Dev Tests</li>
                     <li>
                         <a href="{{ route('admin.tests.api') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">

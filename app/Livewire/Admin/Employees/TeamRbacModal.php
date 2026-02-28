@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Employees;
 
 use App\Models\Team;
 use App\Support\Rbac\RbacCatalog;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -22,6 +23,8 @@ class TeamRbacModal extends Component
     #[On('open-team-rbac-modal')]
     public function open(): void
     {
+        Gate::authorize('roles.manage');
+
         $this->showModal = true;
         $this->loadMatrix();
 
@@ -75,6 +78,8 @@ class TeamRbacModal extends Component
 
     public function save(): void
     {
+        Gate::authorize('roles.manage');
+
         $teams = $this->teams();
         $teamIds = $teams->pluck('id')->map(fn ($id) => (int) $id)->all();
         $teamSet = array_flip($teamIds);

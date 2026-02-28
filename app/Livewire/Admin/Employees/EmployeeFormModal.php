@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\User;
 use App\Models\Team;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\On;
 
@@ -42,29 +43,32 @@ class EmployeeFormModal extends Component
         ];
     }
 
-#[On('open-employee-form')]
-public function open(?int $id = null): void
-{
-    $this->resetValidation();
-    $this->reset([
-        'userId','name','email',
-        'password','password_confirmation',
-        'primary_team_id',
-    ]);
+    #[On('open-employee-form')]
+    public function open(?int $id = null): void
+    {
+        Gate::authorize('employees.create');
 
-    if ($id) {
-        $user = User::with('currentTeam')->findOrFail($id);
-        $this->userId = $user->id;
-        $this->name   = (string) ($user->name ?? '');
-        $this->email  = (string) ($user->email ?? '');
-        $this->primary_team_id = (int) optional($user->currentTeam)->id;
+        $this->resetValidation();
+        $this->reset([
+            'userId', 'name', 'email',
+            'password', 'password_confirmation',
+            'primary_team_id',
+        ]);
+
+        if ($id) {
+            $user = User::with('currentTeam')->findOrFail($id);
+            $this->userId = $user->id;
+            $this->name = (string) ($user->name ?? '');
+            $this->email = (string) ($user->email ?? '');
+            $this->primary_team_id = (int) optional($user->currentTeam)->id;
+        }
+
+        $this->showModal = true;
     }
-
-    $this->showModal = true;
-}
 
     public function save()
     {
+        Gate::authorize('employees.create');
         $this->validate();
 
         $user = $this->userId ? User::findOrFail($this->userId) : new User();
@@ -113,9 +117,9 @@ public function open(?int $id = null): void
 
     public function render()
     {
-$teams = Team::where('id', '!=', 1)
-    ->orderBy('name')
-    ->get(['id', 'name']);
+        $teams = Team::where('id', '!=', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
         return view('livewire.admin.employees.employee-form-modal', compact('teams'));
     }
 }
