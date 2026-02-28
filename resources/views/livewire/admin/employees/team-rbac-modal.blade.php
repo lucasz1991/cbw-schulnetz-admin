@@ -28,16 +28,23 @@
                     @if($selectedTeamId)
                         <div class="flex items-center justify-between mb-3">
                             <div class="text-sm font-medium text-gray-800">
-                                Team-ID: {{ $selectedTeamId }}
+                                {{ $teams->where('id', $selectedTeamId)->first()->name }}
                             </div>
-                            <x-ui.buttons.button-basic wire:click="resetSelectedTeamToDefault" :size="'sm'">
-                                Auf Default zuruecksetzen
-                            </x-ui.buttons.button-basic>
+                            <div>
+                                <x-ui.buttons.button-basic wire:click="setSelectedTeamToTrue" :size="'sm'" title="alle Rechte aktivieren">
+                                    <i class="far fa-check-circle mr-2"></i>
+                                    Alle aktivieren
+                                </x-ui.buttons.button-basic>
+                                <x-ui.buttons.button-basic wire:click="setSelectedTeamToFalse" :size="'sm'" title="alle Rechte entfernen">
+                                    <i class="far fa-remove mr-2"></i>
+                                    Alle entfernen
+                                </x-ui.buttons.button-basic>
+                            </div>
                         </div>
 
                         <div class="border border-gray-100 rounded-lg p-3 mb-3">
                             <div class="font-semibold text-gray-800 mb-2">Berechtigungen</div>
-                            <div class="grid md:grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 gap-3">
                                 @foreach($permissionGroups as $groupLabel => $permissions)
                                     <div class="border border-gray-100 rounded-lg p-2">
                                         <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{{ $groupLabel }}</div>

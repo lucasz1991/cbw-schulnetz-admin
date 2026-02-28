@@ -20,13 +20,27 @@ class RbacCatalog
     public static function permissionGroups(): array
     {
         return [
-            'User Management' => [
+            'System' => [
+                ['key' => 'settings.manage', 'label' => 'Einstellungen verwalten'],
+            ],
+            'Employees' => [
+                ['key' => 'employees.view', 'label' => 'Mitarbeiter anzeigen'],
+                ['key' => 'employees.create', 'label' => 'Mitarbeiter erstellen & bearbeiten'],
+                ['key' => 'roles.manage', 'label' => 'Rollen verwalten'],
+            ],
+            'Management' => [
+                ['key' => 'manage.appointments', 'label' => 'Termine anzeigen & verwalten'],
+                ['key' => 'manage.messages', 'label' => 'Nachrichten anzeigen & verwalten'],
+                ['key' => 'manage.onbording', 'label' => 'Onboarding anzeigen & verwalten'],
+            ],
+            'Benutzer' => [
                 ['key' => 'users.view', 'label' => 'Benutzer anzeigen'],
                 ['key' => 'users.profiles.view', 'label' => 'Profile anzeigen'],
-                ['key' => 'users.profiles.edit', 'label' => 'Profile bearbeiten'],
+            ],
+            'Benutzer - Nachrichten' => [
                 ['key' => 'users.messages.view', 'label' => 'Nachrichten anzeigen'],
                 ['key' => 'users.messages.create', 'label' => 'Nachrichten erstellen'],
-                ['key' => 'users.messages.delete', 'label' => 'Nachrichten loeschen'],
+                ['key' => 'users.messages.delete', 'label' => 'Nachrichten löschen'],
             ],
             'Kursverwaltung' => [
                 ['key' => 'courses.view', 'label' => 'Kurse anzeigen'],
@@ -34,9 +48,8 @@ class RbacCatalog
                 ['key' => 'documents.view', 'label' => 'Dokumente anzeigen'],
                 ['key' => 'invoices.view', 'label' => 'Rechnungen anzeigen'],
             ],
-            'System' => [
-                ['key' => 'settings.manage', 'label' => 'Einstellungen verwalten'],
-                ['key' => 'roles.manage', 'label' => 'Rollen verwalten'],
+            'Jobs' => [
+                ['key' => 'jobs.view', 'label' => 'Jobs anzeigen & bearbeiten'],
             ],
         ];
     }

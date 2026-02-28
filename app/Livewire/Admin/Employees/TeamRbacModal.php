@@ -46,7 +46,7 @@ class TeamRbacModal extends Component
         $this->initializeTeam($teamId);
     }
 
-    public function resetSelectedTeamToDefault(): void
+    public function setSelectedTeamToFalse(): void
     {
         if ($this->selectedTeamId === null) {
             return;
@@ -54,6 +54,23 @@ class TeamRbacModal extends Component
 
         $teamId = (int) $this->selectedTeamId;
         $this->matrix[(string) $teamId] = $this->defaultMatrixForTeam();
+    }
+
+    public function setSelectedTeamToTrue(): void
+    {
+        if ($this->selectedTeamId === null) {
+            return;
+        }
+
+        $teamId = (int) $this->selectedTeamId;
+        $permissions = RbacCatalog::allPermissions();
+        $permissionMatrix = [];
+        foreach ($permissions as $permission) {
+            $encodedPermission = $this->permissionKey($permission);
+            $permissionMatrix[$encodedPermission] = true;
+        }
+
+        $this->matrix[(string) $teamId] = $permissionMatrix;
     }
 
     public function save(): void
