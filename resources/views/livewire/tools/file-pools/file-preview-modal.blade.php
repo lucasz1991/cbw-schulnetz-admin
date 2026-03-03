@@ -1,15 +1,6 @@
 <div
   x-data="{ bust: 0 }"
   x-on:filepool-preview.window="$wire.openWith($event.detail.id); bust = Date.now()"
-  x-on:filepreview:open.window="
-        $wire.openWithPath(
-            $event.detail.disk ?? 'local',
-            $event.detail.path ?? '',
-            $event.detail.name ?? null,
-            $event.detail.deleteOnClose ?? true
-        );
-        bust = Date.now();
-  "
 >
   <x-dialog-modal wire:model="open" :maxWidth="'4xl'">
 
@@ -102,6 +93,7 @@
 
             {{-- Close --}}
             <button
+              x-on:click="$dispatch('close')"
               wire:click="close"
               class="inline-flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full p-2 focus:outline-none focus:ring focus:ring-gray-300"
               title="Schließen"
@@ -116,6 +108,7 @@
           </div>
           <div class="shrink-0">
             <button
+              x-on:click="$dispatch('close')"
               wire:click="close"
               class="inline-flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full p-2 focus:outline-none focus:ring focus:ring-gray-300"
               title="Schließen"
@@ -245,7 +238,8 @@
 
         <x-ui.buttons.button-basic
           :mode="'basic'"
-          wire:click="close"
+          x-on:click="$dispatch('close')"
+              wire:click="close"
           :size="'sm'"
           wire:loading.attr="disabled"
           class="disabled:opacity-60 disabled:cursor-wait"
@@ -259,3 +253,4 @@
 
   </x-dialog-modal>
 </div>
+

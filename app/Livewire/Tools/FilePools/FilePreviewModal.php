@@ -155,18 +155,22 @@ class FilePreviewModal extends Component
             'Content-Type' => $mime,
         ]);
     }
-
     public function close(): void
     {
         $this->open = false;
 
-        // Temp löschen (wenn gewünscht)
-        if ($this->deleteOnClose && $this->disk && $this->path) {
-            Storage::disk($this->disk)->delete($this->path);
-        }
+        $shouldDelete = $this->deleteOnClose;
+        $disk = $this->disk;
+        $path = $this->path;
 
         $this->resetTempState();
         $this->resetModelState();
+
+        if ($shouldDelete && $disk && $path) {
+            app()->terminating(function () use ($disk, $path): void {
+                Storage::disk($disk)->delete($path);
+            });
+        }
     }
 
     public function getUrlProperty(): ?string
@@ -218,3 +222,4 @@ class FilePreviewModal extends Component
         return view('livewire.tools.file-pools.file-preview-modal');
     }
 }
+
