@@ -22,7 +22,7 @@ class AdminTaskDetail extends Component
     // 'task' = Aufgabendetails, 'context' = Berichtsheft / Antrag
     public string $viewMode = 'task';
 
-    // erhält zusätzliche Metadaten beim Öffnen
+    // erhÃ¤lt zusÃ¤tzliche Metadaten beim Ã–ffnen
     public array $payload = [];
     public array $entryApprovals = [];
     public string $rejectionComment = '';
@@ -95,8 +95,8 @@ class AdminTaskDetail extends Component
 
         $this->dispatch('showAlert', [
             'type'  => 'success',
-            'title' => 'Übernommen',
-            'text'  => 'Aufgabe erfolgreich übernommen.',
+            'title' => 'Ãœbernommen',
+            'text'  => 'Aufgabe erfolgreich Ã¼bernommen.',
         ]);
     }
 
@@ -156,33 +156,33 @@ class AdminTaskDetail extends Component
 
         $this->dispatch('showAlert', [
             'type'  => 'success',
-            'title' => 'Zurückgegeben',
+            'title' => 'ZurÃ¼ckgegeben',
             'text'  => 'Aufgabe wurde wieder freigegeben.',
         ]);
     }
 
     /* ============================================================
-     *  ReportBook-Kontext: Ausbilder-Prüfung + Signatur
+     *  ReportBook-Kontext: Ausbilder-PrÃ¼fung + Signatur
      * ============================================================ */
 
     /**
-     * Entry-Status, den "geprüft" bedeutet.
+     * Entry-Status, den "geprÃ¼ft" bedeutet.
      * (bei dir: 2)
      */
     protected int $reviewedStatus = 2;
     protected int $rejectedStatus = 3;
 
     /**
-     * File-Type für Ausbilder-Signatur (wie Teilnehmer: sign_reportbook_participant)
+     * File-Type fÃ¼r Ausbilder-Signatur (wie Teilnehmer: sign_reportbook_participant)
      */
     protected string $trainerSignatureType = 'sign_reportbook_trainer';
 
     /**
      * Startet die Freigabe:
-     * - prüft Task + Rechte
-     * - prüft, ob Ausbilder-Signatur existiert
-     * - wenn nicht: öffnet Signature-Form
-     * - wenn ja: führt Approval aus + Task abschließen
+     * - prÃ¼ft Task + Rechte
+     * - prÃ¼ft, ob Ausbilder-Signatur existiert
+     * - wenn nicht: Ã¶ffnet Signature-Form
+     * - wenn ja: fÃ¼hrt Approval aus + Task abschlieÃŸen
      */
     public function approveReportBook(): void
     {
@@ -196,6 +196,15 @@ class AdminTaskDetail extends Component
 
         if (! $reportBook) return;
 
+        if ($this->hasRejectedEntries()) {
+            $this->dispatch('showAlert', [
+                'type'  => 'warning',
+                'title' => 'Freigabe nicht mÃ¶glich',
+                'text'  => 'Es sind abgelehnte EintrÃ¤ge markiert. Nutze in diesem Fall bitte "Ablehnen".',
+            ]);
+            return;
+        }
+
         // Signatur vorhanden?
         if (! $this->hasTrainerSignature($reportBook)) {
             $this->openTrainerSignatureForm($reportBook);
@@ -208,10 +217,7 @@ class AdminTaskDetail extends Component
         // Wenn Signatur schon existiert -> direkt freigeben
         $this->applyReportBookReview($reportBook);
 
-        $this->task = $this->task->fresh(['creator', 'assignedAdmin', 'context']);
-        $this->viewMode = 'context';
-
-        $this->markAsCompleted();
+        $this->finalizeApprovedReportBook($reportBook);
     }
 
     public function rejectReportBook(): void
@@ -240,30 +246,30 @@ class AdminTaskDetail extends Component
     }
 
     /**
-     * Öffnet das generische Signature-Modal (wie im Teilnehmer-Flow) :contentReference[oaicite:3]{index=3}
+     * Ã–ffnet das generische Signature-Modal (wie im Teilnehmer-Flow) :contentReference[oaicite:3]{index=3}
      */
     protected function openTrainerSignatureForm($reportBook): void
     {
-        // Kontext-Name für den Dialog
+        // Kontext-Name fÃ¼r den Dialog
         $courseTitle = data_get($reportBook, 'course.title') ?? 'Kurs';
         $klasse      = data_get($reportBook, 'course.klassen_id');
 
-        $contextName = $klasse ? "{$courseTitle} – {$klasse}" : $courseTitle;
+        $contextName = $klasse ? "{$courseTitle} â€“ {$klasse}" : $courseTitle;
 
         $this->dispatch('openSignatureForm', [
             'fileableType' => ReportBookModel::class,
             'fileableId'   => (int) $reportBook->id,
             'fileType'     => 'sign_reportbook_trainer',
-            'label'        => 'Berichtsheft prüfen',
+            'label'        => 'Berichtsheft prÃ¼fen',
             'signForName'  => 'Berichtsheft (Ausbilder)',
             'contextName'  => $contextName,
-            'confirmText'  => "Ich bestätige als <strong>Ausbilder</strong>, dass ich das Berichtsheft<br><strong>({$contextName})</strong><br>geprüft habe und die Angaben vollständig sind.",
+            'confirmText'  => "Ich bestÃ¤tige als <strong>Ausbilder</strong>, dass ich das Berichtsheft<br><strong>({$contextName})</strong><br>geprÃ¼ft habe und die Angaben vollstÃ¤ndig sind.",
         ]);
     }
 
     /**
-     * Wird ausgelöst, wenn das Signature-Modul fertig ist.
-     * Danach: Approval + Task abschließen.
+     * Wird ausgelÃ¶st, wenn das Signature-Modul fertig ist.
+     * Danach: Approval + Task abschlieÃŸen.
      */
     #[On('signatureCompleted')]
     public function handleTrainerSignatureCompleted(array $payload): void
@@ -292,14 +298,18 @@ class AdminTaskDetail extends Component
             return;
         }
 
+        if ($this->hasRejectedEntries()) {
+            $this->dispatch('showAlert', [
+                'type'  => 'warning',
+                'title' => 'Freigabe nicht mÃ¶glich',
+                'text'  => 'Es sind abgelehnte EintrÃ¤ge markiert. Nutze in diesem Fall bitte "Ablehnen".',
+            ]);
+            return;
+        }
+
         // Jetzt freigeben
         $this->applyReportBookReview($reportBook);
-
-        $this->task = $this->task->fresh(['creator', 'assignedAdmin', 'context']);
-        $this->viewMode = 'context';
-
-        // Task abschließen
-        $this->markAsCompleted();
+        $this->finalizeApprovedReportBook($reportBook);
     }
 
     #[On('signatureAborted')]
@@ -310,7 +320,7 @@ class AdminTaskDetail extends Component
     }
 
     /**
-     * Setzt alle Einträge auf reviewedStatus (=2) und optional den Gesamtstatus.
+     * Setzt alle EintrÃ¤ge auf reviewedStatus (=2) und optional den Gesamtstatus.
      */
     protected function applyReportBookReview($reportBook): void
     {
@@ -345,6 +355,15 @@ class AdminTaskDetail extends Component
                 ->update(['status' => $this->rejectedStatus]);
         }
 
+    }
+
+    protected function finalizeApprovedReportBook($reportBook): void
+    {
+        $this->sendApprovalMessage($reportBook);
+
+        $this->task = $this->task?->fresh(['creator', 'assignedAdmin', 'context']);
+        $this->viewMode = 'context';
+        $this->markAsCompleted();
     }
 
 
@@ -419,14 +438,14 @@ class AdminTaskDetail extends Component
         }
 
         $entriesText = empty($entryLines)
-            ? "- Keine konkreten Einträge gefunden."
+            ? "- Keine konkreten EintrÃ¤ge gefunden."
             : implode("\n", $entryLines);
 
         $subject = 'Berichtsheft abgelehnt';
-        $body = "Dein Berichtsheft für den Baustein ({$courseTitle}) wurde abgelehnt und muss neu eingereicht werden.<br><br>"
-            . "Abgelehnte Einträge:<br>"
+        $body = "Dein Berichtsheft fÃ¼r den Baustein ({$courseTitle}) wurde abgelehnt und muss neu eingereicht werden.<br><br>"
+            . "Abgelehnte EintrÃ¤ge:<br>"
             . "{$entriesText}<br><br>"
-            . "Begründung:<br>"
+            . "BegrÃ¼ndung:<br>"
             . trim($this->rejectionComment);
 
         Mail::create([
@@ -437,6 +456,39 @@ class AdminTaskDetail extends Component
                 'header'  => 'Berichtsheft abgelehnt',
                 'body'    => $body,
                 'link'    => '',
+            ],
+            'recipients' => [[
+                'user_id' => $recipientId,
+                'email'   => (string) data_get($reportBook, 'user.email', ''),
+                'status'  => false,
+            ]],
+        ]);
+    }
+
+    public function sendApprovalMessage($reportBook): void
+    {
+        $recipientId = (int) data_get($reportBook, 'user_id');
+
+        if (! $recipientId) {
+            return;
+        }
+
+        $courseTitle = data_get($reportBook, 'course.title') ?? 'dein Berichtsheft';
+        $baseUrl = rtrim((string) (Setting::getValue('api', 'base_api_url') ?: config('app.url')), '/');
+        $courseId = (int) data_get($reportBook, 'course_id');
+
+        $subject = 'Berichtsheft freigegeben';
+        $body = "Dein Berichtsheft fÃ¼r den Baustein ({$courseTitle}) wurde freigegeben. Gute Arbeit!";
+        $link = "{$baseUrl}/user/reportbook?course={$courseId}"; 
+
+        Mail::create([
+            'type' => 'both',
+            'status' => false,
+            'content' => [
+                'subject' => $subject,
+                'header'  => 'Berichtsheft freigegeben',
+                'body'    => $body,
+                'link'    => $link,
             ],
             'recipients' => [[
                 'user_id' => $recipientId,
@@ -462,7 +514,7 @@ class AdminTaskDetail extends Component
     }
 
     /**
-     * Prüft, ob Ausbilder-Signatur vorhanden ist
+     * PrÃ¼ft, ob Ausbilder-Signatur vorhanden ist
      */
     protected function hasTrainerSignature($reportBook): bool
     {
