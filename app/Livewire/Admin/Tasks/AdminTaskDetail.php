@@ -260,16 +260,16 @@ class AdminTaskDetail extends Component
             'fileableType' => ReportBookModel::class,
             'fileableId'   => (int) $reportBook->id,
             'fileType'     => 'sign_reportbook_trainer',
-            'label'        => 'Berichtsheft prÃ¼fen',
+            'label'        => 'Berichtsheft prüfen',
             'signForName'  => 'Berichtsheft (Ausbilder)',
             'contextName'  => $contextName,
-            'confirmText'  => "Ich bestÃ¤tige als <strong>Ausbilder</strong>, dass ich das Berichtsheft<br><strong>({$contextName})</strong><br>geprÃ¼ft habe und die Angaben vollstÃ¤ndig sind.",
+            'confirmText'  => "Ich bestätige als <strong>Ausbilder</strong>, dass ich das Berichtsheft<br><strong>({$contextName})</strong><br>geprüft habe und die Angaben vollständig sind.",
         ]);
     }
 
     /**
-     * Wird ausgelÃ¶st, wenn das Signature-Modul fertig ist.
-     * Danach: Approval + Task abschlieÃŸen.
+     * Wird ausgelöst, wenn das Signature-Modul fertig ist.
+     * Danach: Approval + Task abschließen.
      */
     #[On('signatureCompleted')]
     public function handleTrainerSignatureCompleted(array $payload): void
@@ -301,8 +301,8 @@ class AdminTaskDetail extends Component
         if ($this->hasRejectedEntries()) {
             $this->dispatch('showAlert', [
                 'type'  => 'warning',
-                'title' => 'Freigabe nicht mÃ¶glich',
-                'text'  => 'Es sind abgelehnte EintrÃ¤ge markiert. Nutze in diesem Fall bitte "Ablehnen".',
+                'title' => 'Freigabe nicht möglich',
+                'text'  => 'Es sind abgelehnte Einträge markiert. Nutze in diesem Fall bitte "Ablehnen".',
             ]);
             return;
         }
@@ -438,14 +438,14 @@ class AdminTaskDetail extends Component
         }
 
         $entriesText = empty($entryLines)
-            ? "- Keine konkreten EintrÃ¤ge gefunden."
+            ? "- Keine konkreten Einträge gefunden."
             : implode("\n", $entryLines);
 
         $subject = 'Berichtsheft abgelehnt';
-        $body = "Dein Berichtsheft fÃ¼r den Baustein ({$courseTitle}) wurde abgelehnt und muss neu eingereicht werden.<br><br>"
-            . "Abgelehnte EintrÃ¤ge:<br>"
+        $body = "Dein Berichtsheft für den Baustein ({$courseTitle}) wurde abgelehnt und muss neu eingereicht werden.<br><br>"
+            . "Abgelehnte Einträge:<br>"
             . "{$entriesText}<br><br>"
-            . "BegrÃ¼ndung:<br>"
+            . "Begründung:<br>"
             . trim($this->rejectionComment);
 
         Mail::create([
@@ -478,7 +478,7 @@ class AdminTaskDetail extends Component
         $courseId = (int) data_get($reportBook, 'course_id');
 
         $subject = 'Berichtsheft freigegeben';
-        $body = "Dein Berichtsheft fÃ¼r den Baustein ({$courseTitle}) wurde freigegeben. Gute Arbeit!";
+        $body = "Dein Berichtsheft für den Baustein ({$courseTitle}) wurde freigegeben. Gute Arbeit!";
         $link = "{$baseUrl}/user/reportbook?course={$courseId}"; 
 
         Mail::create([
