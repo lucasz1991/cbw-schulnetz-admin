@@ -87,7 +87,7 @@ class AdminConfig extends Component
         ],
         'exam_results_missing_by_lecturer' => [
             'label' => 'Prüfungsergebnisse fehlen vom Dozenten',
-            'description' => 'Automatische Nachricht, wenn nach Bausteinende keine vollständigen Ergebnisse vorliegen (Montag nach Kursende, einmalig).',
+            'description' => 'Automatische Nachricht, wenn 13 Tage nach Bausteinende keine vollständigen Ergebnisse vorliegen (einmalig).',
             'default' => false,
         ],
     ];
