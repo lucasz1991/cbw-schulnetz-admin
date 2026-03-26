@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Mail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class UserProfile extends Component
@@ -53,6 +54,45 @@ class UserProfile extends Component
             $this->dispatch('showAlert', 'Benutzer ist bereits inaktiv.', 'info');
         }
         $this->loadUser();
+    }
+
+    public function deleteUser()
+    {
+        Gate::authorize('users.edit');
+
+        $user = User::find($this->userId);
+
+        if (!$user) {
+            $this->dispatch('showAlert', 'Benutzer wurde nicht gefunden.', 'error');
+            return $this->redirectRoute('admin.users');
+        }
+
+        $detachedPersons = 0;
+
+        try {
+            DB::transaction(function () use ($user, &$detachedPersons) {
+                $detachedPersons = $user->detachPersons();
+                $user->tokens()->delete();
+                $user->deleteProfilePhoto();
+                $user->delete();
+            });
+        } catch (\Throwable $e) {
+            \Log::error('Benutzer konnte nicht gelöscht werden.', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->dispatch('showAlert', 'Benutzer konnte nicht gelöscht werden.', 'error');
+            return;
+        }
+
+        $this->dispatch(
+            'showAlert',
+            "Benutzer wurde gelöscht. {$detachedPersons} Person(en) wurden vom Benutzer entkoppelt.",
+            'success'
+        );
+
+        return $this->redirectRoute('admin.users');
     }
 
     public function openMailModal($userId = null)

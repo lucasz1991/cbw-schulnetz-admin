@@ -183,6 +183,13 @@ class User extends Authenticatable
         return $this->hasMany(Person::class, 'user_id');
     }
 
+    public function detachPersons(): int
+    {
+        return Person::query()
+            ->where('user_id', $this->id)
+            ->update(['user_id' => null]);
+    }
+
     
     public function hasAccessToInvoice($filename)
     {

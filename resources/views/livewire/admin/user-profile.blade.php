@@ -35,6 +35,14 @@
                         <i class="far fa-envelope mr-2"></i>
                         Nachricht senden
                     </x-ui.dropdown.dropdown-link>
+                    <x-ui.dropdown.dropdown-link
+                        wire:click="deleteUser()"
+                        wire:confirm="Soll dieser Benutzer wirklich gelöscht werden? Alle zugehörigen Personen bleiben erhalten und werden entkoppelt."
+                        class="text-red-700 hover:bg-red-100 focus:bg-red-100"
+                    >
+                        <i class="far fa-trash-alt mr-2"></i>
+                        Benutzer löschen
+                    </x-ui.dropdown.dropdown-link>
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>
         </div>
