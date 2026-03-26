@@ -35,6 +35,7 @@
                         <i class="far fa-envelope mr-2"></i>
                         Nachricht senden
                     </x-ui.dropdown.dropdown-link>
+                    @if(auth()->user()->isAdmin())
                     <x-ui.dropdown.dropdown-link
                         wire:click="deleteUser()"
                         wire:confirm="Soll dieser Benutzer wirklich gelöscht werden? Alle zugehörigen Personen bleiben erhalten und werden entkoppelt."
@@ -43,6 +44,7 @@
                         <i class="far fa-trash-alt mr-2"></i>
                         Benutzer löschen
                     </x-ui.dropdown.dropdown-link>
+                    @endif
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>
         </div>
