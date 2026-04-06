@@ -21,8 +21,8 @@ class Users extends Component
     use WithFileUploads;
 
     public $search = '';
-    public $sortBy = 'name'; 
-    public $sortDirection = 'asc'; 
+    public $sortBy = 'last_activity'; 
+    public $sortDirection = 'desc'; 
     public $openUserId = null;
     public $usersList;
     public $selectedUsers = [];
@@ -238,7 +238,17 @@ class Users extends Component
                     });
             });
 
-        if ($this->sortBy === 'name') {
+        if ($this->sortBy === 'last_activity') {
+            $usersQuery
+                ->orderBy(
+                    DB::table('activity_log')
+                        ->selectRaw('MAX(created_at)')
+                        ->whereColumn('activity_log.causer_id', 'users.id')
+                        ->where('activity_log.causer_type', User::class),
+                    $sortDirection
+                )
+                ->orderBy('users.name', 'asc');
+        } elseif ($this->sortBy === 'name') {
             $usersQuery
                 ->orderBy(
                     Person::select('nachname')

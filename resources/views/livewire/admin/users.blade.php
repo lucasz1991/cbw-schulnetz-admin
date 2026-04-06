@@ -14,7 +14,7 @@
                     <p>In der Benutzerverwaltung können Sie folgende Aktionen ausführen:</p>
                     <ul class="list-disc pl-5">
                         <li>Benutzer durchsuchen und filtern</li>
-                        <li>Benutzer nach Name, E-Mail oder Registrierungsdatum sortieren</li>
+                        <li>Benutzer standardmäßig nach letzter Aktivität (neueste zuerst), Name, E-Mail oder Registrierungsdatum sortieren</li>
                         <li>Mehrere Benutzer auswählen und Massenaktionen wie Aktivieren, Deaktivieren oder Löschen durchführen</li>
                         <li>E-Mails an ausgewählte Benutzer senden</li>
                     </ul>
