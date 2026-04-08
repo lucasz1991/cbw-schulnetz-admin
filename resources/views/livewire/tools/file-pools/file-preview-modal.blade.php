@@ -158,7 +158,7 @@
               <div>
                 <iframe
                   key="file-preview-model-{{ $file->id }}-{{ $file->updated_at?->timestamp ?? $file->id }}"
-                  class="w-full min-h-[60vh] max-h-[70vh]"
+                  class="w-full min-h-[60vh] max-h-[85vh]"
                   src="{{ $tempUrlModel }}?b={{ now()->timestamp }}"
                 ></iframe>
               </div>
