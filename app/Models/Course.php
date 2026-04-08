@@ -225,6 +225,14 @@ class Course extends Model
             return $this->hasMany(CourseRating::class);
         }
 
+        public function includedRatings()
+        {
+            return $this->ratings()->where(function ($query) {
+                $query->where('skip_course_rating', false)
+                    ->orWhereNull('skip_course_rating');
+            });
+        }
+
     // FilePool (morphable) – lässt du wie gehabt
     public function filePool()
     {
@@ -237,9 +245,9 @@ class Course extends Model
     }
 
     public function materialAcknowledgements()
-{
-    return $this->hasMany(CourseMaterialAcknowledgement::class);
-}
+    {
+        return $this->hasMany(CourseMaterialAcknowledgement::class);
+    }
 
 
 
@@ -322,10 +330,6 @@ class Course extends Model
         return $q->whereNotNull('planned_end_date')
                  ->whereDate('planned_end_date', '<', now()->toDateString());
     }
-
-    // ---- (deine bestehenden Accessors/Relations/Scopes bleiben unverändert) ----
-
-
 
     /*
     |--------------------------------------------------------------------------
@@ -592,7 +596,7 @@ class Course extends Model
 
     public function courseRatingsState(): int
     {
-        return $this->ratings()->exists() ? 1 : 0;
+        return $this->includedRatings()->exists() ? 1 : 0;
     }
 
     public function getCourseRatingsIconHtmlAttribute(): string
@@ -1397,10 +1401,10 @@ public function exportExamResultsPdf(): ?StreamedResponse
      */
     public function generateCourseRatingsPdfFile(): ?string
     {
-        $this->loadMissing(['ratings', 'tutor', 'days']);
+        $this->loadMissing(['tutor', 'days']);
 
         /** @var \Illuminate\Support\Collection<int, \App\Models\CourseRating> $ratings */
-        $ratings = $this->ratings()
+        $ratings = $this->includedRatings()
             ->orderBy('created_at')
             ->get();
 
@@ -1793,4 +1797,3 @@ public function createCourseRatingsPdfForPreview(): ?string
 
 
 }
-

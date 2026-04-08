@@ -17,6 +17,7 @@ class CourseRating extends Model
         'course_id',
         'participant_id',
         'is_anonymous',
+        'skip_course_rating',
         'kb_1','kb_2','kb_3',
         'sa_1','sa_2','sa_3',
         'il_1','il_2','il_3',
@@ -29,7 +30,8 @@ class CourseRating extends Model
      */
     protected $casts = [
         'is_anonymous' => 'boolean',
-    ];
+        'skip_course_rating' => 'boolean',
+    ]; 
 
     protected static function booted(): void
     {
