@@ -2,7 +2,7 @@
   x-data="{ bust: 0 }"
   x-on:filepool-preview.window="$wire.openWith($event.detail.id); bust = Date.now()"
 >
-  <x-dialog-modal wire:model="open" :maxWidth="'4xl'">
+  <x-dialog-modal wire:model="open" :maxWidth="'6xl'">
 
     <x-slot name="title">
       @php
