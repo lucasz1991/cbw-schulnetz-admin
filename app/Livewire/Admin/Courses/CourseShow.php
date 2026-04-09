@@ -11,11 +11,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class CourseShow extends Component
 {
     public Course $course;
+
+    public ?int $deletedTransferSourceCourseId = null;
     
     public string $search  = '';
     public string $sortBy  = 'name';
     public string $sortDir = 'asc';
     public int $perPage    = 10;
+
+    protected $listeners = [
+        'deletedCourseTransferSourceSelected' => 'setDeletedTransferSourceCourse',
+    ];
 
     public function mount(Course $course): void
     {
@@ -119,6 +125,27 @@ class CourseShow extends Component
     public function exportCourseRatingsPdf(): ?StreamedResponse
     {
         return $this->course->exportCourseRatingsPdf();
+    }
+
+    public function setDeletedTransferSourceCourse(int $sourceCourseId): void
+    {
+        $sourceCourse = Course::onlyTrashed()->findOrFail($sourceCourseId);
+
+        $this->deletedTransferSourceCourseId = $sourceCourse->id;
+    }
+
+    public function clearDeletedTransferSourceCourse(): void
+    {
+        $this->deletedTransferSourceCourseId = null;
+    }
+
+    public function getDeletedTransferSourceCourseProperty(): ?Course
+    {
+        if (! $this->deletedTransferSourceCourseId) {
+            return null;
+        }
+
+        return Course::onlyTrashed()->find($this->deletedTransferSourceCourseId);
     }
 
     public function render()

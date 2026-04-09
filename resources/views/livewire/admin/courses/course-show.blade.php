@@ -4,6 +4,7 @@
         <div>
             <x-back-button />
         </div>
+        <div class="flex items-start justify-between gap-4">
         {{-- rechte Buttons --}}
         @can('courses.export')
         <x-ui.dropdown.anchor-dropdown
@@ -65,6 +66,40 @@
                 </x-slot>
             </x-ui.dropdown.anchor-dropdown>
         @endcan
+        @if(Auth::user()->isAdmin())
+            <x-ui.dropdown.anchor-dropdown
+                align="right"
+                width="48"
+                dropdownClasses="mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
+                contentClasses="bg-white"
+                :overlay="false"
+                :trap="false"
+                :scrollOnOpen="false"
+                :offset="6"
+            >
+                {{-- Trigger bleibt wie bisher --}}
+                <x-slot name="trigger">
+                    <x-ui.buttons.button-basic
+                        type="button"
+                        :size="'sm'"
+                        class="px-2 "
+                    >
+                        <i class="fad fa-ellipsis-v text-[16px]"></i>
+                        <span class="hidden md:inline-block ml-2">Optionen</span>
+                    </x-ui.buttons.button-basic>
+                </x-slot>
+
+                <x-slot name="content">
+                    <div class="py-1 text-sm text-gray-700">
+                        <x-dropdown-link wire:click.prevent="$dispatch('openDeletedCourseTransferModal', [{{ $course->id }}])" >
+                            <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
+                            <span>Daten Übertragung aus gelöschten Kursen</span>
+                        </x-dropdown-link>
+                    </div>
+                </x-slot>
+            </x-ui.dropdown.anchor-dropdown>
+        @endif
+            </div>
     </div>
     @php
         $status = $this->status;
@@ -171,6 +206,56 @@
             </div>
         </div>
     </section>
+
+    @if($this->deletedTransferSourceCourse)
+        <section class="rounded-3xl border border-sky-200 bg-sky-50 p-4 md:p-5 shadow-sm">
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div class="min-w-0">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+                        <i class="fal fa-database text-[11px]"></i>
+                        <span>Ausgewaehlter Quellkurs</span>
+                    </div>
+
+                    <h2 class="mt-3 text-lg font-semibold text-sky-950">
+                        {{ $this->deletedTransferSourceCourse->title ?: 'Ohne Titel' }}
+                    </h2>
+
+                    <div class="mt-2 flex flex-wrap gap-2 text-xs text-sky-800">
+                        @if($this->deletedTransferSourceCourse->course_short_name)
+                            <span class="rounded-full border border-sky-200 bg-white px-2.5 py-1">{{ $this->deletedTransferSourceCourse->course_short_name }}</span>
+                        @endif
+
+                        @if($this->deletedTransferSourceCourse->klassen_id)
+                            <span class="rounded-full border border-sky-200 bg-white px-2.5 py-1">Klasse {{ $this->deletedTransferSourceCourse->klassen_id }}</span>
+                        @endif
+
+                        @if($this->deletedTransferSourceCourse->termin_id)
+                            <span class="rounded-full border border-sky-200 bg-white px-2.5 py-1">Termin {{ $this->deletedTransferSourceCourse->termin_id }}</span>
+                        @endif
+
+                        <span class="rounded-full border border-sky-200 bg-white px-2.5 py-1">
+                            geloescht am {{ optional($this->deletedTransferSourceCourse->deleted_at)->format('d.m.Y H:i') ?: '-' }}
+                        </span>
+                    </div>
+
+                    <p class="mt-3 text-sm text-sky-800">
+                        Dieser geloeschte Kurs ist als Quelle fuer die spaetere Datenuebernahme vorgemerkt.
+                    </p>
+                </div>
+
+                <div class="shrink-0">
+                    <x-ui.buttons.button-basic
+                        type="button"
+                        :size="'sm'"
+                        wire:click="clearDeletedTransferSourceCourse"
+                    >
+                        <i class="fal fa-times text-[12px] mr-2"></i>
+                        Auswahl entfernen
+                    </x-ui.buttons.button-basic>
+                </div>
+            </div>
+        </section>
+    @endif
 
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <section class="xl:col-span-1 rounded-3xl border border-slate-200 bg-white p-5 md:p-6">
@@ -298,4 +383,6 @@
             />
         </x-ui.accordion.tab-panel>
     </x-ui.accordion.tabs>
+
+    <livewire:admin.courses.deleted-course-transfer-modal />
 </div>  
