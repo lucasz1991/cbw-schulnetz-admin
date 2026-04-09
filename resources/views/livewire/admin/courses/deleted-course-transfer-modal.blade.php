@@ -19,6 +19,9 @@
                     <p class="mt-3 text-sm text-sky-800">
                         In diesem Schritt wird vorerst nur der geloeschte Quellkurs ausgewaehlt. Die eigentliche Uebernahme von CourseDays, Dokumentation, Anwesenheit, Teilnehmerdaten und weiteren Inhalten wird danach an diese Auswahl angebunden.
                     </p>
+                    <p class="mt-2 text-xs text-sky-700">
+                        Laut aktueller Loeschlogik werden Kurstage, Tagesdoku, Anwesenheit, Teilnehmer-Zuordnungen, Ergebnisse, Bewertungen und Kursdateien beim Loeschen haeufig direkt entfernt. Berichtshefte bleiben dagegen in der Regel erhalten und koennen deshalb oft noch uebernommen werden.
+                    </p>
                 </div>
 
                 <div class="flex flex-col gap-3 md:flex-row md:items-center">
@@ -45,26 +48,60 @@
                     </label>
                 </div>
 
-                @if($this->selectedSourceCourse)
+                @php
+                    $selectedSourceCourse = $this->selectedSourceCourse;
+                    $selectedPreview = $selectedSourceCourse->transfer_preview ?? null;
+                @endphp
+                @if($selectedSourceCourse)
                     <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                         <div class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Ausgewaehlter Quellkurs</div>
                         <div class="mt-1 text-sm font-semibold text-emerald-950">
-                            {{ $this->selectedSourceCourse->title ?: 'Ohne Titel' }}
+                            {{ $selectedSourceCourse->title ?: 'Ohne Titel' }}
                         </div>
                         <div class="mt-2 flex flex-wrap gap-2 text-xs text-emerald-800">
-                            @if($this->selectedSourceCourse->course_short_name)
-                                <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1">{{ $this->selectedSourceCourse->course_short_name }}</span>
+                            @if($selectedSourceCourse->course_short_name)
+                                <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1">{{ $selectedSourceCourse->course_short_name }}</span>
                             @endif
-                            @if($this->selectedSourceCourse->klassen_id)
-                                <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1">Klasse {{ $this->selectedSourceCourse->klassen_id }}</span>
+                            @if($selectedSourceCourse->klassen_id)
+                                <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1">Klasse {{ $selectedSourceCourse->klassen_id }}</span>
                             @endif
-                            @if($this->selectedSourceCourse->termin_id)
-                                <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1">Termin {{ $this->selectedSourceCourse->termin_id }}</span>
+                            @if($selectedSourceCourse->termin_id)
+                                <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1">Termin {{ $selectedSourceCourse->termin_id }}</span>
                             @endif
                             <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1">
-                                geloescht am {{ optional($this->selectedSourceCourse->deleted_at)->format('d.m.Y H:i') ?: '-' }}
+                                geloescht am {{ optional($selectedSourceCourse->deleted_at)->format('d.m.Y H:i') ?: '-' }}
                             </span>
                         </div>
+
+                        @if($selectedPreview)
+                            <div class="mt-3 rounded-2xl border border-emerald-200 bg-white/70 p-3">
+                                <div class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Transfervorschau</div>
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    @foreach($selectedPreview['recoverable'] as $item)
+                                        <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs text-emerald-800">
+                                            {{ $item['label'] }}
+                                            @if(($item['count'] ?? 0) > 0)
+                                                <span class="font-semibold">{{ $item['count'] }}</span>
+                                            @endif
+                                        </span>
+                                    @endforeach
+                                </div>
+
+                                @if(!empty($selectedPreview['missing']))
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        @foreach($selectedPreview['missing'] as $item)
+                                            <span class="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs text-rose-700">
+                                                {{ $item }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <p class="mt-3 text-xs text-emerald-800">
+                                    {{ $selectedPreview['summary'] }}
+                                </p>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
@@ -73,6 +110,7 @@
                         @php
                             $isSelected = $selectedSourceCourseId === $deletedCourse->id;
                             $tutorName = trim(($deletedCourse->tutor->vorname ?? '').' '.($deletedCourse->tutor->nachname ?? ''));
+                            $preview = $deletedCourse->transfer_preview ?? null;
                         @endphp
 
                         <article
@@ -135,6 +173,41 @@
                                     @if($tutorName !== '')
                                         <div class="mt-3 text-xs text-slate-500">
                                             Dozent: {{ $tutorName }}
+                                        </div>
+                                    @endif
+
+                                    @if($preview)
+                                        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                                            <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                                Aktuell uebertragbar
+                                            </div>
+                                            <div class="mt-2 flex flex-wrap gap-2">
+                                                @foreach($preview['recoverable'] as $item)
+                                                    <span class="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs text-emerald-800">
+                                                        {{ $item['label'] }}
+                                                        @if(($item['count'] ?? 0) > 0)
+                                                            <span class="font-semibold">{{ $item['count'] }}</span>
+                                                        @endif
+                                                    </span>
+                                                @endforeach
+                                            </div>
+
+                                            @if(!empty($preview['missing']))
+                                                <div class="mt-3 text-[11px] font-semibold uppercase tracking-wide text-rose-500">
+                                                    Aktuell nicht mehr vorhanden
+                                                </div>
+                                                <div class="mt-2 flex flex-wrap gap-2">
+                                                    @foreach($preview['missing'] as $item)
+                                                        <span class="rounded-full border border-rose-200 bg-white px-2.5 py-1 text-xs text-rose-700">
+                                                            {{ $item }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            <p class="mt-3 text-xs text-slate-600">
+                                                {{ $preview['summary'] }}
+                                            </p>
                                         </div>
                                     @endif
                                 </div>
