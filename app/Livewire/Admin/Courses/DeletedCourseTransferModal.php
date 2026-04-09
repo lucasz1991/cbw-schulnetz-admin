@@ -14,6 +14,7 @@ use App\Models\ReportBook;
 use App\Models\ReportBookEntry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -199,8 +200,12 @@ class DeletedCourseTransferModal extends Component
                 'course_files_total' => 0,
                 'file_pool_files_total' => 0,
                 'report_books_total' => 0,
+                'report_books_transferable_total' => 0,
                 'report_book_entries_total' => 0,
+                'report_book_entries_transferable_total' => 0,
+                'report_book_entries_unmatched_total' => 0,
                 'report_book_files_total' => 0,
+                'target_course_days_total' => 0,
             ]);
 
             return $course;
@@ -214,6 +219,9 @@ class DeletedCourseTransferModal extends Component
         if ($ids === []) {
             return [];
         }
+
+        $targetCourseDayDates = $this->loadTargetCourseDayDates();
+        $targetCourseDayCount = $targetCourseDayDates->count();
 
         $daysByCourse = $this->pluckCounts(
             CourseDay::query()
@@ -309,13 +317,35 @@ class DeletedCourseTransferModal extends Component
                 ->groupBy('course_id')
         );
 
-        $reportBookEntriesByCourse = $this->pluckCounts(
+        $reportBookEntriesTotalByCourse = $this->pluckCounts(
             ReportBookEntry::query()
                 ->join('report_books as rb', 'rb.id', '=', 'report_book_entries.report_book_id')
                 ->whereIn('rb.course_id', $ids)
                 ->selectRaw('rb.course_id as course_id, COUNT(report_book_entries.id) as aggregate')
                 ->groupBy('rb.course_id')
         );
+
+        $reportBookEntriesTransferableByCourse = $targetCourseDayDates->isEmpty()
+            ? []
+            : $this->pluckCounts(
+                ReportBookEntry::query()
+                    ->join('report_books as rb', 'rb.id', '=', 'report_book_entries.report_book_id')
+                    ->whereIn('rb.course_id', $ids)
+                    ->whereIn('report_book_entries.entry_date', $targetCourseDayDates->all())
+                    ->selectRaw('rb.course_id as course_id, COUNT(report_book_entries.id) as aggregate')
+                    ->groupBy('rb.course_id')
+            );
+
+        $reportBooksTransferableByCourse = $targetCourseDayDates->isEmpty()
+            ? []
+            : $this->pluckCounts(
+                ReportBookEntry::query()
+                    ->join('report_books as rb', 'rb.id', '=', 'report_book_entries.report_book_id')
+                    ->whereIn('rb.course_id', $ids)
+                    ->whereIn('report_book_entries.entry_date', $targetCourseDayDates->all())
+                    ->selectRaw('rb.course_id as course_id, COUNT(DISTINCT report_book_entries.report_book_id) as aggregate')
+                    ->groupBy('rb.course_id')
+            );
 
         $reportBookFilesByCourse = $this->pluckCounts(
             File::query()
@@ -342,8 +372,16 @@ class DeletedCourseTransferModal extends Component
                 'course_files_total' => (int) ($courseFilesByCourse[$courseId] ?? 0),
                 'file_pool_files_total' => (int) ($filePoolFilesByCourse[$courseId] ?? 0),
                 'report_books_total' => (int) ($reportBooksByCourse[$courseId] ?? 0),
-                'report_book_entries_total' => (int) ($reportBookEntriesByCourse[$courseId] ?? 0),
+                'report_books_transferable_total' => (int) ($reportBooksTransferableByCourse[$courseId] ?? 0),
+                'report_book_entries_total' => (int) ($reportBookEntriesTotalByCourse[$courseId] ?? 0),
+                'report_book_entries_transferable_total' => (int) ($reportBookEntriesTransferableByCourse[$courseId] ?? 0),
+                'report_book_entries_unmatched_total' => max(
+                    0,
+                    (int) ($reportBookEntriesTotalByCourse[$courseId] ?? 0)
+                    - (int) ($reportBookEntriesTransferableByCourse[$courseId] ?? 0)
+                ),
                 'report_book_files_total' => (int) ($reportBookFilesByCourse[$courseId] ?? 0),
+                'target_course_days_total' => $targetCourseDayCount,
             ]);
         }
 
@@ -378,9 +416,8 @@ class DeletedCourseTransferModal extends Component
         $pushRecoverable('Material-Signaturen', 'acknowledgement_files_total');
         $pushRecoverable('Kursdateien', 'course_files_total');
         $pushRecoverable('FilePool-Dateien', 'file_pool_files_total');
-        $pushRecoverable('Berichtshefte', 'report_books_total');
-        $pushRecoverable('Berichtsheft-Eintraege', 'report_book_entries_total');
-        $pushRecoverable('Berichtsheft-Dateien', 'report_book_files_total');
+        $pushRecoverable('Berichtshefte mit passenden Tagen', 'report_books_transferable_total');
+        $pushRecoverable('Passende Berichtsheft-Eintraege', 'report_book_entries_transferable_total');
 
         $missing = [];
 
@@ -414,6 +451,14 @@ class DeletedCourseTransferModal extends Component
             && (int) ($stats['report_book_entries_total'] ?? 0) === 0
             && (int) ($stats['report_book_files_total'] ?? 0) === 0) {
             $missing[] = 'Berichtshefte';
+        } elseif ((int) ($stats['target_course_days_total'] ?? 0) === 0) {
+            $missing[] = 'Im Zielkurs sind noch keine Kurstage fuer Berichtshefte vorhanden';
+        } elseif ((int) ($stats['report_book_entries_transferable_total'] ?? 0) === 0) {
+            $missing[] = 'Keine Berichtsheft-Eintraege mit passendem Kurstag im Zielkurs';
+        }
+
+        if ((int) ($stats['report_book_entries_unmatched_total'] ?? 0) > 0) {
+            $missing[] = (int) $stats['report_book_entries_unmatched_total'] . ' Berichtsheft-Eintraege ohne passenden Kurstag';
         }
 
         $legacyCoursePayload = collect([
@@ -431,12 +476,20 @@ class DeletedCourseTransferModal extends Component
         ])->sum(fn (string $key) => (int) ($stats[$key] ?? 0));
 
         $reportBookPayload = collect([
-            'report_books_total',
-            'report_book_entries_total',
-            'report_book_files_total',
+            'report_books_transferable_total',
+            'report_book_entries_transferable_total',
         ])->sum(fn (string $key) => (int) ($stats[$key] ?? 0));
 
         $summary = match (true) {
+            (int) ($stats['report_books_total'] ?? 0) > 0 && (int) ($stats['target_course_days_total'] ?? 0) === 0
+                => 'Im Zielkurs gibt es aktuell keine Kurstage; Berichtsheft-Eintraege koennen daher noch nicht uebernommen werden.',
+            (int) ($stats['report_book_entries_transferable_total'] ?? 0) > 0
+                && (int) ($stats['report_book_entries_unmatched_total'] ?? 0) > 0
+                => 'Bei Berichtsheften werden nur Eintraege gezaehlt, deren Datum bereits als Kurstag im Zielkurs existiert; unpassende Tage bleiben unberuecksichtigt.',
+            (int) ($stats['report_book_entries_transferable_total'] ?? 0) > 0
+                => 'Berichtsheft-Eintraege sind nur fuer bereits vorhandene Kurstage im Zielkurs uebertragbar.',
+            (int) ($stats['report_books_total'] ?? 0) > 0
+                => 'Es sind Berichtsheft-Daten vorhanden, aber aktuell passt kein Eintrag zeitlich zu den Kurstagen des Zielkurses.',
             $legacyCoursePayload > 0 && $reportBookPayload > 0
                 => 'Neben Berichtsheften sind auch noch direkte Kursinhalte in der Datenbank vorhanden.',
             $legacyCoursePayload > 0
@@ -455,6 +508,27 @@ class DeletedCourseTransferModal extends Component
             'report_book_payload_total' => $reportBookPayload,
             'summary' => $summary,
         ];
+    }
+
+    protected function loadTargetCourseDayDates(): Collection
+    {
+        if (! $this->targetCourseId) {
+            return collect();
+        }
+
+        return CourseDay::query()
+            ->where('course_id', $this->targetCourseId)
+            ->pluck('date')
+            ->map(function ($date) {
+                if (! $date) {
+                    return null;
+                }
+
+                return Carbon::parse($date)->toDateString();
+            })
+            ->filter()
+            ->unique()
+            ->values();
     }
 
     protected function pluckCounts(Builder $query): array

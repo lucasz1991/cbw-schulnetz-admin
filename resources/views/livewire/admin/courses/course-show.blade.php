@@ -239,15 +239,29 @@
                     </div>
 
                     <p class="mt-3 text-sm text-sky-800">
-                        Dieser geloeschte Kurs ist als Quelle fuer die spaetere Datenuebernahme vorgemerkt.
+                        Dieser geloeschte Kurs ist als Quelle fuer die Datenuebernahme vorgemerkt. Berichtshefte werden nur fuer bereits vorhandene Kurstage im Zielkurs zusammengefuehrt; nicht passende Tage werden ignoriert und es werden keine neuen Kurstage angelegt.
                     </p>
                 </div>
 
-                <div class="shrink-0">
+                <div class="flex shrink-0 flex-wrap items-center gap-2">
+                    <x-ui.buttons.button-basic
+                        type="button"
+                        :size="'sm'"
+                        wire:click="transferDeletedCourseReportBooks"
+                        wire:loading.attr="disabled"
+                        wire:target="transferDeletedCourseReportBooks"
+                    >
+                        <i class="fal fa-random text-[12px] mr-2" wire:loading.remove wire:target="transferDeletedCourseReportBooks"></i>
+                        <i class="fal fa-spinner-third fa-spin text-[12px] mr-2" wire:loading wire:target="transferDeletedCourseReportBooks"></i>
+                        Berichtshefte uebernehmen
+                    </x-ui.buttons.button-basic>
+
                     <x-ui.buttons.button-basic
                         type="button"
                         :size="'sm'"
                         wire:click="clearDeletedTransferSourceCourse"
+                        wire:loading.attr="disabled"
+                        wire:target="transferDeletedCourseReportBooks"
                     >
                         <i class="fal fa-times text-[12px] mr-2"></i>
                         Auswahl entfernen

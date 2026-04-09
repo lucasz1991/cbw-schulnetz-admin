@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Courses;
 
+use App\Actions\Courses\TransferDeletedCourseReportBooks;
 use Livewire\Component;
 use App\Models\Course;
 use Illuminate\Support\Carbon;
@@ -139,6 +140,32 @@ class CourseShow extends Component
         $this->deletedTransferSourceCourseId = null;
     }
 
+    public function transferDeletedCourseReportBooks(TransferDeletedCourseReportBooks $transferAction): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), Response::HTTP_FORBIDDEN);
+
+        if (! $this->deletedTransferSourceCourseId) {
+            $this->dispatch('toast', type: 'warning', message: 'Bitte waehlen Sie zuerst einen geloeschten Quellkurs aus.');
+            return;
+        }
+
+        $sourceCourse = Course::onlyTrashed()->find($this->deletedTransferSourceCourseId);
+
+        if (! $sourceCourse) {
+            $this->deletedTransferSourceCourseId = null;
+            $this->dispatch('toast', type: 'warning', message: 'Der ausgewaehlte Quellkurs ist nicht mehr verfuegbar.');
+            return;
+        }
+
+        $summary = $transferAction->handle($sourceCourse, $this->course->fresh());
+
+        $toast = $this->buildDeletedReportBookTransferToast($summary);
+
+        $this->course = $this->course->fresh();
+
+        $this->dispatch('toast', type: $toast['type'], message: $toast['message']);
+    }
+
     public function getDeletedTransferSourceCourseProperty(): ?Course
     {
         if (! $this->deletedTransferSourceCourseId) {
@@ -146,6 +173,63 @@ class CourseShow extends Component
         }
 
         return Course::onlyTrashed()->find($this->deletedTransferSourceCourseId);
+    }
+
+    protected function buildDeletedReportBookTransferToast(array $summary): array
+    {
+        $sourceBooksFound = (int) ($summary['source_books_found'] ?? 0);
+        $participantsProcessed = (int) ($summary['participants_processed'] ?? 0);
+        $participantsSkipped = (int) ($summary['participants_skipped'] ?? 0);
+
+        if ($sourceBooksFound === 0) {
+            return [
+                'type' => 'info',
+                'message' => 'Im ausgewaehlten geloeschten Kurs wurden keine Berichtshefte gefunden.',
+            ];
+        }
+
+        if ($participantsProcessed === 0) {
+            $message = 'Es konnten keine Berichtshefte in den aktuellen Kurs uebernommen werden.';
+
+            if ($participantsSkipped > 0) {
+                $message .= ' Die betroffenen Teilnehmer sind im Zielkurs derzeit nicht aktiv zugeordnet.';
+            }
+
+            if ((int) ($summary['participants_without_matching_days'] ?? 0) > 0) {
+                $message .= ' Fuer die uebrigen Berichtsheft-Eintraege gibt es im Zielkurs keine passenden Kurstage.';
+            }
+
+            return [
+                'type' => 'warning',
+                'message' => $message,
+            ];
+        }
+
+        $parts = [
+            $participantsProcessed . ' Teilnehmer',
+            ((int) ($summary['entries_kept'] ?? 0)) . ' Eintraege',
+        ];
+
+        if ((int) ($summary['duplicate_dates_resolved'] ?? 0) > 0) {
+            $parts[] = ((int) $summary['duplicate_dates_resolved']) . ' Datums-Konflikte bereinigt';
+        }
+
+        if ((int) ($summary['entries_deleted'] ?? 0) > 0) {
+            $parts[] = ((int) $summary['entries_deleted']) . ' alte Dubletten geloescht';
+        }
+
+        if ((int) ($summary['entries_ignored_without_matching_day'] ?? 0) > 0) {
+            $parts[] = ((int) $summary['entries_ignored_without_matching_day']) . ' Tage ohne Ziel-Kurstag ignoriert';
+        }
+
+        if ($participantsSkipped > 0) {
+            $parts[] = $participantsSkipped . ' Teilnehmer uebersprungen';
+        }
+
+        return [
+            'type' => 'success',
+            'message' => 'Berichtshefte uebernommen: ' . implode(', ', $parts) . '.',
+        ];
     }
 
     public function render()

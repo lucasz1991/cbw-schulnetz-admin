@@ -17,10 +17,10 @@
                         </div>
                     @endif
                     <p class="mt-3 text-sm text-sky-800">
-                        In diesem Schritt wird vorerst nur der geloeschte Quellkurs ausgewaehlt. Die eigentliche Uebernahme von CourseDays, Dokumentation, Anwesenheit, Teilnehmerdaten und weiteren Inhalten wird danach an diese Auswahl angebunden.
+                        In dieser Liste wird bereits geprueft, ob Berichtsheft-Eintraege zeitlich zum Zielkurs passen. Es werden nur Eintraege beruecksichtigt, deren Datum im Zielkurs bereits als Kurstag existiert.
                     </p>
                     <p class="mt-2 text-xs text-sky-700">
-                        Laut aktueller Loeschlogik werden Kurstage, Tagesdoku, Anwesenheit, Teilnehmer-Zuordnungen, Ergebnisse, Bewertungen und Kursdateien beim Loeschen haeufig direkt entfernt. Berichtshefte bleiben dagegen in der Regel erhalten und koennen deshalb oft noch uebernommen werden.
+                        Laut aktueller Loeschlogik werden Kurstage, Tagesdoku, Anwesenheit, Teilnehmer-Zuordnungen, Ergebnisse, Bewertungen und Kursdateien beim Loeschen haeufig direkt entfernt. Berichtshefte bleiben dagegen in der Regel erhalten, werden aber nur fuer bereits vorhandene Ziel-Kurstage uebernommen. Es werden keine neuen Kurstage angelegt.
                     </p>
                 </div>
 
@@ -241,7 +241,7 @@
         <x-slot name="footer">
             <div class="flex w-full items-center justify-between gap-3">
                 <p class="text-xs text-slate-500">
-                    Die Auswahl speichert vorerst nur den geloeschten Quellkurs fuer den aktuellen Baustein.
+                    Die Vorschau zeigt Berichtshefte nur dann als uebertragbar an, wenn im Zielkurs bereits ein Kurstag mit demselben Datum existiert.
                 </p>
 
                 <div class="flex items-center gap-2">
