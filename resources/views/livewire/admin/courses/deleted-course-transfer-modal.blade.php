@@ -221,7 +221,7 @@
                         </article>
                     @empty
                         <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                            Keine geloeschten Kurse fuer diese Suche gefunden.
+                            Keine geloeschten Kurse mit passenden uebertragbaren Daten fuer diesen Zielkurs gefunden.
                         </div>
                     @endforelse
                 </div>

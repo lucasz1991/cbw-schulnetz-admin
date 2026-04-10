@@ -142,8 +142,25 @@ class DeletedCourseTransferModal extends Component
 
     protected function deletedCoursesQuery(): Builder
     {
+        $targetCourseDayDates = $this->loadTargetCourseDayDates();
+        $targetParticipantUserIds = $this->loadTargetParticipantUserIds();
+
         return Course::onlyTrashed()
             ->when($this->targetCourseId, fn (Builder $query) => $query->where('id', '!=', $this->targetCourseId))
+            ->when(
+                $targetCourseDayDates->isEmpty() || $targetParticipantUserIds->isEmpty(),
+                fn (Builder $query) => $query->whereRaw('1 = 0'),
+                function (Builder $query) use ($targetCourseDayDates, $targetParticipantUserIds): void {
+                    $query->whereExists(function ($subQuery) use ($targetCourseDayDates, $targetParticipantUserIds): void {
+                        $subQuery->selectRaw('1')
+                            ->from('report_books as rb')
+                            ->join('report_book_entries as rbe', 'rbe.report_book_id', '=', 'rb.id')
+                            ->whereColumn('rb.course_id', 'courses.id')
+                            ->whereIn('rb.user_id', $targetParticipantUserIds->all())
+                            ->whereIn('rbe.entry_date', $targetCourseDayDates->all());
+                    });
+                }
+            )
             ->when($this->search !== '', function (Builder $query): void {
                 $term = '%' . str_replace(' ', '%', trim($this->search)) . '%';
 
@@ -222,6 +239,7 @@ class DeletedCourseTransferModal extends Component
 
         $targetCourseDayDates = $this->loadTargetCourseDayDates();
         $targetCourseDayCount = $targetCourseDayDates->count();
+        $targetParticipantUserIds = $this->loadTargetParticipantUserIds();
 
         $daysByCourse = $this->pluckCounts(
             CourseDay::query()
@@ -325,23 +343,25 @@ class DeletedCourseTransferModal extends Component
                 ->groupBy('rb.course_id')
         );
 
-        $reportBookEntriesTransferableByCourse = $targetCourseDayDates->isEmpty()
+        $reportBookEntriesTransferableByCourse = $targetCourseDayDates->isEmpty() || $targetParticipantUserIds->isEmpty()
             ? []
             : $this->pluckCounts(
                 ReportBookEntry::query()
                     ->join('report_books as rb', 'rb.id', '=', 'report_book_entries.report_book_id')
                     ->whereIn('rb.course_id', $ids)
+                    ->whereIn('rb.user_id', $targetParticipantUserIds->all())
                     ->whereIn('report_book_entries.entry_date', $targetCourseDayDates->all())
                     ->selectRaw('rb.course_id as course_id, COUNT(report_book_entries.id) as aggregate')
                     ->groupBy('rb.course_id')
             );
 
-        $reportBooksTransferableByCourse = $targetCourseDayDates->isEmpty()
+        $reportBooksTransferableByCourse = $targetCourseDayDates->isEmpty() || $targetParticipantUserIds->isEmpty()
             ? []
             : $this->pluckCounts(
                 ReportBookEntry::query()
                     ->join('report_books as rb', 'rb.id', '=', 'report_book_entries.report_book_id')
                     ->whereIn('rb.course_id', $ids)
+                    ->whereIn('rb.user_id', $targetParticipantUserIds->all())
                     ->whereIn('report_book_entries.entry_date', $targetCourseDayDates->all())
                     ->selectRaw('rb.course_id as course_id, COUNT(DISTINCT report_book_entries.report_book_id) as aggregate')
                     ->groupBy('rb.course_id')
@@ -526,6 +546,27 @@ class DeletedCourseTransferModal extends Component
 
                 return Carbon::parse($date)->toDateString();
             })
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+    protected function loadTargetParticipantUserIds(): Collection
+    {
+        if (! $this->targetCourseId) {
+            return collect();
+        }
+
+        $targetCourse = Course::query()->find($this->targetCourseId);
+
+        if (! $targetCourse) {
+            return collect();
+        }
+
+        return $targetCourse->participants()
+            ->whereNotNull('persons.user_id')
+            ->pluck('persons.user_id')
+            ->map(fn ($userId) => (int) $userId)
             ->filter()
             ->unique()
             ->values();
