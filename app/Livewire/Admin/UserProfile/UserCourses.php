@@ -11,6 +11,7 @@ use App\Models\Person;
 use App\Models\CourseDay;
 use App\Models\CourseResult;
 use App\Models\CourseMaterialAcknowledgement;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 
 class UserCourses extends Component
@@ -93,7 +94,12 @@ class UserCourses extends Component
             $pivot = 'course_participant_enrollments';
 
             $query = Course::query()
-                ->join($pivot, "$pivot.course_id", '=', 'courses.id')
+                ->join($pivot, function (JoinClause $join) use ($pivot) {
+                    $join->on("$pivot.course_id", '=', 'courses.id')
+                        ->whereNull("$pivot.deleted_at")
+                        ->where("$pivot.is_active", true);
+                })
+                ->whereNull('courses.deleted_at')
                 ->whereIn("$pivot.person_id", $personIds)
                 ->select([
                     'courses.*',
