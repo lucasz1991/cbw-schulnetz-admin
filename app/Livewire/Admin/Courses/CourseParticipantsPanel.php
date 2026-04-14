@@ -129,7 +129,7 @@ class CourseParticipantsPanel extends Component
      */
     protected function examMetaFromCourseResult(?CourseResult $result): array
     {
-        if (!$result) {
+        if (! $result) {
             return [null, null];
         }
 
@@ -180,25 +180,64 @@ class CourseParticipantsPanel extends Component
             '+' => ['+', 'Teilgenommen', 'bg-emerald-50 text-emerald-700 border-emerald-200', 'fal fa-check-circle'],
             '-' => ['-', 'Nicht teilgenommen', 'bg-amber-50 text-amber-700 border-amber-200', 'fal fa-user-slash'],
             'V' => ['V', 'Betrugsversuch', 'bg-red-50 text-red-700 border-red-200', 'fal fa-ban'],
+            'XO' => ['XO', 'Externe Pruefung ausstehend', 'bg-blue-50 text-blue-700 border-blue-200', 'fal fa-clock'],
+            'B' => ['B', 'Externe Pruefung bestanden', 'bg-emerald-50 text-emerald-700 border-emerald-200', 'fal fa-check-circle'],
+            'D' => ['D', 'Externe Pruefung durchgefallen', 'bg-rose-50 text-rose-700 border-rose-200', 'fal fa-times-circle'],
+            'X' => ['X', 'Externe Pruefung nicht teilgenommen', 'bg-amber-50 text-amber-700 border-amber-200', 'fal fa-user-slash'],
+            'N' => ['N', 'Nachklausur', 'bg-indigo-50 text-indigo-700 border-indigo-200', 'fal fa-redo-alt'],
+            'K' => ['K', 'Nachkorrektur', 'bg-sky-50 text-sky-700 border-sky-200', 'fal fa-search'],
+            'I' => ['I', 'Pruefung ignorieren', 'bg-slate-50 text-slate-700 border-slate-200', 'fal fa-eye-slash'],
+            'E' => ['E', 'Externe Pruefung ausstehend', 'bg-blue-50 text-blue-700 border-blue-200', 'fal fa-clock'],
             default => [null, null, null, null],
         };
     }
 
     protected function normalizeExamStatus(mixed $status, mixed $result): ?string
     {
-        $raw = is_string($status) ? trim($status) : '';
-        $lower = mb_strtolower($raw);
+        $raw = is_string($status) || is_numeric($status)
+            ? trim((string) $status)
+            : '';
 
-        if ($raw === 'V' || in_array($lower, ['v', 'betrug', 'betrugsversuch'], true)) {
+        if ($raw !== '') {
+            $upper = mb_strtoupper($raw);
+
+            if (in_array($upper, ['V', '+', 'XO', 'B', 'D', 'X', 'N', 'K', '-', 'I', 'E'], true)) {
+                return $upper;
+            }
+        }
+
+        $normalized = str_replace([' ', '-'], '_', mb_strtolower($raw));
+
+        if (in_array($normalized, ['v', 'betrug', 'betrugsversuch'], true)) {
             return 'V';
         }
 
-        if ($raw === '-' || in_array($lower, ['-', 'nicht_teilgenommen', 'nicht teilgenommen', 'nt', 'not_participated', '3'], true)) {
+        if (in_array($normalized, ['nicht_teilgenommen', 'nt', 'not_participated', '3'], true)) {
             return '-';
         }
 
-        if ($raw === '+' || in_array($lower, ['+', 'teilgenommen', 'an prüfung teilgenommen', 'bestanden', 'passed', '1'], true)) {
+        if (in_array($normalized, ['an_pruefung_teilgenommen', 'teilgenommen', 'bestanden', 'passed', '1'], true)) {
             return '+';
+        }
+
+        if (in_array($normalized, ['ausstehend', 'pending'], true)) {
+            return 'XO';
+        }
+
+        if (in_array($normalized, ['durchgefallen', 'failed', 'nicht_bestanden', '2'], true)) {
+            return 'D';
+        }
+
+        if (in_array($normalized, ['nachklausur', 'retake'], true)) {
+            return 'N';
+        }
+
+        if (in_array($normalized, ['nachkorrektur', 'recheck'], true)) {
+            return 'K';
+        }
+
+        if (in_array($normalized, ['pruefung_ignorieren', 'ignorieren', 'ignore'], true)) {
+            return 'I';
         }
 
         if ($result !== null && $result !== '') {
@@ -240,7 +279,7 @@ class CourseParticipantsPanel extends Component
 
             $this->dispatch(
                 'showAlert',
-                "Prüfungsergebnisse gelöscht: {$deleted}",
+                "Pruefungsergebnisse geloescht: {$deleted}",
                 'success'
             );
         } catch (\Throwable $e) {
@@ -251,7 +290,7 @@ class CourseParticipantsPanel extends Component
 
             $this->dispatch(
                 'showAlert',
-                'Prüfungsergebnisse konnten nicht gelöscht werden.',
+                'Pruefungsergebnisse konnten nicht geloescht werden.',
                 'error'
             );
         }
