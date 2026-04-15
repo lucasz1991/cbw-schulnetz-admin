@@ -26,6 +26,7 @@ use App\Http\Controllers\PagebuilderProjectController;
 use App\Http\Controllers\LocaleController;
 
 use App\Livewire\Admin\Tests\ApiTests;
+use App\Livewire\Admin\Tests\MailTests;
 
 
 
@@ -72,5 +73,6 @@ Route::middleware(['auth:sanctum', 'auth.status', config('jetstream.auth_session
         Route::get('/admin/pagebuilder/assets', [PagebuilderProjectController::class, 'getAssets']);
 
         Route::get('/admin/tests/api', ApiTests::class)->name('admin.tests.api');
+        Route::get('/admin/tests/mail', MailTests::class)->name('admin.tests.mail');
     });
 });

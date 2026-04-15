@@ -127,6 +127,12 @@
                             <span data-key="t-tools">Api Tests</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.tests.mail') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">
+                            <i data-feather="mail" fill="#545a6d33"></i>
+                            <span data-key="t-tools-mail">Mail Tests</span>
+                        </a>
+                    </li>
                 @endif
             </ul>
         </div>
