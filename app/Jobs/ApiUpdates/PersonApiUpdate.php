@@ -2,15 +2,12 @@
 
 namespace App\Jobs\ApiUpdates;
 
-use App\Models\Person;
-use App\Services\ApiUvs\PersonUvsSyncService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class PersonApiUpdate implements ShouldQueue, ShouldBeUnique
 {
@@ -33,18 +30,6 @@ class PersonApiUpdate implements ShouldQueue, ShouldBeUnique
 
     public function handle(): void
     {
-        $person = Person::withTrashed()->find($this->personPk);
-
-        if (! $person) {
-            Log::warning("PersonApiUpdate: Person {$this->personPk} nicht gefunden.");
-            return;
-        }
-
-        if (empty($person->person_id)) {
-            Log::warning("PersonApiUpdate: 'person_id' leer fuer persons.id={$person->id}.");
-            return;
-        }
-
-        app(PersonUvsSyncService::class)->sync($person);
+        // Verarbeitung erfolgt zentral in der Base-Installation ueber denselben Queue-Job-Namen.
     }
 }
