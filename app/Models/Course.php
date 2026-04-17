@@ -21,6 +21,7 @@ use App\Models\CourseResult;
 use App\Models\CourseRating;
 use Illuminate\Support\Facades\Cache;
 use App\Jobs\ApiUpdates\CreateOrUpdateCourse;
+use App\Jobs\ApiUpdates\LoadCourseResultsFromUvsJob;
 
 
 class Course extends Model
@@ -128,6 +129,26 @@ class Course extends Model
         }
 
         CreateOrUpdateCourse::dispatch((string) $course->klassen_id);
+    }
+
+    /**
+     * Stellt das harte Nachladen der Pruefungsergebnisse in die gemeinsame Queue.
+     */
+    public function queueLoadResultsFromUvs(): void
+    {
+        LoadCourseResultsFromUvsJob::dispatch($this->id);
+    }
+
+    public function getSetting(string $key, $default = null)
+    {
+        return $this->settings[$key] ?? $default;
+    }
+
+    public function setSetting(string $key, $value): void
+    {
+        $settings = $this->settings ?? [];
+        $settings[$key] = $value;
+        $this->settings = $settings;
     }
 
     /*

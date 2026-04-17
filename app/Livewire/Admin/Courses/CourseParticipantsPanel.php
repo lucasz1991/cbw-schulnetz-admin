@@ -13,6 +13,7 @@ class CourseParticipantsPanel extends Component
 {
     public Course $course;
     public int $examResultsCount = 0;
+    public bool $isPollingCourseResultsLoad = false;
 
     /** @var \Illuminate\Support\Collection<int, array> */
     public Collection $rows;
@@ -21,6 +22,7 @@ class CourseParticipantsPanel extends Component
     {
         $this->course = $course;
         $this->rows   = collect();
+        $this->isPollingCourseResultsLoad = $this->course->getSetting('results_load_status') === 'running';
 
         $this->buildRows();
     }
@@ -265,6 +267,67 @@ class CourseParticipantsPanel extends Component
                 'error' => $e->getMessage(),
             ]);
             $this->dispatch('showAlert', 'Person API Update konnte nicht gestartet werden.', 'error');
+        }
+    }
+
+    public function triggerCourseResultsLoadFromUvs(): void
+    {
+        try {
+            $this->course->setSetting('results_load_status', 'running');
+            $this->course->setSetting('results_load_finished_at', null);
+            $this->course->save();
+
+            $this->course->queueLoadResultsFromUvs();
+            $this->isPollingCourseResultsLoad = true;
+
+            $this->dispatch(
+                'showAlert',
+                'Hartes UVS-Laden der Pruefungsergebnisse wurde in die Queue gestellt.',
+                'success'
+            );
+        } catch (\Throwable $e) {
+            $this->course->setSetting('results_load_status', 'failed');
+            $this->course->setSetting('results_load_finished_at', now()->toDateTimeString());
+            $this->course->save();
+            $this->isPollingCourseResultsLoad = false;
+
+            \Log::error('Course results UVS load konnte nicht gestartet werden.', [
+                'course_id' => $this->course->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->dispatch(
+                'showAlert',
+                'Hartes UVS-Laden der Pruefungsergebnisse konnte nicht gestartet werden.',
+                'error'
+            );
+        }
+    }
+
+    public function pollCourseResultsLoad(): void
+    {
+        $this->course->refresh();
+
+        $status = $this->course->getSetting('results_load_status');
+
+        if ($status === 'running') {
+            return;
+        }
+
+        $this->isPollingCourseResultsLoad = false;
+
+        if ($status === 'done') {
+            $this->buildRows();
+            $this->dispatch('reload-page');
+            return;
+        }
+
+        if ($status === 'failed') {
+            $this->dispatch(
+                'showAlert',
+                'Hartes UVS-Laden der Pruefungsergebnisse ist fehlgeschlagen.',
+                'error'
+            );
         }
     }
 

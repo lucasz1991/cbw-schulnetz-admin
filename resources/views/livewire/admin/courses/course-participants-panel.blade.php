@@ -1,4 +1,8 @@
-<div class="space-y-3">
+<div x-data class="space-y-3" x-on:reload-page.window="window.location.reload()">
+    @if($isPollingCourseResultsLoad)
+        <div wire:poll.2s="pollCourseResultsLoad" class="hidden"></div>
+    @endif
+
     @if($rows->isEmpty())
         <div class="text-sm text-neutral-400">
             Keine Teilnehmer vorhanden.
@@ -23,6 +27,17 @@
                 </x-slot>
 
                 <x-slot name="content">
+                    <button
+                        type="button"
+                        wire:click="triggerCourseResultsLoadFromUvs"
+                        wire:loading.attr="disabled"
+                        wire:target="triggerCourseResultsLoadFromUvs"
+                        class="flex w-full items-center gap-2 px-4 py-2 text-sm text-left text-blue-700 hover:bg-blue-50 disabled:opacity-60"
+                    >
+                        <i class="fal fa-sync"></i>
+                        <span>Pruefungsergebnisse hart aus UVS laden</span>
+                    </button>
+
                     <button
                         type="button"
                         wire:click="deleteAllCourseResults"
