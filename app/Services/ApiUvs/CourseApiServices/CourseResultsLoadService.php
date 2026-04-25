@@ -20,6 +20,8 @@ class CourseResultsLoadService
 
     public function queue(Course $course): void
     {
+        // Sofortige Markierung als "queued", um sofortiges Feedback in der UI zu ermöglichen.
+        $this->markQueued($course);
         LoadCourseResultsFromUvsJob::dispatch($course->id);
     }
 
