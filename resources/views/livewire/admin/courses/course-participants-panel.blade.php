@@ -9,7 +9,7 @@
             <div class="text-xs text-neutral-500">
                 Teilnehmer – Bildungsmittel-Bestätigungen, Prüfungsergebnisse & Kursbewertungen
             </div>
-            @if(Auth::user()->isAdmin())
+            @if(Auth::user()->isAdmin() && false) {{-- TODO: UVS actions --}}
             <x-dropdown align="right" width="56">
                 <x-slot name="trigger">
                     <button
