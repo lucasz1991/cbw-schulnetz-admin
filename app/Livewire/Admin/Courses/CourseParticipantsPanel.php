@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Person;
 use App\Models\CourseResult;
 use App\Models\CourseRating;
+use App\Services\ApiUvs\CourseApiServices\CourseResultsLoadService;
 use Illuminate\Support\Collection;
 
 class CourseParticipantsPanel extends Component
@@ -22,7 +23,7 @@ class CourseParticipantsPanel extends Component
     {
         $this->course = $course;
         $this->rows   = collect();
-        $this->isPollingCourseResultsLoad = $this->course->getSetting('results_load_status') === 'running';
+        $this->isPollingCourseResultsLoad = app(CourseResultsLoadService::class)->isBusy($this->course);
 
         $this->buildRows();
     }
@@ -273,10 +274,6 @@ class CourseParticipantsPanel extends Component
     public function triggerCourseResultsLoadFromUvs(): void
     {
         try {
-            $this->course->setSetting('results_load_status', 'running');
-            $this->course->setSetting('results_load_finished_at', null);
-            $this->course->save();
-
             $this->course->queueLoadResultsFromUvs();
             $this->isPollingCourseResultsLoad = true;
 
@@ -286,9 +283,7 @@ class CourseParticipantsPanel extends Component
                 'success'
             );
         } catch (\Throwable $e) {
-            $this->course->setSetting('results_load_status', 'failed');
-            $this->course->setSetting('results_load_finished_at', now()->toDateTimeString());
-            $this->course->save();
+            app(CourseResultsLoadService::class)->markFailed($this->course, $e->getMessage());
             $this->isPollingCourseResultsLoad = false;
 
             \Log::error('Course results UVS load konnte nicht gestartet werden.', [
@@ -308,21 +303,21 @@ class CourseParticipantsPanel extends Component
     {
         $this->course->refresh();
 
-        $status = $this->course->getSetting('results_load_status');
+        $status = app(CourseResultsLoadService::class)->getStatus($this->course);
 
-        if ($status === 'running') {
+        if (in_array($status, [CourseResultsLoadService::STATUS_QUEUED, CourseResultsLoadService::STATUS_RUNNING], true)) {
             return;
         }
 
         $this->isPollingCourseResultsLoad = false;
 
-        if ($status === 'done') {
+        if ($status === CourseResultsLoadService::STATUS_DONE) {
             $this->buildRows();
             $this->dispatch('reload-page');
             return;
         }
 
-        if ($status === 'failed') {
+        if ($status === CourseResultsLoadService::STATUS_FAILED) {
             $this->dispatch(
                 'showAlert',
                 'Hartes UVS-Laden der Pruefungsergebnisse ist fehlgeschlagen.',

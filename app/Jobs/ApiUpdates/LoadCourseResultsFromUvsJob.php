@@ -2,6 +2,7 @@
 
 namespace App\Jobs\ApiUpdates;
 
+use App\Services\ApiUvs\CourseApiServices\CourseResultsLoadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,6 +21,7 @@ class LoadCourseResultsFromUvsJob implements ShouldQueue, ShouldBeUnique
 
     public function __construct(public int $coursePk)
     {
+        app(CourseResultsLoadService::class)->markQueuedByCourseId($this->coursePk);
     }
 
     public function uniqueId(): string
