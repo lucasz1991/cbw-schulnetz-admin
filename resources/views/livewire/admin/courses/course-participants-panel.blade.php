@@ -1,7 +1,4 @@
-<div x-data class="space-y-3" x-on:reload-page.window="window.location.reload()">
-    @if($isPollingCourseResultsLoad)
-        <div wire:poll.2s="pollCourseResultsLoad" class="hidden"></div>
-    @endif
+<div x-data class="space-y-3 @if($isPollingCourseResultsLoad) opacity-50 cursor-wait pointer-events-none @endif" x-on:reload-page.window="window.location.reload()" @if($isPollingCourseResultsLoad) wire:poll.2s="pollCourseResultsLoad" @endif>
 
     @if($rows->isEmpty())
         <div class="text-sm text-neutral-400">
