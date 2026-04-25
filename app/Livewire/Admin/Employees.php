@@ -115,9 +115,9 @@ class Employees extends Component
 
         if ($user && ! $user->status) {
             $user->update(['status' => true]);
-            $this->dispatch('showAlert', 'Benutzer erfolgreich aktiviert.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Benutzer erfolgreich aktiviert.');
         } else {
-            $this->dispatch('showAlert', 'Benutzer ist bereits aktiv.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Benutzer ist bereits aktiv.');
         }
     }
 
@@ -129,9 +129,9 @@ class Employees extends Component
 
         if ($user && $user->status) {
             $user->update(['status' => false]);
-            $this->dispatch('showAlert', 'Benutzer erfolgreich deaktiviert.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Benutzer erfolgreich deaktiviert.');
         } else {
-            $this->dispatch('showAlert', 'Benutzer ist bereits inaktiv.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Benutzer ist bereits inaktiv.');
         }
     }
 

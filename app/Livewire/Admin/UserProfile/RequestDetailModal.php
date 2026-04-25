@@ -35,7 +35,7 @@ class RequestDetailModal extends Component
         if (!$this->request) return;
 
         $this->request->delete();
-        $this->dispatch('toast', ['type' => 'success', 'text' => 'Antrag gelöscht.']);
+        $this->dispatch('swal:toast', type: 'success', text: 'Antrag gelöscht.');
         $this->dispatch('refreshUserRequests');
         $this->close();
     }

@@ -36,7 +36,7 @@ class AteraSettings extends Component
         Setting::setValue('atera', 'api_key', trim($this->apiKey));
         Setting::setValue('atera', 'technician_email', trim($this->technicianEmail));
 
-        $this->dispatch('notify', type: 'success', message: 'Atera API-Einstellungen gespeichert.');
+        $this->dispatch('swal:toast', type: 'success', text: 'Atera API-Einstellungen gespeichert.');
     }
 
     public function render()

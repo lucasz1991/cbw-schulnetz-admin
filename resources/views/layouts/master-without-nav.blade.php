@@ -10,6 +10,7 @@
 </head>
 
 <body data-mode="light" data-sidebar-size="lg" class="group">
+    <livewire:user-alert />
     
     @include('layouts.no-auth-layout')
     <!-- script -->

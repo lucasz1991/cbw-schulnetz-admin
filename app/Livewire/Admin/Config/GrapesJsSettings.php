@@ -18,7 +18,7 @@ class GrapesJsSettings extends Component
     {
         Setting::setValue('grapesjs', 'api_key', $this->apiKey);
 
-        $this->dispatch('notify', type: 'success', message: 'GrapesJS API-Einstellungen gespeichert.');
+        $this->dispatch('swal:toast', type: 'success', text: 'GrapesJS API-Einstellungen gespeichert.');
     }
 
     public function render()

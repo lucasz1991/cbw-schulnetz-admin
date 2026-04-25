@@ -36,9 +36,9 @@ class UserProfile extends Component
     {
         if ($this->user && ! $this->user->status) {
             $this->user->update(['status' => true]);
-            $this->dispatch('showAlert', 'Benutzer erfolgreich aktiviert.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Benutzer erfolgreich aktiviert.');
         } else {
-            $this->dispatch('showAlert', 'Benutzer ist bereits aktiv.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Benutzer ist bereits aktiv.');
         }
 
         $this->loadUser();
@@ -48,9 +48,9 @@ class UserProfile extends Component
     {
         if ($this->user && $this->user->status) {
             $this->user->update(['status' => false]);
-            $this->dispatch('showAlert', 'Benutzer erfolgreich deaktiviert.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Benutzer erfolgreich deaktiviert.');
         } else {
-            $this->dispatch('showAlert', 'Benutzer ist bereits inaktiv.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Benutzer ist bereits inaktiv.');
         }
 
         $this->loadUser();
@@ -63,7 +63,7 @@ class UserProfile extends Component
         $user = User::find($this->userId);
 
         if (! $user) {
-            $this->dispatch('showAlert', 'Benutzer wurde nicht gefunden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Benutzer wurde nicht gefunden.');
             return $this->redirectRoute('admin.users');
         }
 
@@ -82,14 +82,14 @@ class UserProfile extends Component
                 'error' => $e->getMessage(),
             ]);
 
-            $this->dispatch('showAlert', 'Benutzer konnte nicht gelöscht werden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Benutzer konnte nicht gelöscht werden.');
             return;
         }
 
         $this->dispatch(
-            'showAlert',
-            "Benutzer wurde gelöscht. {$detachedPersons} Person(en) wurden vom Benutzer entkoppelt.",
-            'success'
+            'swal:toast',
+            type: 'success',
+            text: "Benutzer wurde gelöscht. {$detachedPersons} Person(en) wurden vom Benutzer entkoppelt."
         );
 
         return $this->redirectRoute('admin.users');
@@ -101,7 +101,7 @@ class UserProfile extends Component
             $this->dispatch('openMailModal', $userId);
         } else {
             if (count($this->selectedUsers) === 0) {
-                $this->dispatch('showAlert', 'Bitte wähle mindestens einen Benutzer aus, um eine Mail zu senden.', 'info');
+                $this->dispatch('swal:toast', type: 'info', text: 'Bitte wähle mindestens einen Benutzer aus, um eine Mail zu senden.');
                 return;
             }
 
@@ -116,11 +116,11 @@ class UserProfile extends Component
         $queuedCount = $this->user->uvsApiUpdate($personId ? (int) $personId : null);
 
         if ($queuedCount === 1) {
-            $this->dispatch('showAlert', 'UVS-Update für die Person wurde in die Queue gestellt.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'UVS-Update für die Person wurde in die Queue gestellt.');
         } elseif ($queuedCount > 1) {
-            $this->dispatch('showAlert', "UVS-Update für {$queuedCount} Personen wurde in die Queue gestellt.", 'success');
+            $this->dispatch('swal:toast', type: 'success', text: "UVS-Update für {$queuedCount} Personen wurde in die Queue gestellt.");
         } else {
-            $this->dispatch('showAlert', 'Benutzer oder Person für das UVS-Update nicht gefunden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Benutzer oder Person für das UVS-Update nicht gefunden.');
         }
     }
 

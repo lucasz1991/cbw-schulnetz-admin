@@ -22,7 +22,7 @@ class AdminTaskDetail extends Component
     // 'task' = Aufgabendetails, 'context' = Berichtsheft / Antrag
     public string $viewMode = 'task';
 
-    // erhÃ¤lt zusÃ¤tzliche Metadaten beim Ã–ffnen
+    // erhält zusätzliche Metadaten beim Öffnen
     public array $payload = [];
     public array $entryApprovals = [];
     public string $rejectionComment = '';
@@ -93,11 +93,7 @@ class AdminTaskDetail extends Component
 
         $this->dispatch('taskAssigned');
 
-        $this->dispatch('showAlert', [
-            'type'  => 'success',
-            'title' => 'Ãœbernommen',
-            'text'  => 'Aufgabe erfolgreich Ã¼bernommen.',
-        ]);
+        $this->dispatch('swal:toast', type: 'success', title: 'Übernommen', text: 'Aufgabe erfolgreich übernommen.');
     }
 
     public function markAsCompleted(): void
@@ -118,11 +114,7 @@ class AdminTaskDetail extends Component
 
         $this->close();
 
-        $this->dispatch('showAlert', [
-            'type'  => 'success',
-            'title' => 'Abgeschlossen',
-            'text'  => 'Aufgabe erfolgreich abgeschlossen.',
-        ]);
+        $this->dispatch('swal:toast', type: 'success', title: 'Abgeschlossen', text: 'Aufgabe erfolgreich abgeschlossen.');
     }
 
     public function releaseTask(): void
@@ -154,35 +146,31 @@ class AdminTaskDetail extends Component
         // Existing listener in list uses this event to refresh.
         $this->dispatch('taskAssigned');
 
-        $this->dispatch('showAlert', [
-            'type'  => 'success',
-            'title' => 'ZurÃ¼ckgegeben',
-            'text'  => 'Aufgabe wurde wieder freigegeben.',
-        ]);
+        $this->dispatch('swal:toast', type: 'success', title: 'Zurückgegeben', text: 'Aufgabe wurde wieder freigegeben.');
     }
 
     /* ============================================================
-     *  ReportBook-Kontext: Ausbilder-PrÃ¼fung + Signatur
+     *  ReportBook-Kontext: Ausbilder-Prüfung + Signatur
      * ============================================================ */
 
     /**
-     * Entry-Status, den "geprÃ¼ft" bedeutet.
+     * Entry-Status, den "geprüft" bedeutet.
      * (bei dir: 2)
      */
     protected int $reviewedStatus = 2;
     protected int $rejectedStatus = 3;
 
     /**
-     * File-Type fÃ¼r Ausbilder-Signatur (wie Teilnehmer: sign_reportbook_participant)
+     * File-Type für Ausbilder-Signatur (wie Teilnehmer: sign_reportbook_participant)
      */
     protected string $trainerSignatureType = 'sign_reportbook_trainer';
 
     /**
      * Startet die Freigabe:
-     * - prÃ¼ft Task + Rechte
-     * - prÃ¼ft, ob Ausbilder-Signatur existiert
-     * - wenn nicht: Ã¶ffnet Signature-Form
-     * - wenn ja: fÃ¼hrt Approval aus + Task abschlieÃŸen
+     * - prüft Task + Rechte
+     * - prüft, ob Ausbilder-Signatur existiert
+     * - wenn nicht: öffnet Signature-Form
+     * - wenn ja: führt Approval aus + Task abschließen
      */
     public function approveReportBook(): void
     {
@@ -197,11 +185,7 @@ class AdminTaskDetail extends Component
         if (! $reportBook) return;
 
         if ($this->hasRejectedEntries()) {
-            $this->dispatch('showAlert', [
-                'type'  => 'warning',
-                'title' => 'Freigabe nicht mÃ¶glich',
-                'text'  => 'Es sind abgelehnte EintrÃ¤ge markiert. Nutze in diesem Fall bitte "Ablehnen".',
-            ]);
+            $this->dispatch('swal:toast', type: 'warning', title: 'Freigabe nicht möglich', text: 'Es sind abgelehnte Einträge markiert. Nutze in diesem Fall bitte "Ablehnen".');
             return;
         }
 
@@ -246,15 +230,15 @@ class AdminTaskDetail extends Component
     }
 
     /**
-     * Ã–ffnet das generische Signature-Modal (wie im Teilnehmer-Flow) :contentReference[oaicite:3]{index=3}
+     * Öffnet das generische Signature-Modal (wie im Teilnehmer-Flow) :contentReference[oaicite:3]{index=3}
      */
     protected function openTrainerSignatureForm($reportBook): void
     {
-        // Kontext-Name fÃ¼r den Dialog
+        // Kontext-Name für den Dialog
         $courseTitle = data_get($reportBook, 'course.title') ?? 'Kurs';
         $klasse      = data_get($reportBook, 'course.klassen_id');
 
-        $contextName = $klasse ? "{$courseTitle} â€“ {$klasse}" : $courseTitle;
+        $contextName = $klasse ? "{$courseTitle} – {$klasse}" : $courseTitle;
 
         $this->dispatch('openSignatureForm', [
             'fileableType' => ReportBookModel::class,
@@ -299,11 +283,7 @@ class AdminTaskDetail extends Component
         }
 
         if ($this->hasRejectedEntries()) {
-            $this->dispatch('showAlert', [
-                'type'  => 'warning',
-                'title' => 'Freigabe nicht möglich',
-                'text'  => 'Es sind abgelehnte Einträge markiert. Nutze in diesem Fall bitte "Ablehnen".',
-            ]);
+            $this->dispatch('swal:toast', type: 'warning', title: 'Freigabe nicht möglich', text: 'Es sind abgelehnte Einträge markiert. Nutze in diesem Fall bitte "Ablehnen".');
             return;
         }
 
@@ -320,7 +300,7 @@ class AdminTaskDetail extends Component
     }
 
     /**
-     * Setzt alle EintrÃ¤ge auf reviewedStatus (=2) und optional den Gesamtstatus.
+     * Setzt alle Einträge auf reviewedStatus (=2) und optional den Gesamtstatus.
      */
     protected function applyReportBookReview($reportBook): void
     {
@@ -514,7 +494,7 @@ class AdminTaskDetail extends Component
     }
 
     /**
-     * PrÃ¼ft, ob Ausbilder-Signatur vorhanden ist
+     * Prüft, ob Ausbilder-Signatur vorhanden ist
      */
     protected function hasTrainerSignature($reportBook): bool
     {

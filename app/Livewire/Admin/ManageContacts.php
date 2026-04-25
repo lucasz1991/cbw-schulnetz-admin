@@ -32,7 +32,7 @@ class ManageContacts extends Component
     public function refreshContacts()
     {
         $this->resetPage(); 
-        $this->dispatch('showAlert', 'Kontake erfolgreich gespeichert.', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Kontake erfolgreich gespeichert.');
     }
 
     public function render()

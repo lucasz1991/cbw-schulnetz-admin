@@ -91,7 +91,7 @@ class AdminTasksList extends Component
                 $q->where('task_type', 'like', $like)
                     ->orWhereRaw(
                         "CASE task_type
-                            WHEN 'reportbook_review' THEN 'Berichtsheft pruefen'
+                            WHEN 'reportbook_review' THEN 'Berichtsheft prüfen'
                             WHEN 'user_request_review' THEN 'Teilnehmer Antrag'
                             ELSE 'Unbekannte Aufgabe'
                         END LIKE ?",

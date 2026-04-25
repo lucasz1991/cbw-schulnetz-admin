@@ -289,7 +289,7 @@ class OnboardingManagement extends Component
         $this->thumbnailDataUrl = null;
 
         $this->closeModal();
-        $this->dispatch('showAlert', 'Onboarding-Asset gespeichert.', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Onboarding-Asset gespeichert.');
         $this->resetPage();
     }
 
@@ -342,7 +342,7 @@ class OnboardingManagement extends Component
             OnboardingVideo::where('id', $vid)->update(['sort_order' => $i + 1]);
         }
 
-        $this->dispatch('showAlert', 'Reihenfolge aktualisiert.', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Reihenfolge aktualisiert.');
     }
 
     public function toggleActive(int $id): void
@@ -358,7 +358,7 @@ class OnboardingManagement extends Component
     {
         $video = OnboardingVideo::findOrFail($id);
         $video->delete();
-        $this->dispatch('showAlert', 'Video gelöscht (Soft-Delete).', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Video gelöscht (Soft-Delete).');
         $this->resetPage();
     }
 
@@ -366,7 +366,7 @@ class OnboardingManagement extends Component
     {
         $video = OnboardingVideo::withTrashed()->findOrFail($id);
         $video->restore();
-        $this->dispatch('showAlert', 'Video wiederhergestellt.', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Video wiederhergestellt.');
     }
 
     public function forceDelete(int $id): void
@@ -377,7 +377,7 @@ class OnboardingManagement extends Component
         $video->files()->get()->each(fn ($f) => $f->delete());
 
         $video->forceDelete();
-        $this->dispatch('showAlert', 'Video endgültig gelöscht.', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Video endgültig gelöscht.');
         $this->resetPage();
     }
 

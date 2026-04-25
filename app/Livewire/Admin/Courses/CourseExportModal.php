@@ -32,7 +32,7 @@ class CourseExportModal extends Component
     /** ZIP-Option */
     public bool $asZip = true;
 
-    /** Client-seitiges Loading-Flag fuer Export */
+    /** Client-seitiges Loading-Flag für Export */
     public bool $isExporting = false;
 
     /** Optional: Name des Exports */
@@ -113,13 +113,13 @@ class CourseExportModal extends Component
         }
 
         if (! $response) {
-            $this->dispatch('toast', type: 'error', message: 'Keine exportierbaren Dokumente für die Auswahl gefunden.');
+            $this->dispatch('swal:toast', type: 'error', text: 'Keine exportierbaren Dokumente für die Auswahl gefunden.');
             return;
         }
 
         try {
             $this->showModal = false;
-            $this->dispatch('toast', type: 'success', message: 'Download wurde gestartet.');
+            $this->dispatch('swal:toast', type: 'success', text: 'Download wurde gestartet.');
 
             return $response;
         } finally {

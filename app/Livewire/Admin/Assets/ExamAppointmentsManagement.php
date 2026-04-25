@@ -220,7 +220,7 @@ class ExamAppointmentsManagement extends Component
         // Tab nach Save passend setzen (damit UX stimmt)
         $this->tab = $data['type'];
 
-        $this->dispatch('toast', 'Prüfung gespeichert', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Prüfung gespeichert');
 
         $this->resetPages();
     }
@@ -229,7 +229,7 @@ class ExamAppointmentsManagement extends Component
     {
         ExamAppointment::findOrFail($id)->delete();
 
-        $this->dispatch('toast', 'Prüfung gelöscht', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Prüfung gelöscht');
 
         $this->resetPages();
     }

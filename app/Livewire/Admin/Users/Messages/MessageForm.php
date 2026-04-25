@@ -54,7 +54,7 @@ class MessageForm extends Component
             }
         }
 
-        $this->dispatch('showAlert', 'Bitte wähle mindestens einen Benutzer oder gib eine gültige Mailadresse an.', 'info');
+        $this->dispatch('swal:toast', type: 'info', text: 'Bitte wähle mindestens einen Benutzer oder gib eine gültige Mailadresse an.');
     }
 
     public function handleModalClosed(): void
@@ -130,7 +130,7 @@ class MessageForm extends Component
             $user = User::find($this->mailUserId);
 
             if (! $user) {
-                $this->dispatch('showAlert', 'Benutzer nicht gefunden.', 'error');
+                $this->dispatch('swal:toast', type: 'error', text: 'Benutzer nicht gefunden.');
                 return;
             }
 
@@ -145,7 +145,7 @@ class MessageForm extends Component
                 ]],
             ]);
 
-            $this->dispatch('showAlert', 'Mail wurde zur Verarbeitung an ' . $user->email . ' vorbereitet.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Mail wurde zur Verarbeitung an ' . $user->email . ' vorbereitet.');
         } elseif (! empty($this->directRecipients)) {
             $mail = Mail::create([
                 'type' => 'mail',
@@ -164,7 +164,7 @@ class MessageForm extends Component
                 ? $this->directRecipients[0]
                 : count($this->directRecipients) . ' Mailadressen';
 
-            $this->dispatch('showAlert', 'Test-Mail wurde zur Verarbeitung an ' . $recipientLabel . ' vorbereitet.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Test-Mail wurde zur Verarbeitung an ' . $recipientLabel . ' vorbereitet.');
         } else {
             $recipients = [];
 
@@ -183,7 +183,7 @@ class MessageForm extends Component
             }
 
             if (empty($recipients)) {
-                $this->dispatch('showAlert', 'Es wurden keine gültigen Empfänger gefunden.', 'error');
+                $this->dispatch('swal:toast', type: 'error', text: 'Es wurden keine gültigen Empfänger gefunden.');
                 return;
             }
 
@@ -194,7 +194,7 @@ class MessageForm extends Component
                 'recipients' => $recipients,
             ]);
 
-            $this->dispatch('showAlert', 'Mail wurde zur Verarbeitung für ' . count($recipients) . ' Benutzer vorbereitet.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Mail wurde zur Verarbeitung für ' . count($recipients) . ' Benutzer vorbereitet.');
         }
 
         foreach ($this->fileUploads as $uploadedFile) {
@@ -225,7 +225,7 @@ class MessageForm extends Component
         $normalized = $this->normalizeEmails($emails);
 
         if (empty($normalized)) {
-            $this->dispatch('showAlert', 'Bitte gib mindestens eine gültige Mailadresse an.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Bitte gib mindestens eine gültige Mailadresse an.');
             return true;
         }
 

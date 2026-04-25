@@ -32,7 +32,7 @@
                         class="flex w-full items-center gap-2 px-4 py-2 text-sm text-left text-blue-700 hover:bg-blue-50 disabled:opacity-60"
                     >
                         <i class="fal fa-sync"></i>
-                        <span>Pruefungsergebnisse hart aus UVS laden</span>
+                        <span>Prüfungsergebnisse hart aus UVS laden</span>
                     </button>
 
                     <button

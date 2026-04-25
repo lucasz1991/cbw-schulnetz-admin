@@ -145,7 +145,7 @@ class CourseShow extends Component
         abort_unless(auth()->user()?->isAdmin(), Response::HTTP_FORBIDDEN);
 
         if (! $this->deletedTransferSourceCourseId) {
-            $this->dispatch('toast', type: 'warning', message: 'Bitte waehlen Sie zuerst einen geloeschten Quellkurs aus.');
+            $this->dispatch('swal:toast', type: 'warning', text: 'Bitte wählen Sie zuerst einen gelöschten Quellkurs aus.');
             return;
         }
 
@@ -153,7 +153,7 @@ class CourseShow extends Component
 
         if (! $sourceCourse) {
             $this->deletedTransferSourceCourseId = null;
-            $this->dispatch('toast', type: 'warning', message: 'Der ausgewaehlte Quellkurs ist nicht mehr verfuegbar.');
+            $this->dispatch('swal:toast', type: 'warning', text: 'Der ausgewählte Quellkurs ist nicht mehr verfügbar.');
             return;
         }
 
@@ -163,7 +163,7 @@ class CourseShow extends Component
 
         $this->course = $this->course->fresh();
 
-        $this->dispatch('toast', type: $toast['type'], message: $toast['message']);
+        $this->dispatch('swal:toast', type: $toast['type'], text: $toast['message']);
     }
 
     public function getDeletedTransferSourceCourseProperty(): ?Course
@@ -184,19 +184,19 @@ class CourseShow extends Component
         if ($sourceBooksFound === 0) {
             return [
                 'type' => 'info',
-                'message' => 'Im ausgewaehlten geloeschten Kurs wurden keine Berichtshefte gefunden.',
+                'message' => 'Im ausgewählten gelöschten Kurs wurden keine Berichtshefte gefunden.',
             ];
         }
 
         if ($participantsProcessed === 0) {
-            $message = 'Es konnten keine Berichtshefte in den aktuellen Kurs uebernommen werden.';
+            $message = 'Es konnten keine Berichtshefte in den aktuellen Kurs übernommen werden.';
 
             if ($participantsSkipped > 0) {
                 $message .= ' Die betroffenen Teilnehmer sind im Zielkurs derzeit nicht aktiv zugeordnet.';
             }
 
             if ((int) ($summary['participants_without_matching_days'] ?? 0) > 0) {
-                $message .= ' Fuer die uebrigen Berichtsheft-Eintraege gibt es im Zielkurs keine passenden Kurstage.';
+                $message .= ' Für die übrigen Berichtsheft-Einträge gibt es im Zielkurs keine passenden Kurstage.';
             }
 
             return [
@@ -207,7 +207,7 @@ class CourseShow extends Component
 
         $parts = [
             $participantsProcessed . ' Teilnehmer',
-            ((int) ($summary['entries_kept'] ?? 0)) . ' Eintraege',
+            ((int) ($summary['entries_kept'] ?? 0)) . ' Einträge',
         ];
 
         if ((int) ($summary['duplicate_dates_resolved'] ?? 0) > 0) {
@@ -215,7 +215,7 @@ class CourseShow extends Component
         }
 
         if ((int) ($summary['entries_deleted'] ?? 0) > 0) {
-            $parts[] = ((int) $summary['entries_deleted']) . ' alte Dubletten geloescht';
+            $parts[] = ((int) $summary['entries_deleted']) . ' alte Dubletten gelöscht';
         }
 
         if ((int) ($summary['entries_ignored_without_matching_day'] ?? 0) > 0) {
@@ -223,12 +223,12 @@ class CourseShow extends Component
         }
 
         if ($participantsSkipped > 0) {
-            $parts[] = $participantsSkipped . ' Teilnehmer uebersprungen';
+            $parts[] = $participantsSkipped . ' Teilnehmer übersprungen';
         }
 
         return [
             'type' => 'success',
-            'message' => 'Berichtshefte uebernommen: ' . implode(', ', $parts) . '.',
+            'message' => 'Berichtshefte übernommen: ' . implode(', ', $parts) . '.',
         ];
     }
 

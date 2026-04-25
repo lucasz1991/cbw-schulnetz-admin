@@ -4,6 +4,8 @@ import mask from '@alpinejs/mask';
 import resize from '@alpinejs/resize';
 import intersect from '@alpinejs/intersect';
 import sort from '@alpinejs/sort';
+import 'sweetalert2/dist/sweetalert2.min.css';
+import './assets/sweetalerts/sweetalerts';
 
 Alpine.plugin(collapse);
 Alpine.plugin(mask);
@@ -128,4 +130,3 @@ if (document.getElementById('studio-editor')) {
 
 
 feather.replace()
-

@@ -82,11 +82,11 @@ class ShowShelfRental extends Component
         if($fileStorageResponse){
             $file = asset('storage/' .$filePath);
             \Log::info('abels wurden erfolgreich zum Drucken hinzugefügt:', ['Filename' => $filePath]);
-            $this->dispatch('showAlert', 'Labels wurden erfolgreich zum Drucken erstellt und als Download bereitgestellt.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Labels wurden erfolgreich zum Drucken erstellt und als Download bereitgestellt.');
             $this->downloadUrl = $file;
             
         }else{
-            $this->dispatch('showAlert', 'Labels konnten nicht erstellt werden..', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Labels konnten nicht erstellt werden..');
 
         }
     }
@@ -114,11 +114,11 @@ class ShowShelfRental extends Component
         }
     
         if ($noActiveProducts) {
-            $this->dispatch('showAlert', 'Alle ausgewählten Produkte sind bereits deaktiv.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Alle ausgewählten Produkte sind bereits deaktiv.');
         } elseif ($anyFailed) {
-            $this->dispatch('showAlert', 'Einige Produkte konnten nicht deaktiviert werden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Einige Produkte konnten nicht deaktiviert werden.');
         } else {
-            $this->dispatch('showAlert', 'Produkte erfolgreich deaktiviert.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Produkte erfolgreich deaktiviert.');
         }
     
         $this->loadRental(); // Daten neu laden
@@ -142,9 +142,9 @@ class ShowShelfRental extends Component
         }
     
         if ($anyFailed) {
-            $this->dispatch('showAlert', 'Einige Produkte konnten nicht gelöscht werden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Einige Produkte konnten nicht gelöscht werden.');
         } else {
-            $this->dispatch('showAlert', 'Produkte erfolgreich gelöscht.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Produkte erfolgreich gelöscht.');
         }
     
         $this->selectedProducts = [];
@@ -164,7 +164,7 @@ class ShowShelfRental extends Component
     public function executeAction()
     {   
         if (!$this->action || empty($this->selectedProducts)) {
-            $this->dispatch('showAlert', 'Keine Aktion oder keine Produkte ausgewählt.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Keine Aktion oder keine Produkte ausgewählt.');
             return;
         }
         switch ($this->action) {
@@ -184,7 +184,7 @@ class ShowShelfRental extends Component
                 $this->showMoveProductsModal();
                 break;
             default:
-                $this->dispatch('showAlert', 'Ungültige Aktion ausgewählt.', 'error');
+                $this->dispatch('swal:toast', type: 'error', text: 'Ungültige Aktion ausgewählt.');
         } 
     }
 
@@ -199,19 +199,19 @@ class ShowShelfRental extends Component
         if ($this->availableRentals->isNotEmpty()) {
             $this->moveProductsModalOpen = true;
         }else{
-            $this->dispatch('showAlert', 'Keine verfügbaren Regalmieten gefunden.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Keine verfügbaren Regalmieten gefunden.');
         }
     }
 
     public function moveProducts()
     {
         if (!$this->selectedRental) {
-            $this->dispatch('showAlert', 'Bitte wähle eine Ziel-Regalmiete aus.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Bitte wähle eine Ziel-Regalmiete aus.');
             return;
         }
     
         if (empty($this->selectedProducts)) {
-            $this->dispatch('showAlert', 'Keine Produkte ausgewählt.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Keine Produkte ausgewählt.');
             return;
         }
     
@@ -221,7 +221,7 @@ class ShowShelfRental extends Component
             ->get();
     
         if ($draftProducts->isEmpty()) {
-            $this->dispatch('showAlert', 'Keines der ausgewählten Produkte ist ein Entwurf. Nur Entwürfe können umgezogen werden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Keines der ausgewählten Produkte ist ein Entwurf. Nur Entwürfe können umgezogen werden.');
             return;
         }
     
@@ -230,7 +230,7 @@ class ShowShelfRental extends Component
             'shelf_rental_id' => $this->selectedRental,
         ]);
     
-        $this->dispatch('showAlert', count($draftProducts) . ' Entwürfe wurden erfolgreich umgezogen.', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: count($draftProducts) . ' Entwürfe wurden erfolgreich umgezogen.');
     
         // Zurücksetzen
         $this->moveProductsModalOpen = false;
@@ -267,13 +267,13 @@ class ShowShelfRental extends Component
         
         if ($allActive) {
             // Alle Produkte sind bereits aktiv
-            $this->dispatch('showAlert', 'Alle ausgewählten Produkte sind bereits aktiv.', 'info');
+            $this->dispatch('swal:toast', type: 'info', text: 'Alle ausgewählten Produkte sind bereits aktiv.');
         } elseif ($allGood) {
             // Einige Produkte wurden erfolgreich aktiviert
-            $this->dispatch('showAlert', 'Produkte erfolgreich aktiviert und an das Kassensystem gesendet.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Produkte erfolgreich aktiviert und an das Kassensystem gesendet.');
         } else {
             // Kein Produkt konnte aktiviert werden
-            $this->dispatch('showAlert', 'Es gab einen Fehler beim Versuch, die Produkte an das Kassensystem zu senden. Versuche es bitte erneut falls das Problem weiterhin besteht, bitte Admin informieren.', 'warning');
+            $this->dispatch('swal:toast', type: 'warning', text: 'Es gab einen Fehler beim Versuch, die Produkte an das Kassensystem zu senden. Versuche es bitte erneut falls das Problem weiterhin besteht, bitte Admin informieren.');
         }
     
         $this->progress = 0; // Fortschrittsanzeige zurücksetzen
@@ -470,7 +470,7 @@ class ShowShelfRental extends Component
     {
         try {
             if (!$this->shelfRental) {
-                $this->dispatch('showAlert', 'Regalmiete nicht gefunden.', 'error');
+                $this->dispatch('swal:toast', type: 'error', text: 'Regalmiete nicht gefunden.');
                 return;
             }
     
@@ -496,13 +496,13 @@ class ShowShelfRental extends Component
                 ->delete();
     
             // Erfolgsmeldung
-            $this->dispatch('showAlert', 'Regalmiete erfolgreich storniert.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Regalmiete erfolgreich storniert.');
     
             // Daten neu laden
             $this->loadRental();
         } catch (\Exception $e) {
             Log::error('Fehler beim Stornieren der Regalmiete:', ['message' => $e->getMessage()]);
-            $this->dispatch('showAlert', 'Fehler beim Stornieren der Regalmiete.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Fehler beim Stornieren der Regalmiete.');
         }
     }
     

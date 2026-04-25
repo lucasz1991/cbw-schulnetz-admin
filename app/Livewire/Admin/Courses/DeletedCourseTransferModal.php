@@ -91,7 +91,7 @@ class DeletedCourseTransferModal extends Component
             ->first();
 
         if (! $sourceCourse) {
-            $this->addError('selectedSourceCourseId', 'Der geloeschte Kurs konnte nicht geladen werden.');
+            $this->addError('selectedSourceCourseId', 'Der gelöschte Kurs konnte nicht geladen werden.');
             return;
         }
 
@@ -102,19 +102,19 @@ class DeletedCourseTransferModal extends Component
     public function confirmSourceSelection(): void
     {
         if (! $this->selectedSourceCourseId) {
-            $this->addError('selectedSourceCourseId', 'Bitte waehlen Sie zuerst einen geloeschten Kurs aus.');
+            $this->addError('selectedSourceCourseId', 'Bitte wählen Sie zuerst einen gelöschten Kurs aus.');
             return;
         }
 
         $sourceCourse = Course::onlyTrashed()->find($this->selectedSourceCourseId);
 
         if (! $sourceCourse) {
-            $this->addError('selectedSourceCourseId', 'Der ausgewaehlte geloeschte Kurs ist nicht mehr verfuegbar.');
+            $this->addError('selectedSourceCourseId', 'Der ausgewählte gelöschte Kurs ist nicht mehr verfügbar.');
             return;
         }
 
         $this->dispatch('deletedCourseTransferSourceSelected', sourceCourseId: $sourceCourse->id);
-        $this->dispatch('toast', type: 'success', message: 'Der geloeschte Quellkurs wurde ausgewaehlt.');
+        $this->dispatch('swal:toast', type: 'success', text: 'Der gelöschte Quellkurs wurde ausgewählt.');
 
         $this->close();
     }
@@ -430,14 +430,14 @@ class DeletedCourseTransferModal extends Component
         $pushRecoverable('Anwesenheitstage', 'attendance_course_days_total');
         $pushRecoverable('Tagesdateien', 'day_files_total');
         $pushRecoverable('Teilnehmer-Zuordnungen', 'enrollments_total');
-        $pushRecoverable('Pruefungsergebnisse', 'results_total');
+        $pushRecoverable('Prüfungsergebnisse', 'results_total');
         $pushRecoverable('Bewertungen', 'ratings_total');
-        $pushRecoverable('Material-Bestaetigungen', 'acknowledgements_total');
+        $pushRecoverable('Material-Bestätigungen', 'acknowledgements_total');
         $pushRecoverable('Material-Signaturen', 'acknowledgement_files_total');
         $pushRecoverable('Kursdateien', 'course_files_total');
         $pushRecoverable('FilePool-Dateien', 'file_pool_files_total');
         $pushRecoverable('Berichtshefte mit passenden Tagen', 'report_books_transferable_total');
-        $pushRecoverable('Passende Berichtsheft-Eintraege', 'report_book_entries_transferable_total');
+        $pushRecoverable('Passende Berichtsheft-Einträge', 'report_book_entries_transferable_total');
 
         $missing = [];
 
@@ -450,7 +450,7 @@ class DeletedCourseTransferModal extends Component
         }
 
         if ((int) ($stats['results_total'] ?? 0) === 0) {
-            $missing[] = 'Pruefungsergebnisse';
+            $missing[] = 'Prüfungsergebnisse';
         }
 
         if ((int) ($stats['ratings_total'] ?? 0) === 0) {
@@ -459,7 +459,7 @@ class DeletedCourseTransferModal extends Component
 
         if ((int) ($stats['acknowledgements_total'] ?? 0) === 0
             && (int) ($stats['acknowledgement_files_total'] ?? 0) === 0) {
-            $missing[] = 'Material-Bestaetigungen';
+            $missing[] = 'Material-Bestätigungen';
         }
 
         if ((int) ($stats['course_files_total'] ?? 0) === 0
@@ -472,13 +472,13 @@ class DeletedCourseTransferModal extends Component
             && (int) ($stats['report_book_files_total'] ?? 0) === 0) {
             $missing[] = 'Berichtshefte';
         } elseif ((int) ($stats['target_course_days_total'] ?? 0) === 0) {
-            $missing[] = 'Im Zielkurs sind noch keine Kurstage fuer Berichtshefte vorhanden';
+            $missing[] = 'Im Zielkurs sind noch keine Kurstage für Berichtshefte vorhanden';
         } elseif ((int) ($stats['report_book_entries_transferable_total'] ?? 0) === 0) {
-            $missing[] = 'Keine Berichtsheft-Eintraege mit passendem Kurstag im Zielkurs';
+            $missing[] = 'Keine Berichtsheft-Einträge mit passendem Kurstag im Zielkurs';
         }
 
         if ((int) ($stats['report_book_entries_unmatched_total'] ?? 0) > 0) {
-            $missing[] = (int) $stats['report_book_entries_unmatched_total'] . ' Berichtsheft-Eintraege ohne passenden Kurstag';
+            $missing[] = (int) $stats['report_book_entries_unmatched_total'] . ' Berichtsheft-Einträge ohne passenden Kurstag';
         }
 
         $legacyCoursePayload = collect([
@@ -502,22 +502,22 @@ class DeletedCourseTransferModal extends Component
 
         $summary = match (true) {
             (int) ($stats['report_books_total'] ?? 0) > 0 && (int) ($stats['target_course_days_total'] ?? 0) === 0
-                => 'Im Zielkurs gibt es aktuell keine Kurstage; Berichtsheft-Eintraege koennen daher noch nicht uebernommen werden.',
+                => 'Im Zielkurs gibt es aktuell keine Kurstage; Berichtsheft-Einträge können daher noch nicht übernommen werden.',
             (int) ($stats['report_book_entries_transferable_total'] ?? 0) > 0
                 && (int) ($stats['report_book_entries_unmatched_total'] ?? 0) > 0
-                => 'Bei Berichtsheften werden nur Eintraege gezaehlt, deren Datum bereits als Kurstag im Zielkurs existiert; unpassende Tage bleiben unberuecksichtigt.',
+                => 'Bei Berichtsheften werden nur Einträge gezählt, deren Datum bereits als Kurstag im Zielkurs existiert; unpassende Tage bleiben unberücksichtigt.',
             (int) ($stats['report_book_entries_transferable_total'] ?? 0) > 0
-                => 'Berichtsheft-Eintraege sind nur fuer bereits vorhandene Kurstage im Zielkurs uebertragbar.',
+                => 'Berichtsheft-Einträge sind nur für bereits vorhandene Kurstage im Zielkurs übertragbar.',
             (int) ($stats['report_books_total'] ?? 0) > 0
                 => 'Es sind Berichtsheft-Daten vorhanden, aber aktuell passt kein Eintrag zeitlich zu den Kurstagen des Zielkurses.',
             $legacyCoursePayload > 0 && $reportBookPayload > 0
                 => 'Neben Berichtsheften sind auch noch direkte Kursinhalte in der Datenbank vorhanden.',
             $legacyCoursePayload > 0
-                => 'Es sind noch direkte Kursinhalte vorhanden, die grundsaetzlich uebernommen werden koennten.',
+                => 'Es sind noch direkte Kursinhalte vorhanden, die grundsätzlich übernommen werden könnten.',
             $reportBookPayload > 0
-                => 'Es sind nur noch Berichtsheft-Daten vorhanden; die uebrigen Kursinhalte wurden offenbar bereits entfernt.',
+                => 'Es sind nur noch Berichtsheft-Daten vorhanden; die übrigen Kursinhalte wurden offenbar bereits entfernt.',
             default
-                => 'Aktuell ist ausser dem geloeschten Kursdatensatz kein weiterer uebertragbarer Inhalt mehr vorhanden.',
+                => 'Aktuell ist außer dem gelöschten Kursdatensatz kein weiterer übertragbarer Inhalt mehr vorhanden.',
         };
 
         return [

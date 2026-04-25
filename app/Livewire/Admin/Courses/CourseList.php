@@ -407,7 +407,7 @@ public function updated($prop): void
 
     public function exportCourses()
     {
-        $this->dispatch('showAlert', 'Export erfolgreich!', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Export erfolgreich!');
 
     }
 
@@ -445,7 +445,7 @@ public function exportAttendancePdf($courseId): void
 
     $relPath = $course->createAttendanceListPdfForPreview(); // NEU: speichert in storage und gibt relativen Pfad zurück
     if (! $relPath) {
-        $this->dispatch('showAlert', 'Keine Unterrichtstage vorhanden.', 'error');
+        $this->dispatch('swal:toast', type: 'error', text: 'Keine Unterrichtstage vorhanden.');
         return;
     }
 
@@ -465,7 +465,7 @@ public function exportDokuPdf($courseId): void
 
     $relPath = $course->createDokuPdfForPreview();
     if (! $relPath) {
-        $this->dispatch('showAlert', 'Keine Unterrichtstage vorhanden.', 'error');
+        $this->dispatch('swal:toast', type: 'error', text: 'Keine Unterrichtstage vorhanden.');
         return;
     }
 
@@ -485,11 +485,11 @@ public function exportMaterialConfirmationsPdf($courseId): void
 
     $relPath = $course->createMaterialConfirmationsPdfForPreview();
     if (! $relPath) {
-        $this->dispatch('showAlert', 'Keine Teilnehmer / Materialbestätigungen vorhanden.', 'error');
+        $this->dispatch('swal:toast', type: 'error', text: 'Keine Teilnehmer / Materialbestätigungen vorhanden.');
         return;
     }
 
-    $filename = sprintf('Materialbestaetigungen_%s.pdf', $course->klassen_id ?: $course->id);
+    $filename = sprintf('Materialbestätigungen_%s.pdf', $course->klassen_id ?: $course->id);
 
     $this->dispatch('filepreview:open',
         disk: 'local',
@@ -505,7 +505,7 @@ public function exportInvoicePdf($courseId): void
 
     $relPath = $course->createInvoicePdfForPreview();
     if (! $relPath) {
-        $this->dispatch('showAlert', 'Keine Rechnungsdaten vorhanden.', 'error');
+        $this->dispatch('swal:toast', type: 'error', text: 'Keine Rechnungsdaten vorhanden.');
         return;
     }
 
@@ -525,7 +525,7 @@ public function exportRedThreadPdf($courseId): void
 
     $relPath = $course->createRedThreadPdfForPreview();
     if (! $relPath) {
-        $this->dispatch('showAlert', 'Roter Faden nicht verfügbar.', 'error');
+        $this->dispatch('swal:toast', type: 'error', text: 'Roter Faden nicht verfügbar.');
         return;
     }
 
@@ -545,11 +545,11 @@ public function exportExamResultsPdf($courseId): void
 
     $relPath = $course->createExamResultsPdfForPreview();
     if (! $relPath) {
-        $this->dispatch('showAlert', 'Keine Prüfungsergebnisse vorhanden.', 'error');
+        $this->dispatch('swal:toast', type: 'error', text: 'Keine Prüfungsergebnisse vorhanden.');
         return;
     }
 
-    $filename = sprintf('Pruefungsergebnisse_%s.pdf', $course->klassen_id ?: $course->id);
+    $filename = sprintf('Prüfungsergebnisse_%s.pdf', $course->klassen_id ?: $course->id);
 
     $this->dispatch('filepreview:open',
         disk: 'local',
@@ -565,7 +565,7 @@ public function exportCourseRatingsPdf($courseId): void
 
     $relPath = $course->createCourseRatingsPdfForPreview();
     if (! $relPath) {
-        $this->dispatch('showAlert', 'Keine Kursbewertungen vorhanden.', 'error');
+        $this->dispatch('swal:toast', type: 'error', text: 'Keine Kursbewertungen vorhanden.');
         return;
     }
 

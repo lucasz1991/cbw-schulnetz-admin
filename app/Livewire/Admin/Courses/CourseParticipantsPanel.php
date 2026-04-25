@@ -30,8 +30,8 @@ class CourseParticipantsPanel extends Component
 
     /**
      * Baut die Datenstruktur fuer das Teilnehmer-Panel:
-     * - Materialbestaetigung
-     * - Pruefungsergebnisse (alle Eintraege pro Teilnehmer)
+     * - Materialbestätigung
+     * - Prüfungsergebnisse (alle Einträge pro Teilnehmer)
      * - Kursbewertung (genau 1 Rating pro User & Kurs)
      */
     protected function buildRows(): void
@@ -45,12 +45,12 @@ class CourseParticipantsPanel extends Component
 
         $this->examResultsCount = $this->course->results->count();
 
-        // Materialbestaetigungen pro Person
+        // Materialbestätigungen pro Person
         $acks = $this->course->materialAcknowledgements
             ->sortByDesc('acknowledged_at')
             ->groupBy('person_id');
 
-        // Pruefungsresultate pro Person (alle Eintraege, neuester zuerst)
+        // Prüfungsresultate pro Person (alle Einträge, neuester zuerst)
         $resultsByPerson = $this->course->results
             ->sortByDesc('updated_at')
             ->groupBy('person_id');
@@ -66,13 +66,13 @@ class CourseParticipantsPanel extends Component
             ->values()
             ->map(function ($person) use ($acks, $resultsByPerson, $ratingsByUser) {
 
-                // Materialbestaetigung
+                // Materialbestätigung
                 $ackList         = $acks->get($person->id);
                 $latestAck       = $ackList?->first();
                 $hasConfirmation = (bool) $latestAck;
                 $confirmedAt     = $latestAck?->acknowledged_at;
 
-                // Pruefungsresultate
+                // Prüfungsresultate
                 /** @var Collection<int, CourseResult> $personResults */
                 $personResults = ($resultsByPerson->get($person->id) ?? collect())->values();
 
@@ -183,14 +183,14 @@ class CourseParticipantsPanel extends Component
             '+' => ['+', 'Teilgenommen', 'bg-emerald-50 text-emerald-700 border-emerald-200', 'fal fa-check-circle'],
             '-' => ['-', 'Nicht teilgenommen', 'bg-amber-50 text-amber-700 border-amber-200', 'fal fa-user-slash'],
             'V' => ['V', 'Betrugsversuch', 'bg-red-50 text-red-700 border-red-200', 'fal fa-ban'],
-            'XO' => ['XO', 'Externe Pruefung ausstehend', 'bg-blue-50 text-blue-700 border-blue-200', 'fal fa-clock'],
-            'B' => ['B', 'Externe Pruefung bestanden', 'bg-emerald-50 text-emerald-700 border-emerald-200', 'fal fa-check-circle'],
-            'D' => ['D', 'Externe Pruefung durchgefallen', 'bg-rose-50 text-rose-700 border-rose-200', 'fal fa-times-circle'],
-            'X' => ['X', 'Externe Pruefung nicht teilgenommen', 'bg-amber-50 text-amber-700 border-amber-200', 'fal fa-user-slash'],
+            'XO' => ['XO', 'Externe Prüfung ausstehend', 'bg-blue-50 text-blue-700 border-blue-200', 'fal fa-clock'],
+            'B' => ['B', 'Externe Prüfung bestanden', 'bg-emerald-50 text-emerald-700 border-emerald-200', 'fal fa-check-circle'],
+            'D' => ['D', 'Externe Prüfung durchgefallen', 'bg-rose-50 text-rose-700 border-rose-200', 'fal fa-times-circle'],
+            'X' => ['X', 'Externe Prüfung nicht teilgenommen', 'bg-amber-50 text-amber-700 border-amber-200', 'fal fa-user-slash'],
             'N' => ['N', 'Nachklausur', 'bg-indigo-50 text-indigo-700 border-indigo-200', 'fal fa-redo-alt'],
             'K' => ['K', 'Nachkorrektur', 'bg-sky-50 text-sky-700 border-sky-200', 'fal fa-search'],
-            'I' => ['I', 'Pruefung ignorieren', 'bg-slate-50 text-slate-700 border-slate-200', 'fal fa-eye-slash'],
-            'E' => ['E', 'Externe Pruefung ausstehend', 'bg-blue-50 text-blue-700 border-blue-200', 'fal fa-clock'],
+            'I' => ['I', 'Prüfung ignorieren', 'bg-slate-50 text-slate-700 border-slate-200', 'fal fa-eye-slash'],
+            'E' => ['E', 'Externe Prüfung ausstehend', 'bg-blue-50 text-blue-700 border-blue-200', 'fal fa-clock'],
             default => [null, null, null, null],
         };
     }
@@ -255,19 +255,19 @@ class CourseParticipantsPanel extends Component
         $person = Person::find($personId);
 
         if (! $person) {
-            $this->dispatch('showAlert', 'Person nicht gefunden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Person nicht gefunden.');
             return;
         }
 
         try {
             $person->apiupdate();
-            $this->dispatch('showAlert', 'Person API Update wurde gestartet.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Person API Update wurde gestartet.');
         } catch (\Throwable $e) {
             \Log::error('Person API Update konnte nicht gestartet werden.', [
                 'person_id' => $personId,
                 'error' => $e->getMessage(),
             ]);
-            $this->dispatch('showAlert', 'Person API Update konnte nicht gestartet werden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Person API Update konnte nicht gestartet werden.');
         }
     }
 
@@ -279,7 +279,7 @@ class CourseParticipantsPanel extends Component
 
             $this->dispatch(
                 'showAlert',
-                'Hartes UVS-Laden der Pruefungsergebnisse wurde in die Queue gestellt.',
+                'Hartes UVS-Laden der Prüfungsergebnisse wurde in die Queue gestellt.',
                 'success'
             );
         } catch (\Throwable $e) {
@@ -293,7 +293,7 @@ class CourseParticipantsPanel extends Component
 
             $this->dispatch(
                 'showAlert',
-                'Hartes UVS-Laden der Pruefungsergebnisse konnte nicht gestartet werden.',
+                'Hartes UVS-Laden der Prüfungsergebnisse konnte nicht gestartet werden.',
                 'error'
             );
         }
@@ -315,7 +315,7 @@ class CourseParticipantsPanel extends Component
         if ($status === CourseResultsLoadService::STATUS_FAILED) {
             $this->dispatch(
                 'showAlert',
-                'Hartes UVS-Laden der Pruefungsergebnisse ist fehlgeschlagen.',
+                'Hartes UVS-Laden der Prüfungsergebnisse ist fehlgeschlagen.',
                 'error'
             );
         }
@@ -332,18 +332,18 @@ class CourseParticipantsPanel extends Component
 
             $this->dispatch(
                 'showAlert',
-                "Pruefungsergebnisse geloescht: {$deleted}",
+                "Prüfungsergebnisse gelöscht: {$deleted}",
                 'success'
             );
         } catch (\Throwable $e) {
-            \Log::error('Pruefungsergebnisse konnten nicht geloescht werden.', [
+            \Log::error('Prüfungsergebnisse konnten nicht gelöscht werden.', [
                 'course_id' => $this->course->id,
                 'error' => $e->getMessage(),
             ]);
 
             $this->dispatch(
                 'showAlert',
-                'Pruefungsergebnisse konnten nicht geloescht werden.',
+                'Prüfungsergebnisse konnten nicht gelöscht werden.',
                 'error'
             );
         }

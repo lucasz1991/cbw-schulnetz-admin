@@ -82,7 +82,7 @@ class UserMessages extends Component
     public function deleteMessage(int $messageId): void
     {
         if (!Auth::user()?->isAdmin()) {
-            $this->dispatch('showAlert', 'Keine Berechtigung zum Löschen.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Keine Berechtigung zum Löschen.');
             return;
         }
 
@@ -93,7 +93,7 @@ class UserMessages extends Component
             ->first();
 
         if (! $message) {
-            $this->dispatch('showAlert', 'Nachricht nicht gefunden.', 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Nachricht nicht gefunden.');
             return;
         }
 
@@ -107,7 +107,7 @@ class UserMessages extends Component
             $this->closeMessageModal();
         }
 
-        $this->dispatch('showAlert', 'Nachricht wurde gelöscht.', 'success');
+        $this->dispatch('swal:toast', type: 'success', text: 'Nachricht wurde gelöscht.');
         $this->resetPage();
     }
 

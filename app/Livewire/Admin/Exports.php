@@ -42,10 +42,10 @@ class Exports extends Component
             );
     
             // Erfolgs-Message
-            $this->dispatch('showAlert', 'Exporteinstellungen erfolgreich gespeichert.', 'success');
+            $this->dispatch('swal:toast', type: 'success', text: 'Exporteinstellungen erfolgreich gespeichert.');
         } catch (\Exception $e) {
             // Fehler-Message
-            $this->dispatch('showAlert', 'Fehler beim Speichern: ' . $e->getMessage(), 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Fehler beim Speichern: ' . $e->getMessage());
         }
     }
     
@@ -95,7 +95,7 @@ class Exports extends Component
     
         } catch (\Exception $e) {
             // **Fehlermeldung senden**
-            $this->dispatch('showAlert', 'Fehler: ' . $e->getMessage(), 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Fehler: ' . $e->getMessage());
         }
     }
 
@@ -136,7 +136,7 @@ class Exports extends Component
             $filename = 'minifinds-regalbuchungen_verlaengerungen_export_' . $year . '-' . $month . '.csv';
             $this->downloadCsv($csv, $filename, 'Die Verlängerungen wurden erfolgreich exportiert.');
         } catch (\Exception $e) {
-            $this->dispatch('showAlert', 'Fehler: ' . $e->getMessage(), 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Fehler: ' . $e->getMessage());
         }
     }
     
@@ -198,7 +198,7 @@ class Exports extends Component
             $filename = 'minifinds-auszahlungen_export_' . $year . '-' . $month . '.csv';
             $this->downloadCsv($csv, $filename, 'Die Auszahlungen wurden erfolgreich exportiert.');
         } catch (\Exception $e) {
-            $this->dispatch('showAlert', 'Fehler: ' . $e->getMessage(), 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Fehler: ' . $e->getMessage());
         }
     }
 
@@ -240,7 +240,7 @@ class Exports extends Component
             $filename = 'minifinds-kunden_export_' . $year . '-' . $month . '.csv';
             $this->downloadCsv($csv, $filename, 'Die Kunden wurden erfolgreich exportiert.');
         } catch (\Exception $e) {
-            $this->dispatch('showAlert', 'Fehler: ' . $e->getMessage(), 'error');
+            $this->dispatch('swal:toast', type: 'error', text: 'Fehler: ' . $e->getMessage());
         }
     }
 
@@ -249,7 +249,7 @@ class Exports extends Component
         $csvUtf8 = "\xEF\xBB\xBF" . mb_convert_encoding($csv, 'UTF-8', 'auto');
         $encodedCsv = base64_encode($csvUtf8);
         $this->dispatch('downloadCsv', [$encodedCsv, $filename]);
-        $this->dispatch('showAlert', $successMessage, 'success');
+        $this->dispatch('swal:toast', type: 'success', text: $successMessage);
     }
     
     /**
