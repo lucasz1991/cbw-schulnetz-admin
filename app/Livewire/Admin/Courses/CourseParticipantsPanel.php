@@ -23,7 +23,7 @@ class CourseParticipantsPanel extends Component
     {
         $this->course = $course;
         $this->rows   = collect();
-        $this->isPollingCourseResultsLoad = app(CourseResultsLoadService::class)->isBusy($this->course) || $this->course->status_api_throttled;
+        $this->isPollingCourseResultsLoad = app(CourseResultsLoadService::class)->isBusy($this->course);
 
         $this->buildRows();
     }

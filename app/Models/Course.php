@@ -19,7 +19,6 @@ use App\Models\File;
 use App\Models\CourseDay;
 use App\Models\CourseResult;
 use App\Models\CourseRating;
-use Illuminate\Support\Facades\Cache;
 use App\Jobs\ApiUpdates\CreateOrUpdateCourse;
 use App\Services\ApiUvs\CourseApiServices\CourseResultsLoadService;
 
@@ -27,8 +26,6 @@ use App\Services\ApiUvs\CourseApiServices\CourseResultsLoadService;
 class Course extends Model
 {
     use HasFactory, SoftDeletes;
-
-    public const API_UPDATE_COOLDOWN_MINUTES = 20;
 
     private const API_UPDATE_ROUTES = [
         'admin.courses.show',
@@ -120,23 +117,7 @@ class Course extends Model
             return;
         }
 
-        $cacheKey = "course-sync-cooldown:{$course->klassen_id}";
-        $payload = [
-            'last'   => now()->toDateTimeString(),
-            'source' => $source,
-        ];
-
-        if (! Cache::add($cacheKey, $payload, now()->addMinutes(self::API_UPDATE_COOLDOWN_MINUTES))) {
-            return;
-        }
-
         CreateOrUpdateCourse::dispatch((string) $course->klassen_id);
-    }
-
-    public function getStatusApiThrottledAttribute(): bool
-    {
-        $cacheKey = "course-sync-cooldown:{$this->klassen_id}";
-        return Cache::has($cacheKey);
     }
     
     /**
