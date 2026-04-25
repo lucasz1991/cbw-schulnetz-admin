@@ -11,7 +11,7 @@
     class="relative"
     @click.away="focused = false"
 >
-    <div class="flex items-center border border-gray-300 rounded-lg ring  ring-offset-4 transition-all duration-300"
+    <div class="flex items-center border border-gray-300 rounded-lg ring   transition-all duration-300"
         :class="{
             'w-[300px]': focused || value.length > 0,
             'w-[30px]': !(focused || value.length > 0),

@@ -2,50 +2,47 @@
 
 namespace App\Livewire\Admin;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\AdminTask;
 use App\Models\ReportBook;
+use App\Services\ApiUvs\AssetsApiServices\InstitutionsLoadService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class AdminTasksList extends Component
 {
     use WithPagination;
 
-    // Filter OHNE strikte Typen, damit Livewire Strings aus Query/Request setzen darf
-    public $search         = '';
-    public $filterStatus   = AdminTask::STATUS_OPEN; // null = alle, Default setzen wir in mount()
-    public $filterPriority = null; // null = alle
-    public bool $onlyMine  = false;
+    public $search = '';
+    public $filterStatus = AdminTask::STATUS_OPEN;
+    public $filterPriority = null;
+    public $filterInstitution = null;
+    public bool $onlyMine = false;
+
+    public $institutionOptions = [];
 
     protected $queryString = [
-        'search'         => ['except' => ''],
-        'filterStatus'   => ['except' => null],
+        'search' => ['except' => ''],
+        'filterStatus' => ['except' => null],
         'filterPriority' => ['except' => null],
-        'onlyMine'       => ['except' => false],
-        'page'           => ['except' => 1],
+        'filterInstitution' => ['except' => null],
+        'onlyMine' => ['except' => false],
+        'page' => ['except' => 1],
     ];
 
     protected $listeners = [
         'taskCompleted' => '$refresh',
-        'taskAssigned'  => '$refresh',
+        'taskAssigned' => '$refresh',
     ];
 
     public function mount(): void
     {
-        // Berechtigung prüfen, damit niemand ohne Rechte die Seite sieht (und damit auch nicht die Query ausführt)
-        // Die eigentlichen Aktionen (z.B. Task abschließen) müssen natürlich auch noch mit Policies gesichert werden
-        // Aber hiermit verhindern wir schonmal den Zugriff auf die Seite und die Daten für Unberechtigte
         Gate::authorize('jobs.view');
-        $this->filterStatus = AdminTask::STATUS_OPEN;
-    }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Actions
-    |--------------------------------------------------------------------------
-    */
+        $this->filterStatus = AdminTask::STATUS_OPEN;
+        $this->institutionOptions = app(InstitutionsLoadService::class)->getInstitutionOptions();
+    }
 
     public function updatingFilterStatus(): void
     {
@@ -53,6 +50,11 @@ class AdminTasksList extends Component
     }
 
     public function updatingFilterPriority(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingFilterInstitution(): void
     {
         $this->resetPage();
     }
@@ -67,25 +69,19 @@ class AdminTasksList extends Component
         $this->resetPage();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Render
-    |--------------------------------------------------------------------------
-    */
-
     public function render()
     {
-        // Falls Livewire einen String gesetzt hat, hier „weich“ in int wandeln
-        $status   = is_numeric($this->filterStatus)   ? (int) $this->filterStatus   : null;
+        $status = is_numeric($this->filterStatus) ? (int) $this->filterStatus : null;
         $priority = is_numeric($this->filterPriority) ? (int) $this->filterPriority : null;
-        $search   = trim((string) $this->search);
+        $institution = is_numeric($this->filterInstitution) ? (int) $this->filterInstitution : null;
+        $search = trim((string) $this->search);
 
         $query = AdminTask::with(['creator.person', 'assignedAdmin', 'context'])
             ->where('task_type', 'reportbook_review')
-            ->withStatus($status)           // Scope nimmt ?int, PHP castet sauber
+            ->withStatus($status)
             ->withPriority($priority)
             ->orderBy('status')
-            ->orderBy('priority')           // Hoch vor niedrig
+            ->orderBy('priority')
             ->orderByDesc('created_at');
 
         if ($search !== '') {
@@ -129,15 +125,25 @@ class AdminTasksList extends Component
             });
         }
 
+        if ($institution !== null) {
+            $query->whereHasMorph('context', [ReportBook::class], function ($contextQuery) use ($institution) {
+                $contextQuery->whereHas('course', function ($courseQuery) use ($institution) {
+                    $courseQuery->where('institut_id', $institution);
+                });
+            });
+        }
+
         if ($this->onlyMine) {
             $query->forAdmin(Auth::id());
         }
 
-        $tasks     = $query->paginate(20);
-        $openCount = AdminTask::open()->where('task_type', 'reportbook_review')->count();
+        $tasks = $query->paginate(20);
+        $openCount = AdminTask::open()
+            ->where('task_type', 'reportbook_review')
+            ->count();
 
         return view('livewire.admin.admin-tasks-list', [
-            'tasks'     => $tasks,
+            'tasks' => $tasks,
             'openCount' => $openCount,
         ])->layout('layouts.master');
     }

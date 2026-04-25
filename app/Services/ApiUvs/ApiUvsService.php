@@ -34,6 +34,12 @@ class ApiUvsService
         return $this->request('GET', '/api/participants', [], ['mail' => $mail]);
     }
 
+    /** Institute laden */
+    public function getInstitutions(): array
+    {
+        return $this->request('GET', '/api/assets/institutions');
+    }
+
     /** Teilnehmer-Daten mit Qualiprogram-Daten holen */
     public function getParticipantAndQualiprogrambyId($id): array
     {
