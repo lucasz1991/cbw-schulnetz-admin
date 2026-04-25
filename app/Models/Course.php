@@ -110,6 +110,8 @@ class Course extends Model
 
             static::dispatchApiUpdateIfNotThrottled($course, 'retrieved');
         });
+
+
     }
 
     protected static function dispatchApiUpdateIfNotThrottled(Course $course, string $source): void
@@ -131,6 +133,12 @@ class Course extends Model
         CreateOrUpdateCourse::dispatch((string) $course->klassen_id);
     }
 
+    public function getStatusApiThrottledAttribute(): bool
+    {
+        $cacheKey = "course-sync-cooldown:{$this->klassen_id}";
+        return Cache::has($cacheKey);
+    }
+    
     /**
      * Stellt das harte Nachladen der Pruefungsergebnisse in die gemeinsame Queue.
      */

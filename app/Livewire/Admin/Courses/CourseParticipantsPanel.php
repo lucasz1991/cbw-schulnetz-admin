@@ -23,7 +23,7 @@ class CourseParticipantsPanel extends Component
     {
         $this->course = $course;
         $this->rows   = collect();
-        $this->isPollingCourseResultsLoad = app(CourseResultsLoadService::class)->isBusy($this->course);
+        $this->isPollingCourseResultsLoad = app(CourseResultsLoadService::class)->isBusy($this->course) || $this->course->status_api_throttled;
 
         $this->buildRows();
     }
@@ -311,11 +311,6 @@ class CourseParticipantsPanel extends Component
 
         $this->isPollingCourseResultsLoad = false;
 
-        if ($status === CourseResultsLoadService::STATUS_DONE) {
-            $this->buildRows();
-            $this->dispatch('reload-page');
-            return;
-        }
 
         if ($status === CourseResultsLoadService::STATUS_FAILED) {
             $this->dispatch(
