@@ -353,6 +353,7 @@
                             </div>
                         </x-slot>
                     </x-settings-collapse>
+                    @livewire('admin.config.atera-settings')
                     @livewire('admin.config.grapes-js-settings')
                 </div>
             </div>

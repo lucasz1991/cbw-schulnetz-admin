@@ -38,6 +38,15 @@ class Setting extends Model
         });
     }
 
+    public static function getValueUncached($type, $key)
+    {
+        $setting = static::where('type', $type)
+            ->where('key', $key)
+            ->first();
+
+        return $setting ? $setting->value : null;
+    }
+    
     /**
      * Set or update the value of a setting by key
      * and clear the cache automatically.
