@@ -11,7 +11,6 @@ use App\Models\CourseResult;
 use App\Models\CourseRating;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Person extends Model
@@ -19,8 +18,6 @@ class Person extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'persons';
-    
-    public const API_UPDATE_COOLDOWN_MINUTES = 30;
 
     protected static bool $syncLinkedUserPortalRoleEnabled = true;
 
@@ -99,14 +96,13 @@ class Person extends Model
             $person->apiupdate();
         });
 
-        
         static::retrieved(function (Person $person) {
-            // nur sinnvoll, wenn mit User verknüpft
-            if (empty($person->user_id) || !empty($person->programdata)) {
+            // nur sinnvoll, wenn mit User verknuepft
+            if (empty($person->user_id) || ! empty($person->programdata)) {
                 return;
             }
 
-            static::dispatchApiUpdateIfNotThrottled($person, 'retrieved');
+            $person->apiupdate();
         });
 
         static::saved(function (Person $person) {
@@ -154,29 +150,6 @@ class Person extends Model
     public function apiupdate()
     {
         PersonApiUpdate::dispatch($this->id);
-    }
-
-        protected static function dispatchApiUpdateIfNotThrottled(Person $person, string $source): void
-    {
-        if (empty($person->user_id) || empty($person->id) || !empty($person->programdata)) {
-            return;
-        }
-
-        $cacheKey = "person_apiupdate_cooldown:{$person->id}";
-
-        // add() legt den Key nur an, wenn er noch nicht existiert
-        $payload = [
-            'last'   => now()->toDateTimeString(),
-            'source' => $source,
-        ];
-
-        // Wenn Key bereits existiert -> wir sind im Cooldown -> nichts tun
-        if (! Cache::add($cacheKey, $payload, now()->addMinutes(self::API_UPDATE_COOLDOWN_MINUTES))) {
-            return;
-        }
-
-        // Außerhalb des Cooldowns: Job dispatchen
-        PersonApiUpdate::dispatch($person->id);
     }
 
     public function user()
@@ -322,7 +295,7 @@ class Person extends Model
             ->wherePivot('is_active', true);
     }
 
-    /** Kurse, in denen die Person primärer Tutor ist */
+    /** Kurse, in denen die Person primaerer Tutor ist */
     public function taughtCourses()
     {
         return $this->hasMany(Course::class, 'primary_tutor_person_id');
@@ -389,5 +362,4 @@ class Person extends Model
             return null;
         }
     }
-
 }
