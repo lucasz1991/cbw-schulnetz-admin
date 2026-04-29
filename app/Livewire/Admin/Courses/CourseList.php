@@ -442,6 +442,10 @@ public function updated($prop): void
 public function exportAttendancePdf($courseId): void
 {
     $course = Course::findOrFail($courseId);
+    if (! $course->hasAttendanceList()) {
+        $this->dispatch('swal:toast', type: 'error', text: 'Keine Unterrichtstage vorhanden.');
+        return;
+    }
 
     $relPath = $course->createAttendanceListPdfForPreview(); // NEU: speichert in storage und gibt relativen Pfad zurück
     if (! $relPath) {
@@ -450,7 +454,6 @@ public function exportAttendancePdf($courseId): void
     }
 
     $filename = sprintf('Klassen-Anwesenheitsliste_%s.pdf', $course->klassen_id ?: $course->id);
-
     $this->dispatch('filepreview:open',
         disk: 'local',
         path: $relPath,

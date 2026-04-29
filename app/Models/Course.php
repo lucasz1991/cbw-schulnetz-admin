@@ -20,12 +20,16 @@ use App\Models\CourseDay;
 use App\Models\CourseResult;
 use App\Models\CourseRating;
 use App\Jobs\ApiUpdates\CreateOrUpdateCourse;
+use App\Services\ApiUvs\CourseApiServices\CourseUvsDirectLoadService;
 use App\Services\ApiUvs\CourseApiServices\CourseResultsLoadService;
+Use Illuminate\Support\Facades\Log;
 
 
 class Course extends Model
 {
     use HasFactory, SoftDeletes;
+
+    private const PDF_REMOTE_REFRESH_TTL_MINUTES = 20;
 
     private const API_UPDATE_ROUTES = [
         'admin.courses.show',
@@ -138,6 +142,68 @@ class Course extends Model
         $settings = $this->settings ?? [];
         $settings[$key] = $value;
         $this->settings = $settings;
+    }
+
+    protected function isTimestampOlderThan(mixed $timestamp, int $maxAgeMinutes = self::PDF_REMOTE_REFRESH_TTL_MINUTES): bool
+    {
+        if ($timestamp instanceof Carbon) {
+            return $timestamp->lt(now()->subMinutes($maxAgeMinutes));
+        }
+
+        if (! is_string($timestamp) || trim($timestamp) === '') {
+            return true;
+        }
+
+        try {
+            return Carbon::parse($timestamp)->lt(now()->subMinutes($maxAgeMinutes));
+        } catch (\Throwable) {
+            return true;
+        }
+    }
+
+    protected function refreshExamResultsForPdfIfStale(int $maxAgeMinutes = self::PDF_REMOTE_REFRESH_TTL_MINUTES): void
+    {
+        $resultsLoadService = app(CourseResultsLoadService::class);
+        $status = $resultsLoadService->getStatus($this);
+
+        if (in_array($status, [CourseResultsLoadService::STATUS_QUEUED, CourseResultsLoadService::STATUS_RUNNING], true)) {
+            return;
+        }
+
+        $lastFinishedAt = $this->getSetting(CourseResultsLoadService::SETTING_FINISHED_AT);
+
+        if ($status !== CourseResultsLoadService::STATUS_FAILED && ! $this->isTimestampOlderThan($lastFinishedAt, $maxAgeMinutes)) {
+            return;
+        }
+
+        $resultsLoadService->handle($this);
+        $this->refresh();
+    }
+
+    protected function refreshAttendanceDataForPdfIfStale(int $maxAgeMinutes = self::PDF_REMOTE_REFRESH_TTL_MINUTES): void
+    {
+        $attendanceDays = $this->days()
+            ->get(['id', 'attendance_last_synced_at']);
+
+        if ($attendanceDays->isEmpty()) {
+            return;
+        }
+
+        $needsRefresh = $attendanceDays->contains(
+            fn (CourseDay $day) => empty($day->attendance_last_synced_at)
+        );
+
+        if (! $needsRefresh) {
+            $latestSyncedAt = $attendanceDays->max('attendance_last_synced_at');
+            $needsRefresh = $this->isTimestampOlderThan($latestSyncedAt, $maxAgeMinutes);
+        }
+
+        if (! $needsRefresh) {
+            return;
+        }
+        Log::info("Refreshing attendance data for Course ID {$this->id} before PDF generation due to staleness.");
+        app(CourseUvsDirectLoadService::class)->loadAttendances($this);
+        $this->refresh();
     }
 
     /*
@@ -783,7 +849,8 @@ public function canExportExamResultsPdf(): bool
 
 public function generateAttendanceListPdfFile(): ?string
 {
-    $this->loadMissing(['days', 'participants', 'tutor']);
+    $this->refreshAttendanceDataForPdfIfStale();
+    $this->load(['days', 'participants', 'tutor']);
 
     $days = $this->days()
         ->orderBy('date')
@@ -1324,8 +1391,8 @@ public function exportRedThreadPdf(): ?StreamedResponse
 
 public function generateExamResultsPdfFile(): ?string
 {
-    // Relevante Relationen laden
-    $this->loadMissing(['participants', 'results', 'tutor', 'days']);
+    $this->refreshExamResultsForPdfIfStale();
+    $this->load(['participants', 'results', 'tutor', 'days']);
 
     // Teilnehmer sortiert
     $participants = $this->participants
