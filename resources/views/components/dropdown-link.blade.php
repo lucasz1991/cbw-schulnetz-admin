@@ -1,4 +1,7 @@
-@props(['can' => true])
+@props([
+    'can' => true,
+    'disabled' => false,
+])
 
 @php
 if (is_string($can) && $can !== '') {
@@ -8,7 +11,7 @@ if (is_string($can) && $can !== '') {
 }
 
 $isDeniedByCan = ! $isAllowed;
-$isDisabled = isset($attributes['disabled']) || $isDeniedByCan;
+$isDisabled = (bool) $disabled || $isDeniedByCan;
 
 $classes = 'inline-flex items-center w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out';
 if ($isDisabled) {

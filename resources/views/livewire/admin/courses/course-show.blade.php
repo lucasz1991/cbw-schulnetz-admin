@@ -31,34 +31,34 @@
 
                 <x-slot name="content">
                     <div class="py-1 text-sm text-gray-700">
-                        <x-dropdown-link wire:click.prevent="exportAttendancePdf"  :disabled="!$this->canExportAttendance" class="{{ $this->canExportAttendance ? '' : 'opacity-40 cursor-not-allowed' }}">
+                        <x-dropdown-link wire:click.prevent="exportAttendancePdf"  :disabled="!$this->canExportAttendance" class="{{ $this->canExportAttendance ? '' : 'opacity-40 cursor-not-allowed bg-gray-300 hover:bg-300 ' }}">
                             <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Anwesenheit</span>
                         </x-dropdown-link>
-                        <x-dropdown-link wire:click.prevent="exportDokuPdf"  :disabled="!$this->canExportDoku" class="{{ $this->canExportDoku ? '' : 'opacity-40 cursor-not-allowed' }}">
+                        <x-dropdown-link wire:click.prevent="exportDokuPdf"  :disabled="!$this->canExportDoku" class="{{ $this->canExportDoku ? '' : 'opacity-40 cursor-not-allowed bg-gray-300 hover:bg-300' }}">
                             <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Dokumentation</span>
                         </x-dropdown-link>
-                        <x-dropdown-link wire:click.prevent="exportMaterialConfirmationsPdf" :disabled="!$this->canExportMaterialConfirmations" class="{{ $this->canExportMaterialConfirmations ? '' : 'opacity-40 cursor-not-allowed' }}">
+                        <x-dropdown-link wire:click.prevent="exportMaterialConfirmationsPdf" :disabled="!$this->canExportMaterialConfirmations" class="{{ $this->canExportMaterialConfirmations ? '' : 'opacity-40 cursor-not-allowed bg-gray-300 hover:bg-300' }}">
                             <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Bildungsmittel-Bestät.</span>
                         </x-dropdown-link>
 
 
-                        <x-dropdown-link wire:click.prevent="exportRedThreadPdf"  :disabled="!$this->canExportRedThread" class="{{ $this->canExportRedThread ? '' : 'opacity-40 cursor-not-allowed ' }}">
+                        <x-dropdown-link wire:click.prevent="exportRedThreadPdf"  :disabled="!$this->canExportRedThread" class="{{ $this->canExportRedThread ? '' : 'opacity-40 cursor-not-allowed bg-gray-300 hover:bg-300' }}">
                             <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Roter Faden</span>
                         </x-dropdown-link>
-                        <x-dropdown-link wire:click.prevent="exportExamResultsPdf"  :disabled="!$this->canExportExamResults" class="{{ $this->canExportExamResults ? '' : 'opacity-40 cursor-not-allowed ' }}">
+                        <x-dropdown-link wire:click.prevent="exportExamResultsPdf"  :disabled="!$this->canExportExamResults" class="{{ $this->canExportExamResults ? '' : 'opacity-40 cursor-not-allowed bg-gray-300 hover:bg-300' }}">
                             <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Prüfungsergebnisse</span>
                         </x-dropdown-link>
-                        <x-dropdown-link wire:click.prevent="exportCourseRatingsPdf" :can="'courses.ratings.view'" :disabled="!$this->canExportCourseRatings" class="{{ $this->canExportCourseRatings ? '' : 'opacity-40 cursor-not-allowed ' }}">
+                        <x-dropdown-link wire:click.prevent="exportCourseRatingsPdf" :can="'courses.ratings.view'" :disabled="!$this->canExportCourseRatings" class="{{ $this->canExportCourseRatings ? '' : 'opacity-40 cursor-not-allowed bg-gray-300 hover:bg-300' }}">
                             <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Baustein-Bewertung</span>
                         </x-dropdown-link>
                         
-                        <x-dropdown-link wire:click.prevent="exportInvoicePdf" :can="'invoices.view'" :disabled="!$this->canExportInvoice" class="{{ $this->canExportInvoice ? '' : 'opacity-40 cursor-not-allowed ' }}">
+                        <x-dropdown-link wire:click.prevent="exportInvoicePdf" :can="'invoices.view'" :disabled="!$this->canExportInvoice" class="{{ $this->canExportInvoice ? '' : 'opacity-40 cursor-not-allowed bg-gray-300 hover:bg-300' }}">
                             <i class="fal fa-download text-[14px] text-gray-500 mr-2"></i>
                             <span>Dozenten-Rechnung</span>
                         </x-dropdown-link>
