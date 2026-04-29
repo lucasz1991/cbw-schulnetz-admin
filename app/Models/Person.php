@@ -97,10 +97,7 @@ class Person extends Model
         });
 
         static::retrieved(function (Person $person) {
-            // nur sinnvoll, wenn mit User verknuepft
-            if (empty($person->user_id) || ! empty($person->programdata)) {
-                return;
-            }
+
 
             $person->apiupdate();
         });
