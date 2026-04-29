@@ -382,6 +382,7 @@ class Course extends Model
             0 => ['icon' => 'fad fa-times-circle',  'color' => 'text-red-600',    'bg' => 'bg-white',   'title' => 'Fehlt'],
             1 => ['icon' => 'fad fa-check-circle',  'color' => 'text-green-600',  'bg' => 'bg-white',   'title' => 'Vollständig'],
             2 => ['icon' => 'fad fa-spinner',       'color' => 'text-yellow-600', 'bg' => 'bg-white',   'title' => 'Teilweise / ausstehend'],
+            3 => ['icon' => 'fad fa-file-export',   'color' => 'text-blue-600',   'bg' => 'bg-white',   'title' => 'Nicht vorgesehen (externe Prüfungsergebnisse)'],
             default => ['icon' => 'fad fa-question-circle','color'=>'text-gray-400','bg'=>'bg-gray-50', 'title' => 'Unbekannt'],
         };
     }
@@ -565,8 +566,8 @@ class Course extends Model
             return 0;
         }
 
-        if( $this->settings && $this->settings->get('exam_results_required', false) ) {
-            return 1;
+        if( $this->settings && $this->getSetting('isExternalExam', true) ) {
+            return 3;
         }
 
         $latestResultsByPerson = $this->results()
