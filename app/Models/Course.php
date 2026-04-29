@@ -565,6 +565,10 @@ class Course extends Model
             return 0;
         }
 
+        if( $this->settings && $this->settings->get('exam_results_required', false) ) {
+            return 1;
+        }
+
         $latestResultsByPerson = $this->results()
             ->whereIn('person_id', $participantIds)
             ->orderByDesc('updated_at')

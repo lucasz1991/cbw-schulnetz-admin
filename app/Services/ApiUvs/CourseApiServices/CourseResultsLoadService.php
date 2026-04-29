@@ -18,9 +18,13 @@ class CourseResultsLoadService
     public const STATUS_DONE = 'done';
     public const STATUS_FAILED = 'failed';
 
+    public function __construct(
+        protected CourseUvsDirectLoadService $directLoadService
+    ) {
+    }
+
     public function queue(Course $course): void
     {
-        // Sofortige Markierung als "queued", um sofortiges Feedback in der UI zu ermöglichen.
         $this->markQueued($course);
         LoadCourseResultsFromUvsJob::dispatch($course->id);
     }
@@ -46,12 +50,46 @@ class CourseResultsLoadService
         $course->saveQuietly();
     }
 
+    public function markRunning(Course $course): void
+    {
+        $course->setSetting(self::SETTING_STATUS, self::STATUS_RUNNING);
+        $course->setSetting(self::SETTING_STARTED_AT, now()->toDateTimeString());
+        $course->setSetting(self::SETTING_FINISHED_AT, null);
+        $course->setSetting(self::SETTING_ERROR, null);
+        $course->saveQuietly();
+    }
+
+    public function markDone(Course $course): void
+    {
+        $course->setSetting(self::SETTING_STATUS, self::STATUS_DONE);
+        $course->setSetting(self::SETTING_FINISHED_AT, now()->toDateTimeString());
+        $course->setSetting(self::SETTING_ERROR, null);
+        $course->saveQuietly();
+    }
+
     public function markFailed(Course $course, ?string $error = null): void
     {
         $course->setSetting(self::SETTING_STATUS, self::STATUS_FAILED);
         $course->setSetting(self::SETTING_FINISHED_AT, now()->toDateTimeString());
         $course->setSetting(self::SETTING_ERROR, $error);
         $course->saveQuietly();
+    }
+
+    public function handle(Course $course): bool
+    {
+        $this->markRunning($course);
+
+        $ok = $this->directLoadService->loadResults($course);
+
+        if ($ok) {
+            $this->markDone($course);
+
+            return true;
+        }
+
+        $this->markFailed($course);
+
+        return false;
     }
 
     public function getStatus(Course $course): ?string
