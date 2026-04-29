@@ -152,7 +152,10 @@ class CourseUvsDirectLoadService
         }
 
         $this->applyAttendanceLoadResponse($day, $response, $onlyLocalPersonIds);
-
+        Log::info('CourseUvsDirectLoadService.loadAttendanceForDay: Load OK.', [
+            'day_id' => $day->id,
+            'course_id' => $day->course_id,
+        ]);
         return true;
     }
 
