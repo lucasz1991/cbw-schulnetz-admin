@@ -634,7 +634,7 @@ class Course extends Model
         }
 
         if($this->getSetting('isExternalExam', false) ) {
-            return 3;
+            return 3; 
         }
 
         $latestResultsByPerson = $this->results()
