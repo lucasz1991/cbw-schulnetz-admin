@@ -173,6 +173,7 @@ class Course extends Model
         $lastFinishedAt = $this->getSetting(CourseResultsLoadService::SETTING_FINISHED_AT);
 
         if ($status !== CourseResultsLoadService::STATUS_FAILED && ! $this->isTimestampOlderThan($lastFinishedAt, $maxAgeMinutes)) {
+            log::info("Exam results for Course ID {$this->id} are fresh enough (last finished at: {$lastFinishedAt}), skipping refresh before PDF generation.");
             return;
         }
 
