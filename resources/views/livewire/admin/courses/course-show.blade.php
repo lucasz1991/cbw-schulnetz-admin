@@ -140,7 +140,7 @@
                 'action' => 'exportMaterialConfirmationsPdf',
             ],
             [
-                'label' => 'Pruefungsergebnisse',
+                'label' => 'Prüfungsergebnisse',
                 'icon' => 'fal fa-clipboard-check',
                 'badge' => $course->exam_results_icon_html,
                 'can' => $this->canExportExamResults,
@@ -213,7 +213,7 @@
                 <div class="min-w-0">
                     <div class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
                         <i class="fal fa-database text-[11px]"></i>
-                        <span>Ausgewaehlter Quellkurs</span>
+                        <span>Ausgewählter Quellkurs</span>
                     </div>
 
                     <h2 class="mt-3 text-lg font-semibold text-sky-950">
@@ -239,7 +239,7 @@
                     </div>
 
                     <p class="mt-3 text-sm text-sky-800">
-                        Dieser geloeschte Kurs ist als Quelle fuer die Datenuebernahme vorgemerkt. Berichtshefte werden nur fuer bereits vorhandene Kurstage im Zielkurs zusammengefuehrt; nicht passende Tage werden ignoriert und es werden keine neuen Kurstage angelegt.
+                        Dieser gelöschte Kurs ist als Quelle für die Datenübernahme vorgemerkt. Berichtshefte werden nur für bereits vorhandene Kurstage im Zielkurs zusammengeführt; nicht passende Tage werden ignoriert und es werden keine neuen Kurstage angelegt.
                     </p>
                 </div>
 
@@ -253,7 +253,7 @@
                     >
                         <i class="fal fa-random text-[12px] mr-2" wire:loading.remove wire:target="transferDeletedCourseReportBooks"></i>
                         <i class="fal fa-spinner-third fa-spin text-[12px] mr-2" wire:loading wire:target="transferDeletedCourseReportBooks"></i>
-                        Berichtshefte uebernehmen
+                        Berichtshefte übernehmen
                     </x-ui.buttons.button-basic>
 
                     <x-ui.buttons.button-basic
@@ -274,7 +274,7 @@
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <section class="xl:col-span-1 rounded-3xl border border-slate-200 bg-white p-5 md:p-6">
             <div class="mb-4 flex items-center justify-between">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Baustein Ueberblick</h2>
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Baustein Überblick</h2>
                 <i class="fal fa-info-circle text-slate-300"></i>
             </div>
 
