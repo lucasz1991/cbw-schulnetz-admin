@@ -633,7 +633,7 @@ class Course extends Model
             return 0;
         }
 
-        if($this->getSetting('isExternalExam', true) ) {
+        if($this->getSetting('isExternalExam', false) ) {
             return 3;
         }
 
