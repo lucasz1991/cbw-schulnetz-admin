@@ -29,7 +29,7 @@ class Course extends Model
 {
     use HasFactory, SoftDeletes;
 
-    private const PDF_REMOTE_REFRESH_TTL_MINUTES = 20;
+    private const PDF_REMOTE_REFRESH_TTL_MINUTES = 2;
 
     private const API_UPDATE_ROUTES = [
         'admin.courses.show',
