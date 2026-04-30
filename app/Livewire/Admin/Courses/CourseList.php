@@ -442,7 +442,7 @@ public function updated($prop): void
 public function exportAttendancePdf($courseId): void
 {
     $course = Course::findOrFail($courseId);
-    if (! $course->hasAttendanceList()) {
+    if (! $course->canExportAttendancePdf()) {
         $this->dispatch('swal:toast', type: 'error', text: 'Keine Unterrichtstage vorhanden.');
         return;
     }
