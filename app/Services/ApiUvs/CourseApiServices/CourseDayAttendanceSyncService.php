@@ -24,10 +24,10 @@ class CourseDayAttendanceSyncService
 
     public function loadFromRemote(CourseDay $day, ?array $onlyLocalPersonIds = null): bool
     {
-        Log::info('CourseDayAttendanceSyncService.loadFromRemote: Loading attendance data from remote.', [
-            'day_id' => $day->id,
-            'course_id' => $day->course_id,
-        ]);
+        //Log::info('CourseDayAttendanceSyncService.loadFromRemote: Loading attendance data from remote.', [
+        //    'day_id' => $day->id,
+        //    'course_id' => $day->course_id,
+        //]);
         return $this->directLoadService->loadAttendanceForDay($day, $onlyLocalPersonIds);
     }
 }

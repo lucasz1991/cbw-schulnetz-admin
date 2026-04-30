@@ -29,7 +29,7 @@ class Course extends Model
 {
     use HasFactory, SoftDeletes;
 
-    private const PDF_REMOTE_REFRESH_TTL_MINUTES = 2;
+    private const PDF_REMOTE_REFRESH_TTL_MINUTES = 20;
 
     private const API_UPDATE_ROUTES = [
         'admin.courses.show',
@@ -173,7 +173,7 @@ class Course extends Model
         $lastFinishedAt = $this->getSetting(CourseResultsLoadService::SETTING_FINISHED_AT);
 
         if ($status !== CourseResultsLoadService::STATUS_FAILED && ! $this->isTimestampOlderThan($lastFinishedAt, $maxAgeMinutes)) {
-            log::info("Exam results for Course ID {$this->id} are fresh enough (last finished at: {$lastFinishedAt}), skipping refresh before PDF generation.");
+            //Log::info("Exam results for Course ID {$this->id} are fresh enough (last finished at: {$lastFinishedAt}), skipping refresh before PDF generation.");
             return;
         }
 
@@ -202,7 +202,7 @@ class Course extends Model
         if (! $needsRefresh) {
             return;
         }
-        Log::info("Refreshing attendance data for Course ID {$this->id} before PDF generation due to staleness.");
+        //Log::info("Refreshing attendance data for Course ID {$this->id} before PDF generation due to staleness.");
         app(CourseUvsDirectLoadService::class)->loadAttendances($this);
         $this->refresh();
     }

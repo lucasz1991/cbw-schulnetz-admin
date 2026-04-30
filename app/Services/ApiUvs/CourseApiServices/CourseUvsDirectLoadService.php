@@ -68,9 +68,9 @@ class CourseUvsDirectLoadService
 
         $this->applyResultsLoadResponse($course, $response);
 
-        Log::info('CourseUvsDirectLoadService.loadResults: Load OK.', [
-            'course_id' => $course->id,
-        ]);
+        //Log::info('CourseUvsDirectLoadService.loadResults: Load OK.', [
+        //    'course_id' => $course->id,
+        //]);
 
         return true;
     }
@@ -135,10 +135,7 @@ class CourseUvsDirectLoadService
         }
 
         $this->applyAttendanceLoadResponse($day, $response, $onlyLocalPersonIds);
-        Log::info('CourseUvsDirectLoadService.loadAttendanceForDay: Load OK.', [
-            'day_id' => $day->id,
-            'course_id' => $day->course_id,
-        ]);
+        //Log::info('CourseUvsDirectLoadService.loadAttendanceForDay: Load OK.', ['day_id' => $day->id, 'course_id' => $day->course_id,]);
         return true;
     }
 
@@ -250,15 +247,15 @@ class CourseUvsDirectLoadService
             }
         }
 
-        Log::info('CourseUvsDirectLoadService.applyResultsLoadResponse: CourseResults aus UVS uebernommen.', [
-            'course_id' => $course->id,
-            'deleted_local' => $deletedCount,
-            'created_local' => $createdCount,
-            'items_total' => count($items),
-            'targets_total' => count($targetTeilnehmerIds),
-            'no_remote_data' => $noRemoteDataCount,
-            'missing_person_mapping' => $missingPersonMapping,
-        ]);
+        //Log::info('CourseUvsDirectLoadService.applyResultsLoadResponse: CourseResults aus UVS uebernommen.', [
+        //    'course_id' => $course->id,
+        //    'deleted_local' => $deletedCount,
+        //    'created_local' => $createdCount,
+        //    'items_total' => count($items),
+        //    'targets_total' => count($targetTeilnehmerIds),
+        //    'no_remote_data' => $noRemoteDataCount,
+        //    'missing_person_mapping' => $missingPersonMapping,
+        //]);
     }
 
     protected function extractInnerData(array $response): array
