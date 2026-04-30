@@ -116,6 +116,24 @@ class ApiUvsService
         ]);
     }
 
+    public function loadCourseResultsData(string $terminId, string $klassenId, array $teilnehmerIds): array
+    {
+        return $this->request('POST', '/api/course/courseresults/loaddata', [
+            'termin_id' => $terminId,
+            'klassen_id' => $klassenId,
+            'teilnehmer_ids' => $teilnehmerIds,
+        ]);
+    }
+
+    public function loadCourseDayAttendanceData(string $terminId, string $date, array $teilnehmerIds): array
+    {
+        return $this->request('POST', '/api/course/courseday/loadattendancedata', [
+            'termin_id' => $terminId,
+            'date' => $date,
+            'teilnehmer_ids' => $teilnehmerIds,
+        ]);
+    }
+
         /**
      * Führt eine SQL-Leseabfrage über die UVS-API aus (POST /api/sql).
      *
@@ -154,7 +172,7 @@ class ApiUvsService
             ]);
     }
 
-    public function request(string $method, string $path, array $payload = [], array $query = []): array
+    protected function request(string $method, string $path, array $payload = [], array $query = []): array
     {
         $url = rtrim($this->baseUrl, '/') . $path;
 

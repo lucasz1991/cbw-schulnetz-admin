@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\Log;
 
 class CourseUvsDirectLoadService
 {
-    private const RESULTS_ENDPOINT = '/api/course/courseresults/loaddata';
-    private const ATTENDANCE_ENDPOINT = '/api/course/courseday/loadattendancedata';
-
     private const SUPPORTED_PRUEF_KENNZ = ['V', '+', 'XO', 'B', 'D', 'X', 'N', 'K', '-', 'I', 'E'];
     private const LOCAL_STATUS_CODES_FORCE_ZERO_RESULT = ['V', '-', 'X'];
     private const LOCAL_STATUS_CODES_WITHOUT_RESULT = ['XO', 'B', 'D', 'I', 'E'];
@@ -54,17 +51,10 @@ class CourseUvsDirectLoadService
             return true;
         }
 
-        $payload = [
-            'termin_id' => (string) $course->termin_id,
-            'klassen_id' => (string) $course->klassen_id,
-            'teilnehmer_ids' => $teilnehmerIds,
-        ];
-
-        $response = $this->apiUvsService->request(
-            'POST',
-            self::RESULTS_ENDPOINT,
-            $payload,
-            []
+        $response = $this->apiUvsService->loadCourseResultsData(
+            (string) $course->termin_id,
+            (string) $course->klassen_id,
+            $teilnehmerIds
         );
 
         if (empty($response['ok'])) {
@@ -129,17 +119,10 @@ class CourseUvsDirectLoadService
             return true;
         }
 
-        $payload = [
-            'termin_id' => (string) $day->course->termin_id,
-            'date' => $day->date->toDateString(),
-            'teilnehmer_ids' => $teilnehmerIds,
-        ];
-
-        $response = $this->apiUvsService->request(
-            'POST',
-            self::ATTENDANCE_ENDPOINT,
-            $payload,
-            []
+        $response = $this->apiUvsService->loadCourseDayAttendanceData(
+            (string) $day->course->termin_id,
+            $day->date->toDateString(),
+            $teilnehmerIds
         );
 
         if (empty($response['ok'])) {
