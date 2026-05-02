@@ -86,6 +86,9 @@ class Login extends Component
         if (session()->has('message')) {
             $this->message = session()->get('message');
             $this->messageType = session()->get('messageType', 'default'); 
+            if (!in_array($this->messageType, ['success', 'danger', 'warning', 'info'])) {
+                $this->messageType = 'info';
+            }
             $this->dispatch('showAlert', $this->message, $this->messageType);
         }
     }
