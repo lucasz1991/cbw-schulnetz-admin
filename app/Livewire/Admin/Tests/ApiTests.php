@@ -31,8 +31,7 @@ class ApiTests extends Component
     public ?string $order = 'asc';
 
     // CSV-/Export-Filter
-    public ?int $institutId = 1;
-    public ?string $institutIds = null;
+    public ?string $institutIds = '1';
     public ?string $participantNumber = null;
     public ?string $courseFilter = null;
     public ?string $beratungId = null;
@@ -207,7 +206,6 @@ class ApiTests extends Component
     protected function buildDueDatesManagementFilters(): array
     {
         return [
-            'institut_id' => $this->institutId,
             'institut_ids' => $this->nullIfEmpty($this->institutIds),
             'participant_number' => $this->nullIfEmpty($this->participantNumber),
             'course' => $this->nullIfEmpty($this->courseFilter),
@@ -223,7 +221,6 @@ class ApiTests extends Component
     protected function buildModuleOverviewFilters(): array
     {
         return [
-            'institut_id' => $this->institutId,
             'institut_ids' => $this->nullIfEmpty($this->institutIds),
             'class' => $this->nullIfEmpty($this->classFilter),
             'module' => $this->nullIfEmpty($this->courseFilter),
@@ -239,7 +236,6 @@ class ApiTests extends Component
     protected function buildParticipantRateSelectionFilters(): array
     {
         return [
-            'institut_id' => $this->institutId,
             'institut_ids' => $this->nullIfEmpty($this->institutIds),
             'participant_number' => $this->nullIfEmpty($this->participantNumber),
             'plz' => $this->nullIfEmpty($this->plzFilter),

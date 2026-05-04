@@ -66,9 +66,6 @@
         <div class="mt-5 border-t pt-4">
             <h4 class="text-sm font-semibold mb-3">CSV-Export-Filter</h4>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <label class="text-sm">Institut ID
-                    <input type="number" class="mt-1 w-full border rounded px-3 py-2" wire:model.defer="institutId" min="1">
-                </label>
                 <label class="text-sm">Institut IDs (CSV)
                     <input type="text" class="mt-1 w-full border rounded px-3 py-2" wire:model.defer="institutIds" placeholder="1,2,3">
                 </label>
