@@ -173,7 +173,14 @@
                             @endif
                         </td>
                         <td class="px-4 py-2 text-right">
-                            <button class="px-2 py-1 rounded border" wire:click="runOne('{{ $t['key'] }}')">Ausfuehren</button>
+                            <div class="flex justify-end gap-2">
+                                @if(in_array($t['key'], ['uvs_due_dates_management', 'uvs_module_overview', 'uvs_participant_rates'], true))
+                                    <button class="px-2 py-1 rounded border bg-white" wire:click="downloadCsvTest('{{ $t['key'] }}')">
+                                        CSV laden
+                                    </button>
+                                @endif
+                                <button class="px-2 py-1 rounded border" wire:click="runOne('{{ $t['key'] }}')">Ausfuehren</button>
+                            </div>
                         </td>
                     </tr>
                 @endforeach

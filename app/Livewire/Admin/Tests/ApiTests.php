@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use App\Services\ApiUvs\ApiUvsService;
 use App\Models\Setting;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApiTests extends Component
 {
@@ -98,56 +99,67 @@ class ApiTests extends Component
 
         $start = microtime(true);
         try {
-            $resp = match ($key) {
-                'participant_by_mail'       => $svc->getParticipantbyMail($this->email),
-                'participant_qualiprogram'  => $svc->getParticipantAndQualiprogrambyId($this->personId),
-                'person_status'             => $svc->getPersonStatus($this->personId),
-                'tutor_program_by_person'   => $svc->getTutorProgramDataByPersonId($this->personId),
-                'course_classes'            => $svc->getCourseClasses(
-                                                $this->nullIfEmpty($this->searchTerm),
-                                                $this->limit ?: null,
-                                                $this->nullIfEmpty($this->from),
-                                                $this->nullIfEmpty($this->to),
-                                                $this->nullIfEmpty($this->sort),
-                                                $this->nullIfEmpty($this->order),
-                                              ),
-                'course_class_participants' => $svc->getCourseClassParticipants($this->courseClassId),
-                'course_by_klassen_id'      => $svc->getCourseByKlassenId($this->courseClassId),
-                'uvs_due_dates_management'  => $svc->getDueDatesManagementCsv($this->buildDueDatesManagementFilters()),
-                'uvs_module_overview'       => $svc->getModuleOverviewCsv($this->buildModuleOverviewFilters()),
-                'uvs_participant_rates'     => $svc->getParticipantRateSelectionCsv($this->buildParticipantRateSelectionFilters()),
-                default                     => ['ok' => false, 'status' => null, 'message' => "Unbekannter Test: {$key}"],
-            };
-
-            $ms = (int) round((microtime(true) - $start) * 1000);
-
-            $ok      = (bool)($resp['ok'] ?? false);
-            $status  = $resp['status'] ?? null;
-            $message = $resp['message'] ?? ($ok ? 'OK' : 'Fehler');
-            $data    = $resp['data'] ?? null;
-
-            $this->results[$key] = [
-                'ok'         => $ok,
-                'status'     => $status,
-                'duration'   => $ms,
-                'message'    => $message,
-                'preview'    => $this->preview($data),
-                'timestamp'  => now()->format('Y-m-d H:i:s'),
-            ];
+            $resp = $this->resolveTestResponse($key, $svc);
+            $this->storeTestResult($key, $resp, $start);
         } catch (\Throwable $e) {
-            $this->results[$key] = [
-                'ok'         => false,
-                'status'     => null,
-                'duration'   => (int) round((microtime(true) - $start) * 1000),
-                'message'    => $e->getMessage(),
-                'preview'    => null,
-                'timestamp'  => now()->format('Y-m-d H:i:s'),
-            ];
+            $this->storeTestResult($key, [
+                'ok' => false,
+                'status' => null,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ], $start);
         }
 
         Cache::put($this->cacheKey(), $this->results, now()->addMinutes(60));
         $this->dispatch('$refresh');
         $this->render();
+    }
+
+    public function downloadCsvTest(string $key): ?StreamedResponse
+    {
+        if (! $this->isCsvTest($key)) {
+            return null;
+        }
+
+        if ($this->useFake) {
+            $this->installFakes();
+        }
+
+        $svc = app(ApiUvsService::class);
+        $start = microtime(true);
+
+        try {
+            $resp = $this->resolveTestResponse($key, $svc);
+            $this->storeTestResult($key, $resp, $start);
+            Cache::put($this->cacheKey(), $this->results, now()->addMinutes(60));
+
+            if (!($resp['ok'] ?? false)) {
+                $this->dispatch('notify', type: 'error', message: $resp['message'] ?? 'CSV konnte nicht geladen werden.');
+                return null;
+            }
+
+            $content = (string) ($resp['data'] ?? '');
+            $filename = $this->csvFilename($key);
+
+            return response()->streamDownload(
+                static function () use ($content): void {
+                    echo $content;
+                },
+                $filename,
+                ['Content-Type' => 'text/csv; charset=UTF-8']
+            );
+        } catch (\Throwable $e) {
+            $this->storeTestResult($key, [
+                'ok' => false,
+                'status' => null,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ], $start);
+            Cache::put($this->cacheKey(), $this->results, now()->addMinutes(60));
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
+
+            return null;
+        }
     }
 
     public function clearResults(): void
@@ -238,6 +250,69 @@ class ApiTests extends Component
             'to' => $this->nullIfEmpty($this->to),
             'limit' => $this->limit ?: null,
         ];
+    }
+
+    protected function resolveTestResponse(string $key, ApiUvsService $svc): array
+    {
+        return match ($key) {
+            'participant_by_mail'       => $svc->getParticipantbyMail($this->email),
+            'participant_qualiprogram'  => $svc->getParticipantAndQualiprogrambyId($this->personId),
+            'person_status'             => $svc->getPersonStatus($this->personId),
+            'tutor_program_by_person'   => $svc->getTutorProgramDataByPersonId($this->personId),
+            'course_classes'            => $svc->getCourseClasses(
+                                            $this->nullIfEmpty($this->searchTerm),
+                                            $this->limit ?: null,
+                                            $this->nullIfEmpty($this->from),
+                                            $this->nullIfEmpty($this->to),
+                                            $this->nullIfEmpty($this->sort),
+                                            $this->nullIfEmpty($this->order),
+                                          ),
+            'course_class_participants' => $svc->getCourseClassParticipants($this->courseClassId),
+            'course_by_klassen_id'      => $svc->getCourseByKlassenId($this->courseClassId),
+            'uvs_due_dates_management'  => $svc->getDueDatesManagementCsv($this->buildDueDatesManagementFilters()),
+            'uvs_module_overview'       => $svc->getModuleOverviewCsv($this->buildModuleOverviewFilters()),
+            'uvs_participant_rates'     => $svc->getParticipantRateSelectionCsv($this->buildParticipantRateSelectionFilters()),
+            default                     => ['ok' => false, 'status' => null, 'message' => "Unbekannter Test: {$key}"],
+        };
+    }
+
+    protected function storeTestResult(string $key, array $resp, float $start): void
+    {
+        $ms = (int) round((microtime(true) - $start) * 1000);
+        $ok = (bool)($resp['ok'] ?? false);
+        $status = $resp['status'] ?? null;
+        $message = $resp['message'] ?? ($ok ? 'OK' : 'Fehler');
+        $data = $resp['data'] ?? null;
+
+        $this->results[$key] = [
+            'ok'         => $ok,
+            'status'     => $status,
+            'duration'   => $ms,
+            'message'    => $message,
+            'preview'    => $this->preview($data),
+            'timestamp'  => now()->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    protected function isCsvTest(string $key): bool
+    {
+        return in_array($key, [
+            'uvs_due_dates_management',
+            'uvs_module_overview',
+            'uvs_participant_rates',
+        ], true);
+    }
+
+    protected function csvFilename(string $key): string
+    {
+        $base = match ($key) {
+            'uvs_due_dates_management' => 'faelligkeiten_gf',
+            'uvs_module_overview' => 'baustein_uebersicht',
+            'uvs_participant_rates' => 'teilnehmer_satz_auswahl',
+            default => 'uvs_export',
+        };
+
+        return $base . '_' . now()->format('Ymd_His') . '.csv';
     }
 
     /**
