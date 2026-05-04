@@ -28,6 +28,23 @@ class ApiTests extends Component
     public ?string $sort = null;  // z.B. "bezeichnung"
     public ?string $order = 'asc';
 
+    // CSV-/Export-Filter
+    public ?int $institutId = 1;
+    public ?string $institutIds = null;
+    public ?string $participantNumber = null;
+    public ?string $courseFilter = null;
+    public ?string $beratungId = null;
+    public ?string $classFilter = null;
+    public ?string $teacherId = null;
+    public ?string $plzFilter = null;
+    public ?string $vtzFilter = null;
+    public ?string $ktKurzFilter = null;
+    public ?string $hasCancellation = null;
+    public ?string $minAmount = null;
+    public ?string $maxAmount = null;
+    public ?string $minStdSatz = null;
+    public ?string $maxStdSatz = null;
+
     // Laufzeit
     public bool $useFake = false;     // Stub-Antworten statt echter API
     public bool $running = false;
@@ -48,6 +65,9 @@ class ApiTests extends Component
             ['key' => 'course_classes',           'name' => 'Kurs/Klassen Liste (Filter)'],
             ['key' => 'course_class_participants','name' => 'Teilnehmer einer Klasse'],
             ['key' => 'course_by_klassen_id',      'name' => 'Kurs (by klassen_id)'],
+            ['key' => 'uvs_due_dates_management',  'name' => 'UVS CSV: Faelligkeiten / GF'],
+            ['key' => 'uvs_module_overview',       'name' => 'UVS CSV: Baustein Uebersicht'],
+            ['key' => 'uvs_participant_rates',     'name' => 'UVS CSV: Teilnehmer-Satz-Auswahl'],
         ];
     }
 
@@ -93,6 +113,9 @@ class ApiTests extends Component
                                               ),
                 'course_class_participants' => $svc->getCourseClassParticipants($this->courseClassId),
                 'course_by_klassen_id'      => $svc->getCourseByKlassenId($this->courseClassId),
+                'uvs_due_dates_management'  => $svc->getDueDatesManagementCsv($this->buildDueDatesManagementFilters()),
+                'uvs_module_overview'       => $svc->getModuleOverviewCsv($this->buildModuleOverviewFilters()),
+                'uvs_participant_rates'     => $svc->getParticipantRateSelectionCsv($this->buildParticipantRateSelectionFilters()),
                 default                     => ['ok' => false, 'status' => null, 'message' => "Unbekannter Test: {$key}"],
             };
 
@@ -149,7 +172,7 @@ class ApiTests extends Component
             if (json_last_error() === JSON_ERROR_NONE) {
                 return json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
-            return $data;
+            return Str::limit($data, 12000, "\n\n...[gekürzt]");
         }
 
         // Fallback
@@ -159,13 +182,62 @@ class ApiTests extends Component
 
     protected function cacheKey(): string
     {
-        return 'admin.api_uvs_tests.v1';
+        return 'admin.api_uvs_tests.v2';
     }
 
     protected function nullIfEmpty($v)
     {
         if (is_string($v) && trim($v) === '') return null;
         return $v;
+    }
+
+    protected function buildDueDatesManagementFilters(): array
+    {
+        return [
+            'institut_id' => $this->institutId,
+            'institut_ids' => $this->nullIfEmpty($this->institutIds),
+            'participant_number' => $this->nullIfEmpty($this->participantNumber),
+            'course' => $this->nullIfEmpty($this->courseFilter),
+            'beratung_id' => $this->nullIfEmpty($this->beratungId),
+            'from' => $this->nullIfEmpty($this->from),
+            'to' => $this->nullIfEmpty($this->to),
+            'min_amount' => $this->nullIfEmpty($this->minAmount),
+            'max_amount' => $this->nullIfEmpty($this->maxAmount),
+            'limit' => $this->limit ?: null,
+        ];
+    }
+
+    protected function buildModuleOverviewFilters(): array
+    {
+        return [
+            'institut_id' => $this->institutId,
+            'institut_ids' => $this->nullIfEmpty($this->institutIds),
+            'class' => $this->nullIfEmpty($this->classFilter),
+            'module' => $this->nullIfEmpty($this->courseFilter),
+            'teacher_id' => $this->nullIfEmpty($this->teacherId),
+            'from' => $this->nullIfEmpty($this->from),
+            'to' => $this->nullIfEmpty($this->to),
+            'min_std_satz' => $this->nullIfEmpty($this->minStdSatz),
+            'max_std_satz' => $this->nullIfEmpty($this->maxStdSatz),
+            'limit' => $this->limit ?: null,
+        ];
+    }
+
+    protected function buildParticipantRateSelectionFilters(): array
+    {
+        return [
+            'institut_id' => $this->institutId,
+            'institut_ids' => $this->nullIfEmpty($this->institutIds),
+            'participant_number' => $this->nullIfEmpty($this->participantNumber),
+            'plz' => $this->nullIfEmpty($this->plzFilter),
+            'vtz' => $this->nullIfEmpty($this->vtzFilter),
+            'course' => $this->nullIfEmpty($this->courseFilter),
+            'kt_kurz' => $this->nullIfEmpty($this->ktKurzFilter),
+            'has_cancellation' => $this->nullIfEmpty($this->hasCancellation),
+            'from' => $this->nullIfEmpty($this->from),
+            'to' => $this->nullIfEmpty($this->to),
+            'limit' => $this->limit ?: null,
+        ];
     }
 
     /**
@@ -226,6 +298,38 @@ class ApiTests extends Component
                     ['id' => 2, 'name' => 'Beta'],
                 ],
             ], 200),
+
+            // GET /api/uvs/due-dates-management
+            "{$base}/api/uvs/due-dates-management*" => Http::response(
+                implode("\n", [
+                    "Standort;TN Nummer;Kurs;Datum;Betrag",
+                    "HAM - Hamburg;003564500;FKBL;01.10.2025;949,60",
+                    "HAM - Hamburg;003564500;FKBL;01.11.2025;949,60",
+                ]),
+                200,
+                ['Content-Type' => 'text/csv; charset=UTF-8']
+            ),
+
+            // GET /api/uvs/module-overview
+            "{$base}/api/uvs/module-overview*" => Http::response(
+                implode("\n", [
+                    "Klasse;Baustein;Dozent;TN-Std;Std. Satz;Doz-Kst",
+                    "BMG51;DBU2;1-001821100;76;8,90;2128,00",
+                    "FSG56;GLCC;1-000784900;76;11,95;1,00",
+                ]),
+                200,
+                ['Content-Type' => 'text/csv; charset=UTF-8']
+            ),
+
+            // GET /api/uvs/participant-rate-selection
+            "{$base}/api/uvs/participant-rate-selection*" => Http::response(
+                implode("\n", [
+                    "TNNummer;Plz;Geburtsdatum;Geschlecht;Nationalität;Vtz;Massnahmekurz;Bildungsbeginn;Bildungsende;ErsterTag;LezterTag;Anzbaust;Vertragsdatum;Gebgesamt;KTkurz;KTort;KuendigDatum;KuendigZum;Beratungstermin;MBkurzbez;MBlangbez;MBplz;MBort",
+                    "003564500;20095;01.01.1990;M;DE;V;FKBL;01.10.2025;31.03.2026;01.10.2025;31.03.2026;6;15.09.2025;5697,60;AA;Hamburg;;;10.09.2025;AA;AA;;Hamburg",
+                ]),
+                200,
+                ['Content-Type' => 'text/csv; charset=UTF-8']
+            ),
         ]);
     }
 

@@ -5,6 +5,7 @@ namespace App\Services\ApiUvs;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Str;
 use Throwable;
 use App\Models\Setting;
 
@@ -116,6 +117,21 @@ class ApiUvsService
         ]);
     }
 
+    public function getDueDatesManagementCsv(array $filters = []): array
+    {
+        return $this->requestRaw('GET', '/api/uvs/due-dates-management', [], $this->filterEmptyQuery($filters));
+    }
+
+    public function getModuleOverviewCsv(array $filters = []): array
+    {
+        return $this->requestRaw('GET', '/api/uvs/module-overview', [], $this->filterEmptyQuery($filters));
+    }
+
+    public function getParticipantRateSelectionCsv(array $filters = []): array
+    {
+        return $this->requestRaw('GET', '/api/uvs/participant-rate-selection', [], $this->filterEmptyQuery($filters));
+    }
+
     public function loadCourseResultsData(string $terminId, string $klassenId, array $teilnehmerIds): array
     {
         return $this->request('POST', '/api/course/courseresults/loaddata', [
@@ -172,6 +188,15 @@ class ApiUvsService
             ]);
     }
 
+    protected function httpRaw(): PendingRequest
+    {
+        return Http::timeout(60)
+            ->withHeaders([
+                'X-API-KEY' => (string) $this->apiKey,
+                'Accept' => 'text/csv, text/plain;q=0.9, */*;q=0.8',
+            ]);
+    }
+
     protected function request(string $method, string $path, array $payload = [], array $query = []): array
     {
         $url = rtrim($this->baseUrl, '/') . $path;
@@ -209,5 +234,66 @@ class ApiUvsService
             ]);
             return ['ok' => false, 'status' => null, 'message' => $e->getMessage()];
         }
+    }
+
+    protected function requestRaw(string $method, string $path, array $payload = [], array $query = []): array
+    {
+        $url = rtrim($this->baseUrl, '/') . $path;
+
+        try {
+            $res = match (strtoupper($method)) {
+                'GET'    => $this->httpRaw()->get($url, $query),
+                'POST'   => $this->httpRaw()->withQueryParameters($query)->post($url, $payload),
+                'PUT'    => $this->httpRaw()->withQueryParameters($query)->put($url, $payload),
+                'PATCH'  => $this->httpRaw()->withQueryParameters($query)->patch($url, $payload),
+                'DELETE' => $this->httpRaw()->delete($url, $query),
+                default  => throw new \InvalidArgumentException("Unsupported method: {$method}"),
+            };
+
+            $status = $res->status();
+            $body = $res->body();
+
+            if ($res->successful()) {
+                return [
+                    'ok' => true,
+                    'status' => $status,
+                    'data' => $body,
+                    'content_type' => $res->header('Content-Type'),
+                ];
+            }
+
+            Log::warning('Api raw request failed', [
+                'method' => $method,
+                'url'    => $url,
+                'status' => $status,
+                'body'   => Str::limit($body, 1000),
+            ]);
+
+            return [
+                'ok' => false,
+                'status' => $status,
+                'message' => $body !== '' ? $body : 'Request failed',
+                'data' => $body,
+                'content_type' => $res->header('Content-Type'),
+            ];
+        } catch (Throwable $e) {
+            Log::error('Api raw request exception', [
+                'url'   => $url,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ['ok' => false, 'status' => null, 'message' => $e->getMessage()];
+        }
+    }
+
+    protected function filterEmptyQuery(array $query): array
+    {
+        return array_filter($query, function ($value) {
+            if (is_string($value)) {
+                return trim($value) !== '';
+            }
+
+            return !is_null($value);
+        });
     }
 }
