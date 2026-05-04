@@ -194,7 +194,7 @@ class ApiTests extends Component
 
     protected function cacheKey(): string
     {
-        return 'admin.api_uvs_tests.v2';
+        return 'admin.api_uvs_tests.v2' . Carbon::now()->format('Ymd_His'); 
     }
 
     protected function nullIfEmpty($v)
