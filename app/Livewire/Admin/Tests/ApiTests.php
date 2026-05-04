@@ -23,7 +23,7 @@ class ApiTests extends Component
 
     // Such-/Listen-Parameter
     public ?string $searchTerm = null;
-    public ?int $limit = 10;
+    public ?int $limit = 1000;
     public ?string $from = null;  // Y-m-d
     public ?string $to   = null;  // Y-m-d
     public ?string $sort = null;  // z.B. "bezeichnung"
