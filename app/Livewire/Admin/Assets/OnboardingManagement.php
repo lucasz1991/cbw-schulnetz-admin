@@ -50,7 +50,7 @@ class OnboardingManagement extends Component
 
     public function mount(): void
     {
-        Gate::authorize('manage.onboarding');
+        Gate::authorize('manage.onbording.view');
     }
 
     public function updatedFileUploads(): void

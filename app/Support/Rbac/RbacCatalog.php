@@ -31,7 +31,7 @@ class RbacCatalog
             'Management' => [
                 ['key' => 'manage.appointments', 'label' => 'Termine anzeigen & verwalten'],
                 ['key' => 'manage.messages', 'label' => 'Nachrichten anzeigen & verwalten'],
-                ['key' => 'manage.onbording', 'label' => 'Onboarding anzeigen & verwalten'],
+                ['key' => 'manage.onbording.view', 'label' => 'Onboarding anzeigen & verwalten'],
             ],
             'Benutzer' => [
                 ['key' => 'users.view', 'label' => 'Benutzer anzeigen'],
