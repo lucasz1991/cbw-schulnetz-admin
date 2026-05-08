@@ -647,6 +647,13 @@ class Course extends Model
         $setResultsCount = $latestResultsByPerson
             ->filter(function ($result) {
                 $value = $result->result ?? null;
+                $status = is_string($result->status ?? null)
+                    ? trim($result->status)
+                    : $result->status;
+
+                if ($status === 'I') {
+                    return true;
+                }
 
                 if ($value === null) {
                     return false;

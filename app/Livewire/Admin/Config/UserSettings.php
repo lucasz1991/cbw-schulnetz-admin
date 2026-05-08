@@ -333,9 +333,12 @@ class UserSettings extends Component
 
             $payload[$role] = [
                 'user_id' => (int) $userId,
-                'password' => $password !== ''
-                    ? Crypt::encryptString($password)
-                    : ((int) $storedUserId === (int) $userId ? $storedPassword : null),
+                'password' => $this->resolvePasswordStorageValue(
+                    $password,
+                    $userId,
+                    $storedUserId,
+                    $storedPassword
+                ),
                 'anonymize_output' => $anonymizeOutput,
             ];
         }
@@ -380,5 +383,48 @@ class UserSettings extends Component
 
         return (int) $currentUserId === (int) $storedUserId
             && $this->hasStoredPassword($role);
+    }
+
+    protected function resolvePasswordStorageValue(
+        string $password,
+        mixed $userId,
+        mixed $storedUserId,
+        mixed $storedPassword
+    ): ?string {
+        if ($password !== '') {
+            return Hash::make($password);
+        }
+
+        if ((int) $storedUserId !== (int) $userId) {
+            return null;
+        }
+
+        return $this->normalizeStoredPasswordHash($storedPassword);
+    }
+
+    protected function normalizeStoredPasswordHash(mixed $storedPassword): ?string
+    {
+        if (! is_string($storedPassword) || trim($storedPassword) === '') {
+            return null;
+        }
+
+        $storedPassword = trim($storedPassword);
+
+        if ($this->looksLikePasswordHash($storedPassword)) {
+            return $storedPassword;
+        }
+
+        try {
+            return Hash::make(Crypt::decryptString($storedPassword));
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function looksLikePasswordHash(string $value): bool
+    {
+        $passwordInfo = password_get_info($value);
+
+        return ($passwordInfo['algoName'] ?? 'unknown') !== 'unknown';
     }
 }
