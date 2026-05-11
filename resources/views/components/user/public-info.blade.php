@@ -9,6 +9,7 @@
     $resolvedPerson = $person ?? $user?->person ?? null;
     $resolvedUser   = $user ?? $resolvedPerson?->user ?? null;
     $hasUser        = (bool) $resolvedUser;
+    $personEmail    = trim((string)($resolvedPerson->email ?? ''));
 
     // Anzeige-Name
     $first = trim((string)($resolvedPerson->vorname ?? ''));
@@ -42,11 +43,13 @@
         <img
             src="{{ $resolvedUser->getBaseProfilePhotoUrlAttribute() }}"
             class="w-{{ $size }} h-{{ $size }} rounded-full object-cover"
+            title="{{ $personEmail !== '' ? $personEmail : 'Kein E-Mail' }}"
             >
     @else
         <img
             src="{{ $avatarUrl }}"
             class="w-{{ $size }} h-{{ $size }} rounded-full object-cover {{ !$hasUser ? 'grayscale' : '' }}"
+            title="{{ $personEmail !== '' ? $personEmail : 'Kein E-Mail' }}"
             >
     @endif
 
