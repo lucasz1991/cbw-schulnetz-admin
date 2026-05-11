@@ -9,7 +9,7 @@
     $resolvedPerson = $person ?? $user?->person ?? null;
     $resolvedUser   = $user ?? $resolvedPerson?->user ?? null;
     $hasUser        = (bool) $resolvedUser;
-    $personEmail    = trim((string)($resolvedPerson->email ?? ''));
+    $personEmail    = trim((string)($resolvedPerson->email_priv ?? ''));
 
     // Anzeige-Name
     $first = trim((string)($resolvedPerson->vorname ?? ''));
