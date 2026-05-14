@@ -92,14 +92,15 @@ class EmployeeFormModal extends Component
 
         $user->save();
 
-        // Sicherheit: Mitgliedschaft sicherstellen
+        // Genau eine Mitgliedschaft sicherstellen
         if ($this->primary_team_id) {
             $primary = Team::find($this->primary_team_id);
-            if ($primary && !$user->belongsToTeam($primary)) {
-                $user->teams()->attach($primary->id);
+            if ($primary) {
+                $user->teams()->sync([$primary->id]);
+
+                // Optional: Jetstream-internen Switch (falls du Features nutzt, die darauf hören)
+                $user->switchTeam($primary);
             }
-            // Optional: Jetstream-internen Switch (falls du Features nutzt, die darauf hören)
-            $user->switchTeam($primary);
         }
 
         $this->dispatch('employeeSaved');
