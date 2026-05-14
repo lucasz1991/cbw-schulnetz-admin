@@ -27,18 +27,7 @@
                     width="56"
                 />
 
-                {{-- Priority-Filter --}}
-                <x-ui.forms.lz-select
-                    model="filterPriority"
-                    :selected="$filterPriority"
-                    :options="[
-                        ['value' => '', 'label' => 'Prio: Alle'],
-                        ['value' => \App\Models\AdminTask::PRIORITY_HIGH, 'label' => 'Hoch'],
-                        ['value' => \App\Models\AdminTask::PRIORITY_NORMAL, 'label' => 'Normal'],
-                        ['value' => \App\Models\AdminTask::PRIORITY_LOW, 'label' => 'Niedrig'],
-                    ]"
-                    width="56"
-                />
+
 
                 <x-ui.forms.lz-select
                     model="filterInstitution"

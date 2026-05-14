@@ -127,8 +127,8 @@ class AdminTasksList extends Component
 
         if ($institution !== null) {
             $query->whereHasMorph('context', [ReportBook::class], function ($contextQuery) use ($institution) {
-                $contextQuery->whereHas('course', function ($courseQuery) use ($institution) {
-                    $courseQuery->where('institut_id', $institution);
+                $contextQuery->whereHas('user.person', function ($personQuery) use ($institution) {
+                    $personQuery->where('institut_id', $institution);
                 });
             });
         }
