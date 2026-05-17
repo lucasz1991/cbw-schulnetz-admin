@@ -26,6 +26,13 @@
                     Benutzer
                 </button>
                 <button 
+                    class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
+                    :class="{ 'border-blue-500 text-blue-600': activeTab === 'templates', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'templates' }"
+                    @click="activeTab = 'templates'"
+                >
+                    Vorlagen
+                </button>
+                <button 
                 class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                 :class="{ 'border-blue-500 text-blue-600': activeTab === 'mails', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'mails' }"
                 @click="activeTab = 'mails'"
@@ -96,6 +103,10 @@
             <!-- Benutzer Tab -->
             <div x-show="activeTab === 'usersettings'" x-cloak class="space-y-10" x-collapse.duration.400ms>
                 @livewire('admin.config.user-settings')
+            </div>
+            <!-- Vorlagen Tab -->
+            <div x-show="activeTab === 'templates'" x-cloak class="space-y-10" x-collapse.duration.400ms>
+                @livewire('admin.config.roter-faden-template-settings')
             </div>
                 <!-- Mails Tab -->
                 <div x-show="activeTab === 'mails'" x-cloak class="space-y-10" x-collapse.duration.400ms>

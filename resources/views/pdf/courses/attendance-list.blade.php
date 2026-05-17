@@ -187,7 +187,7 @@
 
         <td style="width: 28%;">
             <div class="meta-box">
-                <div><span class="meta-k">Modul:</span> {{ $meta['module'] ?? '-' }}</div>
+                <div><span class="meta-k">Baustein:</span> {{ $meta['module'] ?? '-' }}</div>
                 <div><span class="meta-k">Klasse:</span> {{ $meta['class_label'] ?? '-' }}</div>
                 <div><span class="meta-k">Dozent:</span> {{ $meta['tutor_name'] ?? '-' }}</div>
                 <div><span class="meta-k">Beginn:</span> {{ $meta['start_time'] ?? '-' }} Uhr</div>
@@ -261,9 +261,9 @@
                             E
                         @elseif($cell['empty'] === true)
                         @elseif($cell['morning_present'] === true)
-                            x
+                            X
                         @elseif($cell['morning_present'] === false)
-                            f
+                            F
                         @endif
                     @endif
                 </td>
@@ -274,9 +274,9 @@
                             E
                         @elseif($cell['empty'] === true)
                         @elseif($cell['end_present'] === true)
-                            x
+                            X
                         @elseif($cell['end_present'] === false)
-                            f
+                            F
                         @endif
                     @endif
                 </td>
