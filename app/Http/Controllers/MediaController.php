@@ -21,26 +21,39 @@ class MediaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|max:40960',
+            'file' => ['required', 'file', 'max:512000'], // max 500 MB
             'folder' => 'nullable|string',
             'visibility' => 'nullable|in:public,private',
         ]);
 
         $file = $request->file('file');
+        $stream = fopen($file->getRealPath(), 'r');
 
-        $response = Http::attach(
-            'file', 
-            file_get_contents($file->getRealPath()), 
-            $file->getClientOriginalName()
-        )->withHeaders([
-            'X-API-KEY' => $this->apiSettings['base_api_key'],
-        ])->withoutVerifying()->post(
-            $this->apiSettings['base_api_url'] . '/api/admin/upload',
-            [
-                'folder'     => $request->input('folder'),
-                'visibility' => $request->input('visibility'),
-            ]
-        );
+        if ($stream === false) {
+            return response()->json(['success' => false, 'message' => 'Upload-Datei konnte nicht gelesen werden.'], 500);
+        }
+
+        try {
+            $response = Http::timeout(1800)
+                ->connectTimeout(30)
+                ->attach(
+                    'file',
+                    $stream,
+                    $file->getClientOriginalName()
+                )->withHeaders([
+                    'X-API-KEY' => $this->apiSettings['base_api_key'],
+                ])->withoutVerifying()->post(
+                    $this->apiSettings['base_api_url'] . '/api/admin/upload',
+                    [
+                        'folder'     => $request->input('folder'),
+                        'visibility' => $request->input('visibility'),
+                    ]
+                );
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
 
 
         if ($response->successful()) {

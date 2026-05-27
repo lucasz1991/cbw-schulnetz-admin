@@ -44,8 +44,11 @@ class File extends Model
 
             if ($disk->exists($file->path)) {
                 $absPath = $disk->path($file->path);
-                $file->uploadImageViaMediaController($absPath);
-                unlink($absPath); // Datei nach Upload löschen
+                $uploadedPath = $file->uploadImageViaMediaController($absPath);
+
+                if ($uploadedPath && is_file($absPath)) {
+                    unlink($absPath); // Datei nach erfolgreichem Upload loeschen
+                }
             } else {
                 Log::warning("File::created - Datei nicht gefunden auf Disk '".self::DISK."': {$file->path}");
             }
@@ -111,12 +114,21 @@ class File extends Model
 
             if (method_exists($response, 'getData')) {
                 $data = $response->getData(true);
+
+                if (!($data['success'] ?? false) || empty($data['path'])) {
+                    Log::warning('Upload via MediaController nicht erfolgreich', [
+                        'status' => method_exists($response, 'getStatusCode') ? $response->getStatusCode() : null,
+                        'data' => $data,
+                    ]);
+
+                    return null;
+                }
                 Log::info('Upload via MediaController erfolgreich', ['path' => $data['path'] ?? null]);
                 
                 // speichern des neuen Pfads in der Datenbank
-                $this->update(['path' => $data['path'] ?? null]);
+                $this->update(['path' => $data['path']]);
                 // Rückgabe des neuen Pfads
-                return $data['path'] ?? null;
+                return $data['path'];
             }
 
             Log::warning('Upload via MediaController ohne getData()-Antwort.');
