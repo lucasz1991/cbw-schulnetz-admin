@@ -65,7 +65,7 @@
         maxFilesize: this.opts.maxFilesize,
         acceptedFiles: this.opts.acceptedFiles ?? undefined,
         chunking: true,
-        chunkSize: 1000000, // rein visuell
+        chunkSize: 10000000, // rein visuell
         dictRemoveFile: 'Datei löschen',
         dictMaxFilesExceeded: 'Maximale Anzahl an Dateien erreicht.',
         dictFileTooBig: 'Datei zu groß ',
