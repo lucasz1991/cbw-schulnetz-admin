@@ -185,7 +185,10 @@ class OnboardingManagement extends Component
             'fileUploads.required' => 'Bitte genau eine Datei hochladen.',
             'fileUploads.array' => 'Upload ist ungültig.',
             'fileUploads.max' => 'Bitte nur eine Datei hochladen.',
+            'fileUploads.uploaded' => 'Die Datei konnte nicht hochgeladen werden. Der Server hat den Upload vermutlich wegen der Dateigroesse oder eines Upload-Limits abgelehnt.',
 
+            'fileUploads.*.file' => 'Die hochgeladene Datei ist ungueltig.',
+            'fileUploads.*.uploaded' => 'Die Datei konnte nicht hochgeladen werden. Der Server hat den Upload vermutlich wegen der Dateigroesse oder eines Upload-Limits abgelehnt.',
             'fileUploads.*.mimes' => 'Nur .mp4, .wav oder .pdf Dateien sind erlaubt.',
             'fileUploads.*.max' => 'Die Datei überschreitet die maximale Größe von 500 MB.',
         ];
