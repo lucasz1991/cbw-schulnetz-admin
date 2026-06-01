@@ -192,15 +192,18 @@ class File extends Model
         try {
             $this->syncLocalFileToBase();
 
-            // künstlichen Request an den MediaController bauen
+            if ($this->path && Storage::disk(self::DISK)->exists($this->path)) {
+                return Storage::disk(self::DISK)->url($this->path);
+            }
+
             $params = [
-                'file_id' => $this->id,
+                'url' => $this->path,
                 'expires' => $ttl,
+                'disk' => $disk ?: ($this->disk ?: self::DISK),
             ];
 
-            // optional: Disk explizit mitgeben (falls du es brauchst)
-            if ($disk) {
-                $params['disk'] = $disk; // 'private' oder 'public'
+            if (!$params['url']) {
+                return null;
             }
 
             $request = Request::create('/admin/media/resolve', 'POST', $params);
@@ -216,10 +219,17 @@ class File extends Model
                     return $data['url'];
                 }
 
-                Log::warning('Ephemeral-URL vom MediaController ohne URL', ['data' => $data, 'file_id' => $this->id]);
+                Log::warning('Ephemeral-URL vom MediaController ohne URL', [
+                    'data' => $data,
+                    'file_id' => $this->id,
+                    'path' => $this->path,
+                ]);
             }
         } catch (\Throwable $e) {
-            Log::warning('getEphemeralPublicUrl fehlgeschlagen: '.$e->getMessage(), ['file_id' => $this->id]);
+            Log::warning('getEphemeralPublicUrl fehlgeschlagen: '.$e->getMessage(), [
+                'file_id' => $this->id,
+                'path' => $this->path,
+            ]);
         }
 
         return null;

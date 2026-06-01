@@ -70,6 +70,14 @@
             };
         },
 
+        syncWire(name, value) {
+            try {
+                this.$wire.set(name, value, false);
+            } catch (e) {
+                this.$wire.set(name, value);
+            }
+        },
+
         async process(file) {
             const sig = `${file.name}:${file.size}:${file.lastModified}`;
             if (this._lastSig === sig) return;
@@ -85,8 +93,8 @@
             this.cleanupPreviewUrl();
 
             // reset Livewire fields
-            this.$wire.set('thumbnailDataUrl', null);
-            this.$wire.set('duration_seconds', null);
+            this.syncWire('thumbnailDataUrl', null);
+            this.syncWire('duration_seconds', null);
 
             const name = (file.name || '').toLowerCase();
             const isPdf = file.type === 'application/pdf' || name.endsWith('.pdf');
@@ -120,7 +128,7 @@
             if (isMp4 || isWav || file.type.startsWith('audio/') || file.type.startsWith('video/')) {
                 const d = await this.getDuration(file, isWav ? 'audio' : 'video');
                 this.durationSeconds = d ? Math.round(d) : null;
-                this.$wire.set('duration_seconds', this.durationSeconds);
+                this.syncWire('duration_seconds', this.durationSeconds);
             }
 
             // Thumbnail nur fuer Video
@@ -128,7 +136,7 @@
                 const thumb = await this.makeThumb(file);
                 if (thumb) {
                     this.thumbDataUrl = thumb;
-                    this.$wire.set('thumbnailDataUrl', thumb);
+                    this.syncWire('thumbnailDataUrl', thumb);
                 }
             }
         },
@@ -137,26 +145,49 @@
             return new Promise((resolve) => {
                 const el = document.createElement(kind === 'audio' ? 'audio' : 'video');
                 el.preload = 'metadata';
+                el.muted = true;
+                el.playsInline = true;
 
                 const url = URL.createObjectURL(file);
+                let done = false;
 
-                const cleanup = () => {
+                const finish = (value) => {
+                    if (done) return;
+                    done = true;
                     try { URL.revokeObjectURL(url); } catch (e) {}
+                    try { el.removeAttribute('src'); el.load(); } catch (e) {}
                     el.src = '';
+                    resolve(value);
+                };
+
+                const readFiniteDuration = () => {
+                    const d = el.duration;
+                    if (Number.isFinite(d) && d > 0) {
+                        finish(d);
+                        return true;
+                    }
+                    return false;
                 };
 
                 el.onloadedmetadata = () => {
-                    const d = el.duration;
-                    cleanup();
-                    resolve(Number.isFinite(d) ? d : null);
+                    if (readFiniteDuration()) return;
+
+                    // Manche grosse/fragmentierte Medien melden zuerst Infinity.
+                    try {
+                        el.currentTime = Number.MAX_SAFE_INTEGER;
+                    } catch (e) {
+                        finish(null);
+                    }
                 };
 
-                el.onerror = () => {
-                    cleanup();
-                    resolve(null);
-                };
+                el.ondurationchange = readFiniteDuration;
+                el.ontimeupdate = readFiniteDuration;
+                el.onerror = () => finish(null);
+
+                setTimeout(() => finish(null), 15000);
 
                 el.src = url;
+                try { el.load(); } catch (e) {}
             });
         },
 
@@ -175,9 +206,18 @@
 
             try {
                 await new Promise((res, rej) => {
-                    video.onloadedmetadata = () => res();
-                    video.onerror = () => rej(new Error('metadata error'));
+                    let done = false;
+                    const finish = (ok) => {
+                        if (done) return;
+                        done = true;
+                        ok ? res() : rej(new Error('metadata timeout'));
+                    };
+
+                    video.onloadedmetadata = () => finish(true);
+                    video.onerror = () => finish(false);
+                    setTimeout(() => finish(false), 15000);
                     video.src = url;
+                    try { video.load(); } catch (e) {}
                 });
 
                 // nicht 0s, oft schwarzer frame
@@ -186,22 +226,28 @@
                 await new Promise((res, rej) => {
                     let done = false;
 
-                    const onSeeked = () => {
+                    const onFrameReady = () => {
                         if (done) return;
                         done = true;
-                        video.removeEventListener('seeked', onSeeked);
+                        video.removeEventListener('seeked', onFrameReady);
+                        video.removeEventListener('loadeddata', onFrameReady);
+                        video.removeEventListener('canplay', onFrameReady);
                         res();
                     };
 
-                    video.addEventListener('seeked', onSeeked);
+                    video.addEventListener('seeked', onFrameReady);
+                    video.addEventListener('loadeddata', onFrameReady);
+                    video.addEventListener('canplay', onFrameReady);
                     video.currentTime = Number.isFinite(target) ? target : 0;
 
                     setTimeout(() => {
                         if (done) return;
                         done = true;
-                        video.removeEventListener('seeked', onSeeked);
+                        video.removeEventListener('seeked', onFrameReady);
+                        video.removeEventListener('loadeddata', onFrameReady);
+                        video.removeEventListener('canplay', onFrameReady);
                         rej(new Error('seek timeout'));
-                    }, 4000);
+                    }, 8000);
                 });
 
                 const canvas = document.createElement('canvas');
@@ -465,7 +511,9 @@
 
                         @if($existingVideo)
                             @php
-                                $existingIsPdf = isset($existingVideo['mime']) && str_contains(strtolower($existingVideo['mime']), 'pdf');
+                                $existingMime = strtolower((string)($existingVideo['mime'] ?? ''));
+                                $existingName = strtolower((string)($existingVideo['name'] ?? ''));
+                                $existingIsPdf = str_contains($existingMime, 'pdf') || str_ends_with($existingName, '.pdf');
                             @endphp
                             <div class="rounded-xl bg-gray-50 p-4 space-y-3">
                                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-700">
@@ -499,7 +547,7 @@
                                     mode="single"
                                     label="Datei auswählen"
                                     acceptedFiles=".mp4,.wav,.pdf"
-                                    :maxFilesize="850"
+                                    :maxFilesize="823"
                                 />
                             </div>
                             <x-input-error for="fileUploads.*" class="mt-2" />
@@ -510,6 +558,7 @@
                             class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-3 space-y-3"
                             x-show="showPreview && (isVideo || isPdf)"
                             x-cloak
+                            wire:ignore
                         >
                             <div class="flex items-center justify-between gap-3">
                                 <div class="text-xs text-gray-600">

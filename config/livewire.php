@@ -67,8 +67,8 @@ return [
         // Temp-Uploads landen weiter auf dem Standard-Disk; bei Bedarf auf 'public' oder S3 anpassen.
         'disk' => null,
 
-        // Erlaubt groessere Videos/PDFs bis 500 MB und beschraenkt die Mimes auf die genutzten Typen.
-        'rules' => ['required', 'file', 'max:512000'], // max in KB (512000 = 500 MB)
+        // Erlaubt groessere Videos/PDFs bis ca. 823 MB und beschraenkt die Mimes auf die genutzten Typen.
+        'rules' => ['required', 'file', 'max:823000'],
 
         'directory' => null,   // Example: 'tmp'                      | Default: 'livewire-tmp'
         'middleware' => null,  // Example: 'throttle:5,1'             | Default: 'throttle:60,1'

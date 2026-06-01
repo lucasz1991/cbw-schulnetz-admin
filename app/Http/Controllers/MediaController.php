@@ -22,7 +22,7 @@ class MediaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:512000'], // max 500 MB
+            'file' => ['required', 'file', 'max:823000'], // ca. 823 MB
             'folder' => 'nullable|string',
             'visibility' => 'nullable|in:public,private',
         ]);
