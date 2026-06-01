@@ -34,8 +34,8 @@ class MediaController extends Controller
         }
 
         try {
-            $response = Http::timeout(1800)
-                ->connectTimeout(30)
+            $response = Http::timeout(18000)
+                ->connectTimeout(300)
                 ->attach(
                     'file',
                     $stream,
