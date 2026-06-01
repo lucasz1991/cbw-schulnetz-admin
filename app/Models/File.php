@@ -40,17 +40,12 @@ class File extends Model
         parent::boot();
 
         static::created(function (File $file) {
-            $disk = Storage::disk(self::DISK);
-
-            if ($disk->exists($file->path)) {
-                $absPath = $disk->path($file->path);
-                $uploadedPath = $file->uploadImageViaMediaController($absPath);
-
-                if ($uploadedPath && is_file($absPath)) {
-                    unlink($absPath); // Datei nach erfolgreichem Upload loeschen
-                }
-            } else {
-                Log::warning("File::created - Datei nicht gefunden auf Disk '".self::DISK."': {$file->path}");
+            if (!$file->syncLocalFileToBase()) {
+                Log::warning('File::created - Datei konnte nicht automatisch nach Base uebertragen werden', [
+                    'file_id' => $file->id,
+                    'path' => $file->path,
+                    'local_exists' => $file->path ? Storage::disk(self::DISK)->exists($file->path) : false,
+                ]);
             }
         });
 
@@ -141,7 +136,32 @@ class File extends Model
     }
 
     /**
-     * Löscht über den MediaController per relativem Pfad (Disk = public)
+     * Falls ein File-Datensatz noch auf eine lokale Admin-Datei zeigt,
+     * wird sie nach Base uebertragen und der DB-Pfad auf den Base-Pfad aktualisiert.
+     */
+    protected function syncLocalFileToBase(): ?string
+    {
+        if (!$this->path) {
+            return null;
+        }
+
+        $disk = Storage::disk(self::DISK);
+        if (!$disk->exists($this->path)) {
+            return null;
+        }
+
+        $absPath = $disk->path($this->path);
+        $uploadedPath = $this->uploadImageViaMediaController($absPath);
+
+        if ($uploadedPath && is_file($absPath)) {
+            unlink($absPath); // Datei nach erfolgreichem Upload loeschen
+        }
+
+        return $uploadedPath;
+    }
+
+    /**
+     * Loescht ueber den MediaController per relativem Pfad (Disk = public)
      */
     protected function deleteImageViaMediaController(?string $relativePath): void
     {
@@ -170,6 +190,8 @@ class File extends Model
     public function getEphemeralPublicUrl(int $ttl = 300, ?string $disk = null): ?string
     {
         try {
+            $this->syncLocalFileToBase();
+
             // künstlichen Request an den MediaController bauen
             $params = [
                 'file_id' => $this->id,
