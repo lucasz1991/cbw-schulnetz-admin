@@ -7,6 +7,95 @@ use Illuminate\Support\Carbon;
 
 class CurrentParticipantCourseScope
 {
+    public static function currentContractOverviewFor(?Person $person): ?array
+    {
+        if (! $person) {
+            return null;
+        }
+
+        $programData = is_array($person->programdata) ? $person->programdata : [];
+        $statusData = is_array($person->statusdata) ? $person->statusdata : [];
+        $activeContract = self::activeContracts($statusData)
+            ->sortByDesc(fn (array $contract) => self::parseDate($contract['vertrag_ende'] ?? null)?->timestamp ?? 0)
+            ->first();
+        $identifiers = self::identifiersFor($person);
+
+        if (! $activeContract && ! self::hasCurrentContractFilter($identifiers) && empty($programData)) {
+            return null;
+        }
+
+        $gender = strtoupper(trim((string) (data_get($programData, 'geschlecht') ?? $person->geschlecht ?? '')));
+        $programTitle = $gender === 'M'
+            ? data_get($programData, 'langbez_m')
+            : data_get($programData, 'langbez_w');
+
+        $programTitle = self::firstFilled([
+            $programTitle,
+            data_get($programData, 'langbez_m'),
+            data_get($programData, 'langbez_w'),
+            data_get($programData, 'massn_kurz'),
+        ]);
+
+        $cancelledAt = self::firstFilled([
+            data_get($activeContract, 'kuendig_zum'),
+            data_get($statusData, 'vertrag_kuendig_zum'),
+            data_get($programData, 'kuendig_zum'),
+        ]);
+
+        return [
+            'person_pk' => $person->id,
+            'person_name' => self::firstFilled([
+                trim(($person->vorname ?? '') . ' ' . ($person->nachname ?? '')),
+                data_get($programData, 'name'),
+                $person->person_id,
+            ]),
+            'person_id' => $person->person_id,
+            'status' => self::firstFilled([
+                data_get($statusData, 'status'),
+                data_get($statusData, 'status_short'),
+                $person->status,
+            ]),
+            'teilnehmer_id' => self::firstFilled([
+                data_get($activeContract, 'teilnehmer_id'),
+                $identifiers['teilnehmer_id'] ?? null,
+            ]),
+            'teilnehmer_nr' => self::firstFilled([
+                data_get($statusData, 'teilnehmer_nr'),
+                data_get($programData, 'teilnehmer_nr'),
+                $person->teilnehmer_nr,
+            ]),
+            'beginn' => self::firstFilled([
+                data_get($programData, 'vertrag_beginn'),
+                data_get($activeContract, 'beginn'),
+            ]),
+            'ende' => self::firstFilled([
+                data_get($activeContract, 'vertrag_ende'),
+                data_get($programData, 'vertrag_ende'),
+                data_get($statusData, 'last_teilnehmer_tag'),
+            ]),
+            'letzter_tag' => self::firstFilled([
+                data_get($activeContract, 'letzter_tag'),
+                data_get($statusData, 'last_teilnehmer_tag'),
+            ]),
+            'kuendig_zum' => $cancelledAt,
+            'massnahme_id' => self::firstFilled([
+                data_get($programData, 'massnahme_id'),
+                data_get($programData, 'massn_kurz'),
+            ]),
+            'stammklasse' => data_get($programData, 'stammklasse'),
+            'program_title' => $programTitle,
+            'uform' => data_get($programData, 'uform'),
+            'vtz' => self::firstFilled([
+                data_get($programData, 'vtz_lang'),
+                data_get($programData, 'vtz'),
+            ]),
+            'kostentraeger' => data_get($programData, 'mp_langbez'),
+            'is_active' => $activeContract
+                ? filter_var($activeContract['is_active'] ?? false, FILTER_VALIDATE_BOOL)
+                : null,
+        ];
+    }
+
     public static function identifiersFor(?Person $person): array
     {
         if (! $person) {

@@ -15,6 +15,66 @@
         />
     </div>
 
+    @if($user->role !== 'tutor' && !empty($currentContracts))
+        <div class="mb-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
+            @foreach($currentContracts as $contract)
+                @php
+                    $period = ($contract['beginn_fmt'] ?? null) || ($contract['ende_fmt'] ?? null)
+                        ? (($contract['beginn_fmt'] ?? '-') . ' - ' . ($contract['ende_fmt'] ?? '-'))
+                        : null;
+
+                    $contractFields = [
+                        'Teilnehmer-ID' => $contract['teilnehmer_id'] ?? null,
+                        'TN-Nr.' => $contract['teilnehmer_nr'] ?? null,
+                        'Status' => $contract['status'] ?? null,
+                        'Zeitraum' => $period,
+                        'Letzter Tag' => $contract['letzter_tag_fmt'] ?? null,
+                        'Kuendigung zum' => $contract['kuendig_zum_fmt'] ?? null,
+                        'Stammklasse' => $contract['stammklasse'] ?? null,
+                        'Massnahme' => $contract['massnahme_id'] ?? null,
+                        'Modell' => $contract['vtz'] ?? null,
+                        'Unterrichtsform' => $contract['uform'] ?? null,
+                        'Kostentraeger' => $contract['kostentraeger'] ?? null,
+                    ];
+                @endphp
+
+                <section class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm">
+                    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-sm font-semibold uppercase tracking-wide text-emerald-800">Aktueller Vertrag</h3>
+                                @if(($contract['is_active'] ?? null) === true)
+                                    <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                        <i class="far fa-check-circle"></i>
+                                        Aktiv
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="mt-1 text-base font-semibold text-slate-900">{{ $contract['person_name'] ?? '-' }}</div>
+                            @if(!empty($contract['program_title']))
+                                <div class="mt-0.5 text-sm text-slate-700">{{ $contract['program_title'] }}</div>
+                            @endif
+                        </div>
+
+                        @if(!empty($contract['person_id']))
+                            <div class="text-xs font-medium text-slate-500">Person: {{ $contract['person_id'] }}</div>
+                        @endif
+                    </div>
+
+                    <dl class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+                        @foreach($contractFields as $label => $value)
+                            @continue(blank($value))
+                            <div>
+                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ $label }}</dt>
+                                <dd class="mt-0.5 text-sm font-medium text-slate-800">{{ $value }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </section>
+            @endforeach
+        </div>
+    @endif
+
     @if($user->role !== 'tutor' && $user->persons->isEmpty() && !$user->person)
         <div class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
             Keine Person verkn&uuml;pft. Es k&ouml;nnen keine Teilnehmer-Kurse geladen werden.

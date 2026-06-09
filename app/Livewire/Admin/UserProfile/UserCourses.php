@@ -13,6 +13,7 @@ use App\Models\CourseResult;
 use App\Models\CourseMaterialAcknowledgement;
 use App\Support\CurrentParticipantCourseScope;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class UserCourses extends Component
@@ -59,6 +60,7 @@ class UserCourses extends Component
     {
         $courses = collect();
         $courseMeta = [];
+        $currentContracts = $this->buildCurrentContractOverviews();
 
         // Liste aller person_ids des Users (multi-person)
         $personIds = $this->user->persons->pluck('id')->toArray();
@@ -236,7 +238,46 @@ class UserCourses extends Component
         return view('livewire.admin.user-profile.user-courses', [
             'courses' => $courses,
             'courseMeta' => $courseMeta,
+            'currentContracts' => $currentContracts,
         ]);
+    }
+
+    protected function buildCurrentContractOverviews(): array
+    {
+        return $this->user->persons
+            ->map(fn (Person $person) => CurrentParticipantCourseScope::currentContractOverviewFor($person))
+            ->filter()
+            ->map(function (array $contract) {
+                foreach (['beginn', 'ende', 'letzter_tag', 'kuendig_zum'] as $key) {
+                    $contract[$key . '_fmt'] = $this->formatContractDate($contract[$key] ?? null);
+                }
+
+                return $contract;
+            })
+            ->values()
+            ->all();
+    }
+
+    protected function formatContractDate(mixed $value): ?string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        foreach (['Y/m/d', 'Y-m-d', 'd.m.Y', 'd/m/Y', 'd-m-Y'] as $format) {
+            try {
+                return Carbon::createFromFormat($format, $raw, 'Europe/Berlin')->format('d.m.Y');
+            } catch (\Throwable) {
+                // try next known format
+            }
+        }
+
+        try {
+            return Carbon::parse(str_replace('/', '-', $raw), 'Europe/Berlin')->format('d.m.Y');
+        } catch (\Throwable) {
+            return $raw;
+        }
     }
 
     protected function rowKeyForCourse(Course $course): string
