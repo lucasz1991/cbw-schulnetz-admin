@@ -22,6 +22,14 @@ class UserRequest extends Model
     public const TYPE_EXTERNAL_MAKEUP = 'external_makeup';
     public const TYPE_GENERAL         = 'general';
 
+    public const EXAM_MODALITY_RETAKE      = 'retake';
+    public const EXAM_MODALITY_IMPROVEMENT = 'improvement';
+
+    public const MAKEUP_EXAM_MODALITY_LABELS = [
+        self::EXAM_MODALITY_RETAKE      => 'Interne Wiederholungsprüfung',
+        self::EXAM_MODALITY_IMPROVEMENT => 'Interne Nachprüfung',
+    ];
+
     public const STATUS_PENDING   = 'pending';
     public const STATUS_APPROVED  = 'approved';
     public const STATUS_REJECTED  = 'rejected';
@@ -109,12 +117,42 @@ class UserRequest extends Model
      * -------------------------------------------------------------------------
      */
 
-    /** Formatierte Gebühr (z. B. 20,00 €) */
+    public static function formatFeeCents(?int $feeCents): ?string
+    {
+        return $feeCents === null
+            ? null
+            : number_format($feeCents / 100, 2, ',', '.') . ' €';
+    }
+
+    public static function makeupExamDisplayLabel(?string $examModality, ?int $feeCents): ?string
+    {
+        $modalityLabel = self::MAKEUP_EXAM_MODALITY_LABELS[$examModality] ?? null;
+
+        if ($modalityLabel === null) {
+            return null;
+        }
+
+        $fee = self::formatFeeCents($feeCents);
+
+        return $fee === null ? $modalityLabel : $modalityLabel . ' – ' . $fee;
+    }
+
+    /** Formatierte persistierte Gebühr (z. B. 50,00 €). */
     public function getFeeFormattedAttribute(): ?string
     {
-        return is_null($this->fee_cents)
-            ? null
-            : number_format($this->fee_cents / 100, 2, ',', '.') . ' €';
+        return self::formatFeeCents($this->fee_cents);
+    }
+
+    /** Anzeige der internen Prüfungsart inklusive der bei Antragstellung gespeicherten Gebühr. */
+    public function getMakeupExamOptionLabelAttribute(): ?string
+    {
+        return self::makeupExamDisplayLabel($this->exam_modality, $this->fee_cents);
+    }
+
+    /** Bezeichnung der internen Prüfungsart ohne Gebühr. */
+    public function getMakeupExamModalityLabelAttribute(): ?string
+    {
+        return self::MAKEUP_EXAM_MODALITY_LABELS[$this->exam_modality] ?? null;
     }
 
     /** Anzeige für „mit/ohne Attest“ */

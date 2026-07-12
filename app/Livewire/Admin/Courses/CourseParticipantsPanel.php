@@ -152,14 +152,14 @@ class CourseParticipantsPanel extends Component
 
         $lower = mb_strtolower((string) $label);
 
+        // Negative Begriffe zuerst pruefen: "nicht bestanden" enthaelt "bestanden"
+        // und wuerde sonst faelschlich als 'passed' (gruen) klassifiziert.
         $state = match (true) {
+            str_contains($lower, 'nicht'),
+            str_contains($lower, 'fail')            => 'failed',
+
             str_contains($lower, 'bestanden'),
             str_contains($lower, 'passed')          => 'passed',
-
-            str_contains($lower, 'nicht bestanden'),
-            str_contains($lower, 'nicht'),
-            str_contains($lower, 'fail'),
-            str_contains($lower, 'failed')          => 'failed',
 
             default                                 => 'neutral',
         };
@@ -185,7 +185,9 @@ class CourseParticipantsPanel extends Component
             'V' => ['V', 'Betrugsversuch', 'bg-red-50 text-red-700 border-red-200', 'fal fa-ban'],
             'XO' => ['XO', 'Externe Prüfung ausstehend', 'bg-blue-50 text-blue-700 border-blue-200', 'fal fa-clock'],
             'B' => ['B', 'Externe Prüfung bestanden', 'bg-emerald-50 text-emerald-700 border-emerald-200', 'fal fa-check-circle'],
-            'D' => ['D', 'Externe Prüfung durchgefallen', 'bg-rose-50 text-rose-700 border-rose-200', 'fal fa-times-circle'],
+            // 'D' wird auch fuer intern Durchgefallene gepusht (CourseResultsSyncService),
+            // darf also nicht als "extern" beschriftet werden.
+            'D' => ['D', 'Prüfung nicht bestanden', 'bg-rose-50 text-rose-700 border-rose-200', 'fal fa-times-circle'],
             'X' => ['X', 'Externe Prüfung nicht teilgenommen', 'bg-amber-50 text-amber-700 border-amber-200', 'fal fa-user-slash'],
             'N' => ['N', 'Nachklausur', 'bg-indigo-50 text-indigo-700 border-indigo-200', 'fal fa-redo-alt'],
             'K' => ['K', 'Nachkorrektur', 'bg-sky-50 text-sky-700 border-sky-200', 'fal fa-search'],

@@ -137,11 +137,9 @@
                 ? \Carbon\Carbon::parse($req->exam_date)->format('d.m.Y')
                 : '—';
 
-            $examModality = match($req->exam_modality ?? null) {
-                'retake'      => 'Nach-/Wiederholungsprüfung (20,00 €)',
-                'improvement' => 'Nachprüfung zwecks Ergebnisverbesserung (40,00 €)',
-                default       => 'Nicht angegeben',
-            };
+            $examModality = $req->makeup_exam_option_label
+                ?? $req->exam_modality
+                ?? 'Nicht angegeben';
         @endphp
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

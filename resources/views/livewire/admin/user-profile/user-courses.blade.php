@@ -113,10 +113,31 @@
                         $resultClasses = 'bg-slate-100 text-slate-700 border-slate-200';
 
                         if ($resultLabel) {
-                            if (str_contains($resultStateRaw, 'bestanden') || str_contains($resultStateRaw, 'passed')) {
-                                $resultClasses = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-                            } elseif (str_contains($resultStateRaw, 'nicht') || str_contains($resultStateRaw, 'fail')) {
+                            // Negative Begriffe zuerst: "nicht bestanden" enthaelt "bestanden"
+                            // und wuerde sonst faelschlich gruen dargestellt.
+                            if (str_contains($resultStateRaw, 'nicht') || str_contains($resultStateRaw, 'fail')) {
                                 $resultClasses = 'bg-rose-100 text-rose-700 border-rose-200';
+                            } elseif (str_contains($resultStateRaw, 'bestanden') || str_contains($resultStateRaw, 'passed')) {
+                                $resultClasses = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                            }
+                        }
+
+                        // Kennz-Fallback: bei Pruefungs-Kennzeichen (B/D/X/XO/E) ist result NULL —
+                        // ohne Fallback erschiene z. B. eine nicht bestandene (externe) Pruefung als "-".
+                        if (! $resultLabel && $courseResult) {
+                            $statusKennz = mb_strtoupper(trim((string) ($courseResult->status ?? '')));
+
+                            [$kennzLabel, $kennzClasses] = match ($statusKennz) {
+                                'B'       => ['Bestanden (extern)', 'bg-emerald-100 text-emerald-700 border-emerald-200'],
+                                'D'       => ['Nicht bestanden', 'bg-rose-100 text-rose-700 border-rose-200'],
+                                'X'       => ['Nicht teilgenommen (extern)', 'bg-amber-100 text-amber-700 border-amber-200'],
+                                'XO', 'E' => ['Ergebnis offen', 'bg-blue-100 text-blue-700 border-blue-200'],
+                                default   => [null, null],
+                            };
+
+                            if ($kennzLabel) {
+                                $resultLabel = $kennzLabel;
+                                $resultClasses = $kennzClasses;
                             }
                         }
                     @endphp

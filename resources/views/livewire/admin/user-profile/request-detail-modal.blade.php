@@ -63,6 +63,13 @@
                                 <div class="font-medium">{{ $request->module_code ?? '—' }}</div>
                             </div>
 
+                            @if($request->type === \App\Models\UserRequest::TYPE_MAKEUP)
+                                <div>
+                                    <div class="text-xs uppercase text-gray-500">Art der Nachprüfung</div>
+                                    <div class="font-medium">{{ $request->makeup_exam_modality_label ?? $request->exam_modality ?? '—' }}</div>
+                                </div>
+                            @endif
+
                             <div>
                                 <div class="text-xs uppercase text-gray-500">Zeitraum</div>
                                 <div class="font-medium">
