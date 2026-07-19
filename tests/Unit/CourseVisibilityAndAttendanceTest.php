@@ -131,6 +131,14 @@ class CourseVisibilityAndAttendanceTest extends TestCase
 
     public function test_admin_attendance_tutor_style_row_renders_with_auto_save_controls(): void
     {
+        $person = new Person();
+        $person->forceFill([
+            'id' => 42,
+            'vorname' => 'Erika',
+            'nachname' => 'Mustermann',
+            'teilnehmer_id' => 'TN-42',
+        ]);
+
         Livewire::test(AttendanceEditorModal::class)
             ->set('plannedStart', '08:00')
             ->set('plannedEnd', '16:00')
@@ -139,6 +147,7 @@ class CourseVisibilityAndAttendanceTest extends TestCase
             ->set('noteInput', [42 => 'Testnotiz'])
             ->set('rows', [[
                 'id' => 42,
+                'person' => $person,
                 'name' => 'Mustermann, Erika',
                 'teilnehmer_id' => 'TN-42',
                 'has_entry' => true,
