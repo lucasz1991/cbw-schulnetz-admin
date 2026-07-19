@@ -36,6 +36,35 @@
             }
             .attendance-time-input:disabled,
             .attendance-time-select:disabled { cursor: not-allowed; opacity: .55; }
+            .admin-attendance-person-column {
+                width: 42%;
+                min-width: 18rem;
+            }
+            .admin-attendance-person {
+                width: 100%;
+                min-width: 16rem;
+                max-width: 24rem;
+            }
+            .admin-attendance-person > div {
+                width: 100%;
+                min-width: 0;
+                flex-wrap: nowrap;
+            }
+            .admin-attendance-person > div > img {
+                flex: 0 0 auto;
+            }
+            .admin-attendance-person > div > span {
+                display: block;
+                min-width: 0;
+                flex: 1 1 auto;
+                overflow: hidden;
+            }
+            .admin-attendance-person > div > span > span {
+                display: block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
         </style>
     @endonce
     <x-dialog-modal wire:model="showModal" maxWidth="6xl">
@@ -109,7 +138,7 @@
                         <table class="min-w-full table-fixed text-sm">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="w-1/3 px-4 py-2 text-left font-semibold">Teilnehmer</th>
+                                    <th class="admin-attendance-person-column px-4 py-2 text-left font-semibold">Teilnehmer</th>
                                     <th></th>
                                     <th></th>
                                 </tr>
@@ -151,6 +180,11 @@
                                         x-data="{
                                             lateOpen: false,
                                             noteOpen: false,
+                                            rowLoading: false,
+                                            runRowAction(action) {
+                                                this.rowLoading = true;
+                                                return action().finally(() => this.rowLoading = false);
+                                            },
                                             arrive: @entangle('arrivalInput.' . $row['id']).live ?? '',
                                             leave: @entangle('leaveInput.' . $row['id']).live ?? '',
                                             note: @entangle('noteInput.' . $row['id']).live ?? '',
@@ -158,8 +192,8 @@
                                         wire:key="admin-attendance-row-{{ $row['id'] }}"
                                         class="hover:bg-gray-50"
                                     >
-                                        <td class="px-2 py-2 md:px-4">
-                                            <div class="w-min md:w-max">
+                                        <td class="admin-attendance-person-column px-2 py-2 md:px-4">
+                                            <div class="admin-attendance-person" title="{{ $row['name'] ?: 'Teilnehmer #'.$row['id'] }}">
                                                 @if($row['person'] ?? null)
                                                     <x-user.public-info :person="$row['person']" />
                                                 @else
@@ -209,11 +243,7 @@
                                         </td>
                                         <td class="px-1 py-2 pr-2 md:px-4">
                                             <div class="relative flex items-center justify-end gap-1">
-                                                <div
-                                                    class="hidden w-8 flex items-center justify-center"
-                                                    wire:loading.class.remove="hidden"
-                                                    wire:target="markPresent({{ $row['id'] }}),markAbsent({{ $row['id'] }}),saveArrival({{ $row['id'] }}),saveLeave({{ $row['id'] }}),saveNote({{ $row['id'] }}),clearTimes({{ $row['id'] }})"
-                                                >
+                                                <div x-cloak x-show="rowLoading" style="display: none" class="w-8 items-center justify-center text-center">
                                                     <i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i>
                                                 </div>
 
@@ -222,9 +252,8 @@
                                                         type="button"
                                                         class="inline-flex h-8 w-8 items-center justify-center rounded border border-green-500 text-green-500 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
                                                         title="Anwesend"
-                                                        wire:click="markPresent({{ $row['id'] }})"
-                                                        wire:loading.class="pointer-events-none cursor-wait opacity-50"
-                                                        wire:target="markPresent({{ $row['id'] }})"
+                                                        @click="runRowAction(() => $wire.markPresent({{ $row['id'] }}))"
+                                                        :disabled="rowLoading"
                                                     ><i class="fas fa-check text-sm"></i></button>
                                                 @endif
 
@@ -233,9 +262,8 @@
                                                         type="button"
                                                         class="inline-flex h-8 w-8 items-center justify-center rounded border border-red-500 text-red-500 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                                                         title="Abwesend"
-                                                        wire:click="markAbsent({{ $row['id'] }})"
-                                                        wire:loading.class="pointer-events-none cursor-wait opacity-50"
-                                                        wire:target="markAbsent({{ $row['id'] }})"
+                                                        @click="runRowAction(() => $wire.markAbsent({{ $row['id'] }}))"
+                                                        :disabled="rowLoading"
                                                     ><i class="fas fa-times text-sm"></i></button>
                                                 @endif
 
@@ -256,7 +284,7 @@
 
                                                     <div x-cloak x-show="lateOpen" @click.outside="lateOpen=false" class="absolute right-0 z-20 mt-2 w-72 rounded border border-gray-300 bg-white p-3 shadow">
                                                         <div class="absolute right-0 top-0 flex gap-4 p-2">
-                                                            <button type="button" class="text-xs text-gray-600 hover:text-red-600" wire:click="clearTimes({{ $row['id'] }})" wire:loading.attr="disabled" wire:target="clearTimes({{ $row['id'] }})" title="Zeiten löschen"><i class="far fa-trash-alt"></i></button>
+                                                            <button type="button" class="text-xs text-gray-600 hover:text-red-600" @click="runRowAction(() => $wire.clearTimes({{ $row['id'] }}))" :disabled="rowLoading" title="Zeiten löschen"><i class="far fa-trash-alt"></i></button>
                                                             <button type="button" class="text-xs text-gray-600" @click="lateOpen=false"><i class="far fa-times-circle"></i></button>
                                                         </div>
 
@@ -274,20 +302,17 @@
                                                                             min="{{ $plannedStart }}"
                                                                             max="{{ $plannedEnd }}"
                                                                             step="60"
-                                                                            wire:model.live="arrivalInput.{{ $row['id'] }}"
-                                                                            wire:change="saveArrival({{ $row['id'] }})"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveArrival({{ $row['id'] }})"
+                                                                            @change="arrive = $event.target.value; runRowAction(() => $wire.saveArrival({{ $row['id'] }}, arrive))"
+                                                                            :disabled="rowLoading"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                     </div>
                                                                     <div class="w-10 shrink-0">
                                                                         <select
                                                                             id="admin-arrive-quick-{{ $row['id'] }}"
-                                                                            @change="arrive = $event.target.value; $wire.set('arrivalInput.{{ $row['id'] }}', arrive); $wire.saveArrival({{ $row['id'] }});"
+                                                                            @change="arrive = $event.target.value; runRowAction(() => $wire.saveArrival({{ $row['id'] }}, arrive))"
                                                                             class="attendance-time-select block"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveArrival({{ $row['id'] }})"
+                                                                            :disabled="rowLoading"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                             <option class="text-gray-700" value="">Bitte wählen</option>
@@ -315,20 +340,17 @@
                                                                             min="{{ $plannedStart }}"
                                                                             max="{{ $plannedEnd }}"
                                                                             step="60"
-                                                                            wire:model.live="leaveInput.{{ $row['id'] }}"
-                                                                            wire:change="saveLeave({{ $row['id'] }})"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveLeave({{ $row['id'] }})"
+                                                                            @change="leave = $event.target.value; runRowAction(() => $wire.saveLeave({{ $row['id'] }}, leave))"
+                                                                            :disabled="rowLoading"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                     </div>
                                                                     <div class="w-10 shrink-0">
                                                                         <select
                                                                             id="admin-leave-quick-{{ $row['id'] }}"
-                                                                            @change="leave = $event.target.value; $wire.set('leaveInput.{{ $row['id'] }}', leave); $wire.saveLeave({{ $row['id'] }});"
+                                                                            @change="leave = $event.target.value; runRowAction(() => $wire.saveLeave({{ $row['id'] }}, leave))"
                                                                             class="attendance-time-select block"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveLeave({{ $row['id'] }})"
+                                                                            :disabled="rowLoading"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                             <option class="text-gray-700" value="">Bitte wählen</option>
@@ -390,9 +412,8 @@
                                                             rows="3"
                                                             maxlength="1000"
                                                             class="w-full rounded border-gray-300 text-sm"
-                                                            wire:change="saveNote({{ $row['id'] }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="saveNote({{ $row['id'] }})"
+                                                            @change="note = $event.target.value; runRowAction(() => $wire.saveNote({{ $row['id'] }}, note))"
+                                                            :disabled="rowLoading"
                                                         ></textarea>
                                                         @error('noteInput.'.$row['id']) <div class="mt-1 text-xs text-rose-600">{{ $message }}</div> @enderror
                                                         <div class="mt-2 flex justify-end"><button type="button" class="text-xs text-gray-600 underline" @click="noteOpen=false">Schließen</button></div>
