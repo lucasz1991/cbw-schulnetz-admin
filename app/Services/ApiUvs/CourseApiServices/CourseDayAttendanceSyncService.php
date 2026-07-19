@@ -38,10 +38,13 @@ class CourseDayAttendanceSyncService
         );
         $teilnehmerIds = $this->collectTeilnehmerIds($day, $onlyLocalPersonIds);
 
-        if (empty($changes)) {
-            $this->markRowsAfterPush($day, [], $fullyPresentLocalIds);
+        if (empty($teilnehmerIds)) {
+            Log::warning('Admin attendance sync: Keine UVS-Teilnehmer-ID für den Zeilen-Sync vorhanden.', [
+                'day_id' => $day->id,
+                'person_ids' => $onlyLocalPersonIds,
+            ]);
 
-            return true;
+            return false;
         }
 
         $response = $this->apiUvsService->syncCourseDayAttendanceData(
@@ -71,7 +74,9 @@ class CourseDayAttendanceSyncService
                 'person_ids' => $onlyLocalPersonIds,
             ]);
 
-            return false;
+            // Der Push wurde von UVS bereits bestätigt. Der lokale, als
+            // synchronisiert markierte Zeilenstand bleibt deshalb erhalten.
+            return true;
         }
 
         return true;
@@ -220,7 +225,7 @@ class CourseDayAttendanceSyncService
         }
         foreach ($fullyPresentLocalIds as $personId) {
             if (isset($participants[$personId]) && is_array($participants[$personId])) {
-                $participants[$personId]['state'] = self::STATE_LOCAL;
+                $participants[$personId]['state'] = self::STATE_SYNCED;
                 $participants[$personId]['src_api_id'] = null;
                 $participants[$personId]['updated_at'] = $now->toDateTimeString();
             }

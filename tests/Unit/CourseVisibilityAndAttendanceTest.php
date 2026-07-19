@@ -326,6 +326,59 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertSame('delete', $presentChanges[0]['action']);
     }
 
+    public function test_admin_row_sync_calls_uvs_for_fully_present_participant_without_remote_absence(): void
+    {
+        $person = new Person();
+        $person->forceFill(['id' => 7, 'teilnehmer_id' => 'TN-7', 'institut_id' => 5]);
+
+        $course = new Course();
+        $course->forceFill(['id' => 11, 'termin_id' => 'TERM-11', 'institut_id' => 5]);
+        $course->setRelation('participants', collect([$person]));
+        $course->setRelation('tutor', null);
+
+        $day = Mockery::mock(CourseDay::class)->makePartial();
+        $day->forceFill([
+            'id' => 21,
+            'course_id' => 11,
+            'date' => Carbon::parse('2026-07-19'),
+            'start_time' => '08:00',
+            'end_time' => '16:00',
+            'std' => 8,
+            'attendance_data' => [
+                'participants' => [
+                    7 => [
+                        'present' => true,
+                        'excused' => false,
+                        'late_minutes' => 0,
+                        'left_early_minutes' => 0,
+                        'src_api_id' => null,
+                        'state' => 'synced',
+                    ],
+                ],
+            ],
+        ]);
+        $day->setRelation('course', $course);
+        $day->shouldReceive('loadMissing')->once()->andReturnSelf();
+        $day->shouldReceive('saveQuietly')->once()->andReturnTrue();
+
+        $api = Mockery::mock(ApiUvsService::class);
+        $api->shouldReceive('syncCourseDayAttendanceData')
+            ->once()
+            ->with('TERM-11', '2026-07-19', ['TN-7'], [])
+            ->andReturn(['ok' => true]);
+
+        $loader = Mockery::mock(CourseUvsDirectLoadService::class);
+        $loader->shouldReceive('loadAttendanceForDay')->once()->with($day)->andReturnTrue();
+
+        $service = new CourseDayAttendanceSyncService($loader, $api);
+
+        $this->assertTrue($service->syncToRemote($day, [7]));
+        $this->assertSame(
+            CourseDayAttendanceSyncService::STATE_SYNCED,
+            data_get($day->attendance_data, 'participants.7.state')
+        );
+    }
+
     public function test_changed_admin_attendance_views_compile(): void
     {
         foreach ([
@@ -344,6 +397,7 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $panelSource = file_get_contents(resource_path('views/livewire/admin/courses/course-days-panel.blade.php'));
         $modalSource = file_get_contents(resource_path('views/livewire/admin/courses/attendance-editor-modal.blade.php'));
         $modalComponentSource = file_get_contents(app_path('Livewire/Admin/Courses/AttendanceEditorModal.php'));
+        $attendanceSyncSource = file_get_contents(app_path('Services/ApiUvs/CourseApiServices/CourseDayAttendanceSyncService.php'));
 
         $this->assertStringContainsString('wire:click="openAttendanceEditor', $panelSource);
         $this->assertStringNotContainsString('attendance_rows', $panelSource);
@@ -354,15 +408,14 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertStringContainsString('Gekommen um', $modalSource);
         $this->assertStringContainsString('Gegangen um', $modalSource);
         $this->assertStringNotContainsString('Keine Zusatzangabe', $modalSource);
-        $this->assertStringContainsString('$wire.saveArrival', $modalSource);
-        $this->assertStringContainsString('$wire.saveLeave', $modalSource);
-        $this->assertStringContainsString('$wire.saveNote', $modalSource);
-        $this->assertStringContainsString('finally(() => saving = false)', $modalSource);
+        $this->assertStringContainsString('wire:change="saveArrival', $modalSource);
+        $this->assertStringContainsString('wire:change="saveLeave', $modalSource);
+        $this->assertStringContainsString('wire:change="saveNote', $modalSource);
+        $this->assertStringNotContainsString('saving: false', $modalSource);
         $this->assertStringContainsString('wire:target="clearTimes', $modalSource);
         $this->assertStringContainsString('fad fa-spinner-third fa-spin', $modalSource);
         $this->assertStringContainsString('attendance-time-input', $modalSource);
         $this->assertStringContainsString('attendance-time-select', $modalSource);
-        $this->assertStringContainsString('$event.target.value', $modalSource);
         $this->assertStringContainsString("auth()->user()?->isAdmin()", $modalSource);
         $this->assertStringNotContainsString('Admin-Bearbeitung', $modalSource);
         $this->assertStringContainsString('Bitte wählen', $modalSource);
@@ -374,5 +427,11 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertStringContainsString('function saveArrival(', $modalComponentSource);
         $this->assertStringContainsString('function saveLeave(', $modalComponentSource);
         $this->assertStringContainsString('function clearTimes(', $modalComponentSource);
+        $this->assertStringContainsString('DB::transaction(', $modalComponentSource);
+        $this->assertStringNotContainsString('STATE_DIRTY', $modalComponentSource);
+        $this->assertStringNotContainsString('vorgemerkt', $modalComponentSource);
+        $this->assertStringContainsString('syncCourseDayAttendanceData(', $attendanceSyncSource);
+        $this->assertStringNotContainsString('if (empty($changes))', $attendanceSyncSource);
+        $this->assertStringContainsString("['state'] = self::STATE_SYNCED", $attendanceSyncSource);
     }
 }

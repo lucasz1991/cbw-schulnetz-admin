@@ -6,6 +6,7 @@ use App\Models\CourseDay;
 use App\Services\ApiUvs\CourseApiServices\CourseDayAttendanceSyncService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -245,23 +246,24 @@ class AttendanceEditorModal extends Component
         $day = $this->editableDay();
         $this->assertParticipantBelongsToDay($day, $personId);
         $this->syncError = null;
-        $patch['state'] = CourseDayAttendanceSyncService::STATE_DIRTY;
-
-        $day->setAttendance($personId, $patch);
-        $day->refresh();
+        $patch['state'] = CourseDayAttendanceSyncService::STATE_SYNCED;
 
         try {
-            $synced = app(CourseDayAttendanceSyncService::class)->syncToRemote($day, [$personId]);
-            if (! $synced) {
-                $this->syncError = 'Die Änderung wurde lokal vorgemerkt, aber noch nicht vollständig mit UVS synchronisiert.';
-            }
+            DB::transaction(function () use ($day, $personId, $patch): void {
+                $day->setAttendance($personId, $patch);
+                $day->refresh();
+
+                if (! app(CourseDayAttendanceSyncService::class)->syncToRemote($day, [$personId])) {
+                    throw new \RuntimeException('UVS hat die Änderung nicht bestätigt.');
+                }
+            });
         } catch (\Throwable $exception) {
             Log::error('Admin attendance modal: Speichern fehlgeschlagen.', [
                 'course_day_id' => $day->id,
                 'person_id' => $personId,
                 'error' => $exception->getMessage(),
             ]);
-            $this->syncError = 'Die Änderung wurde lokal vorgemerkt. UVS ist momentan nicht erreichbar.';
+            $this->syncError = 'Die Änderung konnte nicht in UVS gespeichert werden. Der lokale Stand wurde nicht verändert.';
         }
 
         $freshDay = $day->fresh(['course.participants']);
