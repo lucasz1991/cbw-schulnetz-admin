@@ -54,7 +54,7 @@ class AttendanceEditorModal extends Component
             $this->syncError = 'UVS ist momentan nicht erreichbar. Der lokale Stand wird angezeigt.';
         }
 
-        $this->hydrateRows($day->fresh(['course.participants']));
+        $this->loadRowsFromDay($day->fresh(['course.participants']));
     }
 
     public function close(): void
@@ -91,7 +91,7 @@ class AttendanceEditorModal extends Component
             $this->syncError = 'UVS ist momentan nicht erreichbar.';
         }
 
-        $this->hydrateRows($day->fresh(['course.participants']));
+        $this->loadRowsFromDay($day->fresh(['course.participants']));
     }
 
     public function markPresent(int $personId): void
@@ -208,7 +208,7 @@ class AttendanceEditorModal extends Component
         }
 
         $freshDay = $day->fresh(['course.participants']);
-        $this->hydrateRows($freshDay);
+        $this->loadRowsFromDay($freshDay);
         $this->dispatch('adminAttendanceUpdated', courseDayId: $day->id);
     }
 
@@ -246,7 +246,7 @@ class AttendanceEditorModal extends Component
         );
     }
 
-    protected function hydrateRows(CourseDay $day): void
+    protected function loadRowsFromDay(CourseDay $day): void
     {
         $participantsData = data_get($day->attendance_data, 'participants', []);
         if (! is_array($participantsData)) {

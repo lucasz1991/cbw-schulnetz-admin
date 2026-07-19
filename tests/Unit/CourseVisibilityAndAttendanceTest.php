@@ -14,6 +14,7 @@ use App\Services\ApiUvs\CourseApiServices\CourseUvsDirectLoadService;
 use App\Support\Rbac\RbacCatalog;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Livewire;
 use Mockery;
 use ReflectionMethod;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -68,6 +69,16 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertSame(42, $method->invoke($component, ['courseDayId' => 42]));
         $this->assertSame(42, $method->invoke($component, [['courseDayId' => 42]]));
         $this->assertNull($method->invoke($component, ['invalid' => 1, 'other' => 2]));
+    }
+
+    public function test_attendance_modal_rows_loader_does_not_collide_with_livewire_hydrate_hook(): void
+    {
+        $this->assertFalse(method_exists(AttendanceEditorModal::class, 'hydrateRows'));
+        $this->assertTrue(method_exists(AttendanceEditorModal::class, 'loadRowsFromDay'));
+
+        Livewire::test(AttendanceEditorModal::class)
+            ->set('syncError', 'Hydration erfolgreich')
+            ->assertSet('syncError', 'Hydration erfolgreich');
     }
 
     public function test_vacation_uses_immediately_preceding_non_vacation_block(): void
