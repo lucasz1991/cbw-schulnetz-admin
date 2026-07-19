@@ -2,17 +2,21 @@
 
 namespace Tests\Unit;
 
+use App\Livewire\Admin\Courses\AttendanceEditorModal;
 use App\Livewire\Admin\UserProfile\UserCourses;
 use App\Models\Course;
 use App\Models\CourseDay;
 use App\Models\Person;
+use App\Models\User;
 use App\Services\ApiUvs\ApiUvsService;
 use App\Services\ApiUvs\CourseApiServices\CourseDayAttendanceSyncService;
 use App\Services\ApiUvs\CourseApiServices\CourseUvsDirectLoadService;
 use App\Support\Rbac\RbacCatalog;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Mockery;
 use ReflectionMethod;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class CourseVisibilityAndAttendanceTest extends TestCase
@@ -28,6 +32,28 @@ class CourseVisibilityAndAttendanceTest extends TestCase
     public function test_attendance_edit_permission_is_part_of_rbac_catalog(): void
     {
         $this->assertContains('courses.attendance.edit_today', RbacCatalog::allPermissions());
+
+        $permission = collect(RbacCatalog::permissionGroups()['Kursverwaltung'])
+            ->firstWhere('key', 'courses.attendance.edit_today');
+
+        $this->assertTrue((bool) ($permission['admin_only'] ?? false));
+    }
+
+    public function test_non_admin_cannot_open_attendance_editor_server_side(): void
+    {
+        $user = new User();
+        $user->role = 'employee';
+        Auth::setUser($user);
+
+        $method = new ReflectionMethod(AttendanceEditorModal::class, 'editableDay');
+        $method->setAccessible(true);
+
+        try {
+            $method->invoke(new AttendanceEditorModal(), 1);
+            $this->fail('Nicht-Admins dürfen den Anwesenheitseditor nicht öffnen.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
     }
 
     public function test_vacation_uses_immediately_preceding_non_vacation_block(): void
@@ -205,6 +231,7 @@ class CourseVisibilityAndAttendanceTest extends TestCase
             'livewire/admin/courses/attendance-editor-modal.blade.php',
             'livewire/admin/courses/course-days-panel.blade.php',
             'livewire/admin/courses/course-show.blade.php',
+            'livewire/admin/employees/team-rbac-modal.blade.php',
         ] as $view) {
             $compiled = app('blade.compiler')->compileString(
                 file_get_contents(resource_path('views/'.$view))

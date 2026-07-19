@@ -141,8 +141,7 @@
                                                 <i class="fal fa-users text-[11px]"></i>
                                                 <span>Teilnehmer: {{ count($day['attendance_rows']) }}</span>
                                             </span>
-                                            @if($day['is_today'])
-                                                @can('courses.attendance.edit_today')
+                                            @if($day['is_today'] && auth()->user()?->isAdmin())
                                                     <button
                                                         type="button"
                                                         wire:click="openAttendanceEditor({{ $day['id'] }})"
@@ -152,7 +151,6 @@
                                                         <i class="fal fa-user-edit"></i>
                                                         Bearbeiten
                                                     </button>
-                                                @endcan
                                             @endif
                                         </div>
                                     </div>

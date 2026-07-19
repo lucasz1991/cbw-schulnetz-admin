@@ -15,7 +15,7 @@ class RbacCatalog
     }
 
     /**
-     * @return array<string, array<int, array{key: string, label: string}>>
+     * @return array<string, array<int, array{key: string, label: string, admin_only?: bool}>>
      */
     public static function permissionGroups(): array
     {
@@ -47,7 +47,11 @@ class RbacCatalog
                 ['key' => 'courses.view', 'label' => 'Kurse anzeigen'],
                 ['key' => 'courses.export', 'label' => 'Kurse exportieren'],
                 ['key' => 'courses.ratings.view', 'label' => 'Kursbewertungen anzeigen'],
-                ['key' => 'courses.attendance.edit_today', 'label' => 'Anwesenheit heutiger Bausteine bearbeiten'],
+                [
+                    'key' => 'courses.attendance.edit_today',
+                    'label' => 'Anwesenheit heutiger Bausteine bearbeiten',
+                    'admin_only' => true,
+                ],
                 ['key' => 'invoices.view', 'label' => 'Rechnungen anzeigen'],
             ],
             'Jobs' => [

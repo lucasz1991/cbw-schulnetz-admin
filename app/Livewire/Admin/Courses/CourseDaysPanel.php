@@ -221,6 +221,7 @@ class CourseDaysPanel extends Component
 
     public function openAttendanceEditor(int $courseDayId): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         Gate::authorize('courses.attendance.edit_today');
 
         $day = CourseDay::query()

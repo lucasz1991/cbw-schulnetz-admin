@@ -211,6 +211,7 @@ class AttendanceEditorModal extends Component
 
     protected function editableDay(?int $courseDayId = null): CourseDay
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
         Gate::authorize('courses.attendance.edit_today');
 
         $id = $courseDayId ?? $this->courseDayId;
