@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class CourseDayAttendanceSyncService
 {
+    protected const ENDPOINT_SYNC = '/api/course/courseday/syncattendancedata';
+
     public const STATE_DIRTY = 'dirty';
     public const STATE_LOCAL = 'local';
     public const STATE_SYNCED = 'synced';
@@ -47,12 +49,12 @@ class CourseDayAttendanceSyncService
             return false;
         }
 
-        $response = $this->apiUvsService->syncCourseDayAttendanceData(
-            (string) $day->course->termin_id,
-            $day->date->toDateString(),
-            $teilnehmerIds,
-            $changes
-        );
+        $response = $this->apiUvsService->request('POST', self::ENDPOINT_SYNC, [
+            'termin_id' => (string) $day->course->termin_id,
+            'date' => $day->date->toDateString(),
+            'teilnehmer_ids' => $teilnehmerIds,
+            'changes' => $changes,
+        ]);
 
         if (empty($response['ok'])) {
             Log::error('Admin attendance sync: UVS-Response nicht erfolgreich.', [

@@ -63,7 +63,7 @@ class AttendanceEditorModal extends Component
             $this->syncError = 'UVS ist momentan nicht erreichbar. Der lokale Stand wird angezeigt.';
         }
 
-        $this->loadRowsFromDay($day->fresh(['course.participants']));
+        $this->loadRowsFromDay($day->fresh(['course.participants.user']));
     }
 
     public function close(): void
@@ -108,7 +108,7 @@ class AttendanceEditorModal extends Component
             $this->syncError = 'UVS ist momentan nicht erreichbar.';
         }
 
-        $this->loadRowsFromDay($day->fresh(['course.participants']));
+        $this->loadRowsFromDay($day->fresh(['course.participants.user']));
     }
 
     public function markPresent(int $personId): void
@@ -266,7 +266,7 @@ class AttendanceEditorModal extends Component
             $this->syncError = 'Die Änderung konnte nicht in UVS gespeichert werden. Der lokale Stand wurde nicht verändert.';
         }
 
-        $freshDay = $day->fresh(['course.participants']);
+        $freshDay = $day->fresh(['course.participants.user']);
         $this->loadRowsFromDay($freshDay);
         $this->dispatch('adminAttendanceUpdated', courseDayId: $day->id);
     }
@@ -280,7 +280,7 @@ class AttendanceEditorModal extends Component
         abort_unless($id, 404);
 
         return CourseDay::query()
-            ->with(['course.participants', 'course.tutor'])
+            ->with(['course.participants.user', 'course.tutor'])
             ->findOrFail($id);
     }
 
@@ -328,6 +328,7 @@ class AttendanceEditorModal extends Component
 
                 return [
                     'id' => $personId,
+                    'person' => $person,
                     'name' => trim(trim((string) ($person->nachname ?? '')).', '.trim((string) ($person->vorname ?? '')), ', '),
                     'teilnehmer_id' => $person->teilnehmer_id,
                     'has_entry' => $hasEntry,

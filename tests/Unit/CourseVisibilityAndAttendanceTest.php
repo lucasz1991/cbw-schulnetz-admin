@@ -362,9 +362,14 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $day->shouldReceive('saveQuietly')->once()->andReturnTrue();
 
         $api = Mockery::mock(ApiUvsService::class);
-        $api->shouldReceive('syncCourseDayAttendanceData')
+        $api->shouldReceive('request')
             ->once()
-            ->with('TERM-11', '2026-07-19', ['TN-7'], [])
+            ->with('POST', '/api/course/courseday/syncattendancedata', [
+                'termin_id' => 'TERM-11',
+                'date' => '2026-07-19',
+                'teilnehmer_ids' => ['TN-7'],
+                'changes' => [],
+            ])
             ->andReturn(['ok' => true]);
 
         $loader = Mockery::mock(CourseUvsDirectLoadService::class);
@@ -398,6 +403,7 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $modalSource = file_get_contents(resource_path('views/livewire/admin/courses/attendance-editor-modal.blade.php'));
         $modalComponentSource = file_get_contents(app_path('Livewire/Admin/Courses/AttendanceEditorModal.php'));
         $attendanceSyncSource = file_get_contents(app_path('Services/ApiUvs/CourseApiServices/CourseDayAttendanceSyncService.php'));
+        $apiServiceSource = file_get_contents(app_path('Services/ApiUvs/ApiUvsService.php'));
 
         $this->assertStringContainsString('wire:click="openAttendanceEditor', $panelSource);
         $this->assertStringNotContainsString('attendance_rows', $panelSource);
@@ -414,6 +420,9 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertStringNotContainsString('saving: false', $modalSource);
         $this->assertStringContainsString('wire:target="clearTimes', $modalSource);
         $this->assertStringContainsString('fad fa-spinner-third fa-spin', $modalSource);
+        $this->assertStringContainsString('wire:loading.class.remove="hidden"', $modalSource);
+        $this->assertSame(1, substr_count($modalSource, 'wire:loading.class.remove="hidden"'));
+        $this->assertStringContainsString('<x-user.public-info :person="$row[\'person\']" />', $modalSource);
         $this->assertStringContainsString('attendance-time-input', $modalSource);
         $this->assertStringContainsString('attendance-time-select', $modalSource);
         $this->assertStringContainsString("auth()->user()?->isAdmin()", $modalSource);
@@ -430,8 +439,11 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertStringContainsString('DB::transaction(', $modalComponentSource);
         $this->assertStringNotContainsString('STATE_DIRTY', $modalComponentSource);
         $this->assertStringNotContainsString('vorgemerkt', $modalComponentSource);
-        $this->assertStringContainsString('syncCourseDayAttendanceData(', $attendanceSyncSource);
+        $this->assertStringContainsString("request('POST', self::ENDPOINT_SYNC", $attendanceSyncSource);
         $this->assertStringNotContainsString('if (empty($changes))', $attendanceSyncSource);
         $this->assertStringContainsString("['state'] = self::STATE_SYNCED", $attendanceSyncSource);
+        $this->assertStringContainsString("'Connection'    => 'close'", $apiServiceSource);
+        $this->assertStringContainsString('CURLOPT_FRESH_CONNECT => true', $apiServiceSource);
+        $this->assertStringContainsString('public function request(', $apiServiceSource);
     }
 }

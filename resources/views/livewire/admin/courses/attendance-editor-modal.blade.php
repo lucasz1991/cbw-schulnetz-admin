@@ -159,8 +159,13 @@
                                         class="hover:bg-gray-50"
                                     >
                                         <td class="px-2 py-2 md:px-4">
-                                            <div class="font-medium text-gray-900">{{ $row['name'] ?: 'Teilnehmer #'.$row['id'] }}</div>
-                                            <div class="mt-0.5 text-xs text-gray-500">{{ $row['teilnehmer_id'] ?: 'Keine Teilnehmer-ID' }}</div>
+                                            <div class="w-min md:w-max">
+                                                @if($row['person'] ?? null)
+                                                    <x-user.public-info :person="$row['person']" />
+                                                @else
+                                                    <div class="font-medium text-gray-900">{{ $row['name'] ?: 'Teilnehmer #'.$row['id'] }}</div>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-1 py-2 md:px-4">
                                             <div
@@ -204,13 +209,12 @@
                                         </td>
                                         <td class="px-1 py-2 pr-2 md:px-4">
                                             <div class="relative flex items-center justify-end gap-1">
-                                                <div class="flex w-8 items-center justify-center">
-                                                    <div wire:loading wire:target="markPresent({{ $row['id'] }})" class="flex items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
-                                                    <div wire:loading wire:target="markAbsent({{ $row['id'] }})" class="flex items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
-                                                    <div wire:loading wire:target="saveArrival({{ $row['id'] }})" class="flex items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
-                                                    <div wire:loading wire:target="saveLeave({{ $row['id'] }})" class="flex items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
-                                                    <div wire:loading wire:target="saveNote({{ $row['id'] }})" class="flex items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
-                                                    <div wire:loading wire:target="clearTimes({{ $row['id'] }})" class="flex items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
+                                                <div
+                                                    class="hidden w-8 flex items-center justify-center"
+                                                    wire:loading.class.remove="hidden"
+                                                    wire:target="markPresent({{ $row['id'] }}),markAbsent({{ $row['id'] }}),saveArrival({{ $row['id'] }}),saveLeave({{ $row['id'] }}),saveNote({{ $row['id'] }}),clearTimes({{ $row['id'] }})"
+                                                >
+                                                    <i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i>
                                                 </div>
 
                                                 @if(! $isPresent)
