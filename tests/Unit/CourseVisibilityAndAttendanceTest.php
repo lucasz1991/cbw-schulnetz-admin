@@ -447,7 +447,9 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertStringContainsString('function saveArrival(', $modalComponentSource);
         $this->assertStringContainsString('function saveLeave(', $modalComponentSource);
         $this->assertStringContainsString('function clearTimes(', $modalComponentSource);
-        $this->assertStringContainsString('DB::transaction(', $modalComponentSource);
+        $this->assertStringNotContainsString('DB::transaction(', $modalComponentSource);
+        $this->assertStringContainsString('$originalAttendance = $day->attendance_data', $modalComponentSource);
+        $this->assertStringContainsString('$service->lastError()', $modalComponentSource);
         $this->assertStringNotContainsString('STATE_DIRTY', $modalComponentSource);
         $this->assertStringNotContainsString('vorgemerkt', $modalComponentSource);
         $this->assertStringContainsString("request('POST', self::ENDPOINT_SYNC", $attendanceSyncSource);

@@ -11,6 +11,8 @@ class CourseDayAttendanceSyncService
 {
     protected const ENDPOINT_SYNC = '/api/course/courseday/syncattendancedata';
 
+    protected ?string $lastError = null;
+
     public const STATE_DIRTY = 'dirty';
     public const STATE_LOCAL = 'local';
     public const STATE_SYNCED = 'synced';
@@ -23,6 +25,7 @@ class CourseDayAttendanceSyncService
 
     public function syncToRemote(CourseDay $day, ?array $onlyLocalPersonIds = null): bool
     {
+        $this->lastError = null;
         $day->loadMissing(['course.participants', 'course.tutor']);
 
         if (! $day->course || ! $day->course->termin_id || ! $day->date) {
@@ -30,6 +33,7 @@ class CourseDayAttendanceSyncService
                 'day_id' => $day->id,
                 'course_id' => $day->course_id,
             ]);
+            $this->lastError = 'Die Unterrichtseinheit besitzt keine UVS-Termin-ID.';
 
             return false;
         }
@@ -45,6 +49,7 @@ class CourseDayAttendanceSyncService
                 'day_id' => $day->id,
                 'person_ids' => $onlyLocalPersonIds,
             ]);
+            $this->lastError = 'Für diesen Teilnehmer fehlt die UVS-Teilnehmer-ID.';
 
             return false;
         }
@@ -61,6 +66,8 @@ class CourseDayAttendanceSyncService
                 'day_id' => $day->id,
                 'response' => $response,
             ]);
+            $status = isset($response['status']) ? 'HTTP '.$response['status'].': ' : '';
+            $this->lastError = $status.($response['message'] ?? 'Die UVS-API hat den Request abgelehnt.');
 
             return false;
         }
@@ -82,6 +89,11 @@ class CourseDayAttendanceSyncService
         }
 
         return true;
+    }
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
     }
 
     public function loadFromRemote(CourseDay $day, ?array $onlyLocalPersonIds = null): bool

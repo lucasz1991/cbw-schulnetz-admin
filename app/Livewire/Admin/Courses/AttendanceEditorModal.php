@@ -6,7 +6,6 @@ use App\Models\CourseDay;
 use App\Services\ApiUvs\CourseApiServices\CourseDayAttendanceSyncService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -247,23 +246,39 @@ class AttendanceEditorModal extends Component
         $this->assertParticipantBelongsToDay($day, $personId);
         $this->syncError = null;
         $patch['state'] = CourseDayAttendanceSyncService::STATE_SYNCED;
+        $originalAttendance = $day->attendance_data;
+        $originalUpdatedAt = $day->attendance_updated_at;
+        $originalLastSyncedAt = $day->attendance_last_synced_at;
 
         try {
-            DB::transaction(function () use ($day, $personId, $patch): void {
-                $day->setAttendance($personId, $patch);
-                $day->refresh();
+            $day->setAttendance($personId, $patch);
+            $day->refresh();
+            $service = app(CourseDayAttendanceSyncService::class);
 
-                if (! app(CourseDayAttendanceSyncService::class)->syncToRemote($day, [$personId])) {
-                    throw new \RuntimeException('UVS hat die Änderung nicht bestätigt.');
-                }
-            });
+            if (! $service->syncToRemote($day, [$personId])) {
+                throw new \RuntimeException($service->lastError() ?? 'UVS hat die Änderung nicht bestätigt.');
+            }
         } catch (\Throwable $exception) {
+            try {
+                $day->forceFill([
+                    'attendance_data' => $originalAttendance,
+                    'attendance_updated_at' => $originalUpdatedAt,
+                    'attendance_last_synced_at' => $originalLastSyncedAt,
+                ])->saveQuietly();
+            } catch (\Throwable $restoreException) {
+                Log::critical('Admin attendance modal: Lokaler Stand konnte nicht wiederhergestellt werden.', [
+                    'course_day_id' => $day->id,
+                    'person_id' => $personId,
+                    'error' => $restoreException->getMessage(),
+                ]);
+            }
+
             Log::error('Admin attendance modal: Speichern fehlgeschlagen.', [
                 'course_day_id' => $day->id,
                 'person_id' => $personId,
                 'error' => $exception->getMessage(),
             ]);
-            $this->syncError = 'Die Änderung konnte nicht in UVS gespeichert werden. Der lokale Stand wurde nicht verändert.';
+            $this->syncError = 'UVS-Speicherung fehlgeschlagen: '.$exception->getMessage();
         }
 
         $freshDay = $day->fresh(['course.participants.user']);
