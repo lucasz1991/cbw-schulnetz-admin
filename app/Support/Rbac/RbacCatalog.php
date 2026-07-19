@@ -49,7 +49,7 @@ class RbacCatalog
                 ['key' => 'courses.ratings.view', 'label' => 'Kursbewertungen anzeigen'],
                 [
                     'key' => 'courses.attendance.edit_today',
-                    'label' => 'Anwesenheit heutiger Bausteine bearbeiten',
+                    'label' => 'Anwesenheitslisten bearbeiten',
                     'admin_only' => true,
                 ],
                 ['key' => 'invoices.view', 'label' => 'Rechnungen anzeigen'],

@@ -133,97 +133,44 @@
                         <div class="px-4 pb-4 border-t border-dashed border-neutral-200 bg-neutral-50/50">
                             <div class="pt-3 space-y-3">
                                 <div class="rounded-xl border border-neutral-100 bg-white p-3 shadow-sm/5">
-                                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                        <div class="text-[11px] uppercase tracking-wide text-neutral-400">Anwesenheit</div>
-                                        @php $a = $day['attendance']; @endphp
-                                        <div class="flex items-center gap-2">
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 text-slate-600 border border-slate-200 px-2 py-0.5 text-[11px]">
-                                                <i class="fal fa-users text-[11px]"></i>
-                                                <span>Teilnehmer: {{ count($day['attendance_rows']) }}</span>
-                                            </span>
-                                            @if($day['is_today'] && auth()->user()?->isAdmin())
-                                                    <button
-                                                        type="button"
-                                                        wire:click="openAttendanceEditor({{ $day['id'] }})"
-                                                        wire:loading.attr="disabled"
-                                                        class="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:opacity-50"
-                                                    >
-                                                        <i class="fal fa-user-edit"></i>
-                                                        Bearbeiten
-                                                    </button>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    @if($day['has_attendance'])
-                                        <div class="flex flex-wrap items-center gap-2 text-[11px]">
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5">
-                                                <i class="fal fa-check-circle text-[11px]"></i>
-                                                <span>anwesend: {{ $a['present'] }}</span>
-                                            </span>
+                                    @php $a = $day['attendance']; @endphp
+                                    <div class="mb-2 text-[11px] uppercase tracking-wide text-neutral-400">Anwesenheit</div>
 
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-red-50 text-red-700 border border-red-200 px-2 py-0.5">
-                                                <i class="fal fa-times-circle text-[11px]"></i>
-                                                <span>fehlend: {{ $a['absent'] }}</span>
+                                    @if(auth()->user()?->isAdmin())
+                                        <button
+                                            type="button"
+                                            wire:click="openAttendanceEditor({{ $day['id'] }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="openAttendanceEditor({{ $day['id'] }})"
+                                            class="group flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-left transition hover:border-sky-300 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+                                            aria-label="Anwesenheitsliste für {{ $day['date']->format('d.m.Y') }} öffnen und bearbeiten"
+                                        >
+                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-sky-200 bg-white text-sky-700 shadow-sm transition group-hover:border-sky-300">
+                                                <i class="fad fa-clipboard-user" aria-hidden="true"></i>
                                             </span>
-
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5">
-                                                <i class="fal fa-envelope-open-text text-[11px]"></i>
-                                                <span>entschuldigt: {{ $a['excused'] }}</span>
+                                            <span class="min-w-0 flex-1">
+                                                <span class="block text-xs font-semibold text-slate-800">Anwesenheitsliste</span>
+                                                <span class="mt-0.5 block text-[11px] text-slate-500">
+                                                    {{ $day['participants_count'] }} Teilnehmer · {{ $a['total'] }} Einträge
+                                                </span>
                                             </span>
-
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5">
-                                                <i class="fal fa-user-clock text-[11px]"></i>
-                                                <span>frueher gegangen: {{ $a['left_early'] }}</span>
+                                            <span class="hidden items-center gap-1.5 sm:flex" aria-label="Kurzübersicht">
+                                                <span class="inline-flex min-w-8 items-center justify-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-1 text-[10px] font-semibold text-emerald-700" title="Anwesend">
+                                                    <i class="fad fa-user-check" aria-hidden="true"></i>{{ $a['present'] }}
+                                                </span>
+                                                <span class="inline-flex min-w-8 items-center justify-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-1.5 py-1 text-[10px] font-semibold text-rose-700" title="Fehlend">
+                                                    <i class="fad fa-user-times" aria-hidden="true"></i>{{ $a['absent'] }}
+                                                </span>
+                                                <span class="inline-flex min-w-8 items-center justify-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-1.5 py-1 text-[10px] font-semibold text-blue-700" title="Entschuldigt">
+                                                    <i class="fad fa-file-medical" aria-hidden="true"></i>{{ $a['excused'] }}
+                                                </span>
                                             </span>
-                                        </div>
+                                            <i class="fad fa-chevron-right text-xs text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-sky-600" aria-hidden="true"></i>
+                                        </button>
                                     @else
-                                        <div class="text-xs text-neutral-400">
-                                            Keine Anwesenheit erfasst.
-                                        </div>
-                                    @endif
-
-                                    @if(!empty($day['attendance_rows']))
-                                        <div class="mt-3 overflow-hidden rounded-lg border border-slate-200">
-                                            <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-slate-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                                                <span>Teilnehmer</span>
-                                                <span>Start / Ende</span>
-                                            </div>
-                                            <div class="divide-y divide-slate-100">
-                                                @foreach($day['attendance_rows'] as $attendanceRow)
-                                                    @php
-                                                        $startPresent = $attendanceRow['has_entry'] && $attendanceRow['present'] && $attendanceRow['late_minutes'] === 0;
-                                                        $endPresent = $attendanceRow['has_entry'] && $attendanceRow['present'] && $attendanceRow['left_early_minutes'] === 0;
-                                                        $startLabel = $attendanceRow['has_entry'] ? ($startPresent ? 'Anwesend' : 'Fehlend') : 'Offen';
-                                                        $endLabel = $attendanceRow['has_entry'] ? ($endPresent ? 'Anwesend' : 'Fehlend') : 'Offen';
-                                                        $startClasses = ! $attendanceRow['has_entry']
-                                                            ? 'bg-slate-100 text-slate-600'
-                                                            : ($startPresent ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800');
-                                                        $endClasses = ! $attendanceRow['has_entry']
-                                                            ? 'bg-slate-100 text-slate-600'
-                                                            : ($endPresent ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800');
-                                                    @endphp
-                                                    <div wire:key="course-day-{{ $day['id'] }}-attendance-{{ $attendanceRow['id'] }}" class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 text-xs">
-                                                        <div class="min-w-0">
-                                                            <div class="truncate font-medium text-slate-800">{{ $attendanceRow['name'] ?: 'Teilnehmer #'.$attendanceRow['id'] }}</div>
-                                                            <div class="mt-1 flex flex-wrap gap-1 text-[10px]">
-                                                                @if($attendanceRow['excused'])
-                                                                    <span class="text-blue-700">Entschuldigt</span>
-                                                                @endif
-                                                                @if($attendanceRow['late_minutes'] > 0)
-                                                                    <span class="text-amber-700">Verspätet: {{ $attendanceRow['arrived_at'] ?? '–' }}</span>
-                                                                @endif
-                                                                @if($attendanceRow['left_early_minutes'] > 0)
-                                                                    <span class="text-orange-700">Gegangen: {{ $attendanceRow['left_at'] ?? '–' }}</span>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                        <span class="inline-flex overflow-hidden rounded-lg border border-slate-200 text-[10px] font-semibold shadow-sm" title="Start: {{ $startLabel }} · Ende: {{ $endLabel }}">
-                                                            <span class="px-2 py-1 {{ $startClasses }}">{{ $startLabel }}</span>
-                                                            <span class="border-l border-white/70 px-2 py-1 {{ $endClasses }}">{{ $endLabel }}</span>
-                                                        </span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
+                                        <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-xs text-slate-600">
+                                            <i class="fad fa-clipboard-user text-sky-700" aria-hidden="true"></i>
+                                            <span>{{ $day['participants_count'] }} Teilnehmer · {{ $a['total'] }} Anwesenheitseinträge</span>
                                         </div>
                                     @endif
                                 </div>

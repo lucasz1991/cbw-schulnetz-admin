@@ -219,7 +219,6 @@ class AttendanceEditorModal extends Component
 
         return CourseDay::query()
             ->with(['course.participants', 'course.tutor'])
-            ->whereDate('date', Carbon::today('Europe/Berlin')->toDateString())
             ->findOrFail($id);
     }
 

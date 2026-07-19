@@ -239,5 +239,20 @@ class CourseVisibilityAndAttendanceTest extends TestCase
 
             $this->assertNotSame('', trim($compiled), $view);
         }
+
+        $panelSource = file_get_contents(resource_path('views/livewire/admin/courses/course-days-panel.blade.php'));
+        $modalSource = file_get_contents(resource_path('views/livewire/admin/courses/attendance-editor-modal.blade.php'));
+        $modalComponentSource = file_get_contents(app_path('Livewire/Admin/Courses/AttendanceEditorModal.php'));
+
+        $this->assertStringContainsString('wire:click="openAttendanceEditor', $panelSource);
+        $this->assertStringNotContainsString('attendance_rows', $panelSource);
+        $this->assertStringContainsString('fad fa-sunrise', $modalSource);
+        $this->assertStringContainsString('fad fa-sunset', $modalSource);
+        $this->assertStringContainsString('w-28 shrink-0', $modalSource);
+        $this->assertStringContainsString('w-44 shrink-0', $modalSource);
+        $this->assertStringContainsString('Gekommen um', $modalSource);
+        $this->assertStringContainsString('Gegangen um', $modalSource);
+        $this->assertStringNotContainsString('Nur heute bearbeitbar', $modalSource);
+        $this->assertStringNotContainsString("->whereDate('date'", $modalComponentSource);
     }
 }

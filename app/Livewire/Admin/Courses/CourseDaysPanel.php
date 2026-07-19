@@ -86,8 +86,6 @@ class CourseDaysPanel extends Component
                 // Anwesenheits-Statistik aus attendance_data JSON
                 $attendance = $this->buildAttendanceSummary($day->attendance_data ?? []);
                 $hasAttendance = ($attendance['total'] ?? 0) > 0;
-                $attendanceRows = $this->buildAttendanceRows($day);
-
                 return [
                     'id'         => $day->id,
                     'date'       => $date,
@@ -101,8 +99,7 @@ class CourseDaysPanel extends Component
                     'note_status_classes' => $noteStatusMeta['classes'],
                     'has_attendance' => $hasAttendance,
                     'attendance' => $attendance,
-                    'attendance_rows' => $attendanceRows,
-                    'is_today' => $date->isSameDay(Carbon::today('Europe/Berlin')),
+                    'participants_count' => $this->course->participants->count(),
                 ];
             })
             ->values();
@@ -226,7 +223,6 @@ class CourseDaysPanel extends Component
 
         $day = CourseDay::query()
             ->where('course_id', $this->course->id)
-            ->whereDate('date', Carbon::today('Europe/Berlin')->toDateString())
             ->findOrFail($courseDayId);
 
         $this->dispatch('openAdminAttendanceEditor', courseDayId: $day->id);
@@ -239,92 +235,6 @@ class CourseDaysPanel extends Component
             $this->course->unsetRelation('days');
             $this->course->unsetRelation('participants');
             $this->loadDays();
-        }
-    }
-
-    protected function buildAttendanceRows(CourseDay $day): array
-    {
-        $map = data_get($day->attendance_data, 'participants', []);
-        if (! is_array($map)) {
-            $map = [];
-        }
-
-        [$plannedStart, $plannedEnd] = $this->plannedTimes($day);
-
-        return $this->course->participants
-            ->sortBy(fn ($person) => mb_strtolower(trim(($person->nachname ?? '').' '.($person->vorname ?? ''))))
-            ->map(function ($person) use ($map, $plannedStart, $plannedEnd): array {
-                $personId = (int) $person->id;
-                $hasEntry = array_key_exists($personId, $map) || array_key_exists((string) $personId, $map);
-                $row = $map[$personId] ?? $map[(string) $personId] ?? [];
-                $row = is_array($row) ? $row : [];
-                $lateMinutes = max(0, (int) ($row['late_minutes'] ?? 0));
-                $leftEarlyMinutes = max(0, (int) ($row['left_early_minutes'] ?? 0));
-
-                return [
-                    'id' => $personId,
-                    'name' => trim(trim((string) ($person->nachname ?? '')).', '.trim((string) ($person->vorname ?? '')), ', '),
-                    'has_entry' => $hasEntry,
-                    'present' => (bool) ($row['present'] ?? false),
-                    'excused' => (bool) ($row['excused'] ?? false),
-                    'late_minutes' => $lateMinutes,
-                    'left_early_minutes' => $leftEarlyMinutes,
-                    'arrived_at' => $this->displayAttendanceTime($row['arrived_at'] ?? null, $plannedStart, $lateMinutes, true),
-                    'left_at' => $this->displayAttendanceTime($row['left_at'] ?? null, $plannedEnd, $leftEarlyMinutes, false),
-                ];
-            })
-            ->values()
-            ->all();
-    }
-
-    protected function plannedTimes(CourseDay $day): array
-    {
-        $start = $this->normalizeClock($day->start_time);
-        $end = $this->normalizeClock($day->end_time);
-
-        if (! $end && $start && (float) ($day->std ?? 0) > 0) {
-            $end = Carbon::createFromFormat('H:i', $start, 'Europe/Berlin')
-                ->addMinutes((int) round(((float) $day->std) * 60))
-                ->format('H:i');
-        }
-
-        return [$start, $end];
-    }
-
-    protected function displayAttendanceTime(
-        mixed $directTime,
-        ?string $boundary,
-        int $minutes,
-        bool $arrival
-    ): ?string {
-        $normalized = $this->normalizeClock($directTime);
-        if ($normalized) {
-            return $normalized;
-        }
-        if (! $boundary || $minutes <= 0) {
-            return null;
-        }
-
-        try {
-            $time = Carbon::createFromFormat('H:i', $boundary, 'Europe/Berlin');
-
-            return ($arrival ? $time->addMinutes($minutes) : $time->subMinutes($minutes))->format('H:i');
-        } catch (\Throwable) {
-            return null;
-        }
-    }
-
-    protected function normalizeClock(mixed $value): ?string
-    {
-        $value = trim((string) ($value ?? ''));
-        if ($value === '' || in_array($value, ['00:00', '00:00:00', '0:00'], true)) {
-            return null;
-        }
-
-        try {
-            return Carbon::parse($value)->format('H:i');
-        } catch (\Throwable) {
-            return null;
         }
     }
 
