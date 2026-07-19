@@ -1,9 +1,11 @@
 ﻿<div class="relative w-full">  
     <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-2">
-            <h2 class="text-2xl font-bold text-gray-800">Kurse</h2>
+            <h2 class="text-2xl font-bold text-gray-800">
+                {{ $user->role === 'tutor' ? 'Kurse' : 'Verträge und Bausteine' }}
+            </h2>
             <span class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700">
-                {{ $courses?->total() ?? $courses?->count() ?? 0 }}
+                {{ method_exists($courses, 'total') ? $courses->total() : $courses->count() }}
             </span>
         </div>
 
@@ -15,76 +17,105 @@
         />
     </div>
 
-    @if($user->role !== 'tutor' && !empty($currentContracts))
-        <div class="mb-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
-            @foreach($currentContracts as $contract)
-                @php
-                    $period = ($contract['beginn_fmt'] ?? null) || ($contract['ende_fmt'] ?? null)
-                        ? (($contract['beginn_fmt'] ?? '-') . ' - ' . ($contract['ende_fmt'] ?? '-'))
-                        : null;
-
-                    $contractFields = [
-                        'Teilnehmer-ID' => $contract['teilnehmer_id'] ?? null,
-                        'TN-Nr.' => $contract['teilnehmer_nr'] ?? null,
-                        'Status' => $contract['status'] ?? null,
-                        'Zeitraum' => $period,
-                        'Letzter Tag' => $contract['letzter_tag_fmt'] ?? null,
-                        'Kuendigung zum' => $contract['kuendig_zum_fmt'] ?? null,
-                        'Stammklasse' => $contract['stammklasse'] ?? null,
-                        'Massnahme' => $contract['massnahme_id'] ?? null,
-                        'Modell' => $contract['vtz'] ?? null,
-                        'Unterrichtsform' => $contract['uform'] ?? null,
-                        'Kostentraeger' => $contract['kostentraeger'] ?? null,
-                    ];
-                @endphp
-
-                <section class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm">
-                    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <h3 class="text-sm font-semibold uppercase tracking-wide text-emerald-800">Aktueller Vertrag</h3>
-                                @if(($contract['is_active'] ?? null) === true)
-                                    <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                        <i class="far fa-check-circle"></i>
-                                        Aktiv
-                                    </span>
-                                @endif
-                            </div>
-                            <div class="mt-1 text-base font-semibold text-slate-900">{{ $contract['person_name'] ?? '-' }}</div>
-                            @if(!empty($contract['program_title']))
-                                <div class="mt-0.5 text-sm text-slate-700">{{ $contract['program_title'] }}</div>
-                            @endif
-                        </div>
-
-                        @if(!empty($contract['person_id']))
-                            <div class="text-xs font-medium text-slate-500">Person: {{ $contract['person_id'] }}</div>
-                        @endif
-                    </div>
-
-                    <dl class="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-                        @foreach($contractFields as $label => $value)
-                            @continue(blank($value))
-                            <div>
-                                <dt class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ $label }}</dt>
-                                <dd class="mt-0.5 text-sm font-medium text-slate-800">{{ $value }}</dd>
-                            </div>
-                        @endforeach
-                    </dl>
-                </section>
-            @endforeach
-        </div>
-    @endif
-
     @if($user->role !== 'tutor' && $user->persons->isEmpty() && !$user->person)
         <div class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
             Keine Person verkn&uuml;pft. Es k&ouml;nnen keine Teilnehmer-Kurse geladen werden.
         </div>
-    @elseif(!$courses || $courses->count() === 0)
+    @elseif($user->role === 'tutor' && (!$courses || $courses->count() === 0))
         <div class="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">
             Keine Eintr&auml;ge gefunden.
         </div>
+    @elseif($user->role !== 'tutor' && empty($contractCourseGroups))
+        <div class="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">
+            Keine Vertr&auml;ge oder Bausteine gefunden.
+        </div>
     @else
-        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm" x-data="{ openId: null }">
+        @php
+            $displayGroups = $user->role === 'tutor'
+                ? [[
+                    'key' => 'tutor-courses',
+                    'contract' => null,
+                    'courses' => method_exists($courses, 'getCollection') ? $courses->getCollection() : collect($courses),
+                ]]
+                : $contractCourseGroups;
+        @endphp
+
+        <div class="space-y-5">
+        @foreach($displayGroups as $group)
+            @php
+                $contract = $group['contract'] ?? null;
+                $groupCourses = collect($group['courses'] ?? []);
+                $period = $contract && (($contract['beginn_fmt'] ?? null) || ($contract['ende_fmt'] ?? null))
+                    ? (($contract['beginn_fmt'] ?? '-') . ' - ' . ($contract['ende_fmt'] ?? '-'))
+                    : null;
+                $isUnassigned = (bool) ($contract['is_unassigned'] ?? false);
+                $state = $contract['contract_state'] ?? 'unknown';
+                [$stateLabel, $stateClasses] = match ($state) {
+                    'current' => ['Aktueller Vertrag', 'border-emerald-200 bg-emerald-100 text-emerald-700'],
+                    'open' => ['Folgevertrag', 'border-sky-200 bg-sky-100 text-sky-700'],
+                    'closed' => ['Abgeschlossen', 'border-slate-200 bg-slate-100 text-slate-600'],
+                    'unassigned' => ['Nicht eindeutig zugeordnet', 'border-amber-200 bg-amber-100 text-amber-800'],
+                    default => ['Vertrag', 'border-slate-200 bg-slate-100 text-slate-600'],
+                };
+            @endphp
+
+            <section wire:key="contract-course-group-{{ md5($group['key']) }}" class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                @if($contract)
+                    <header class="border-b border-slate-200 bg-slate-50/80 px-4 py-4">
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold {{ $stateClasses }}">
+                                        {{ $stateLabel }}
+                                    </span>
+                                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                                        {{ $groupCourses->count() }} Baustein{{ $groupCourses->count() === 1 ? '' : 'e' }}
+                                    </span>
+                                </div>
+
+                                <h3 class="mt-2 text-base font-semibold text-slate-900">
+                                    @if($isUnassigned)
+                                        {{ !empty($contract['teilnehmer_id']) ? 'Vertrag '.$contract['teilnehmer_id'] : 'Vertrag nicht ermittelbar' }}
+                                    @else
+                                        {{ $contract['program_title'] ?? 'Teilnehmervertrag' }}
+                                    @endif
+                                </h3>
+
+                                <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                                    @if(!empty($contract['teilnehmer_id']))
+                                        <span>Teilnehmer-ID: <strong>{{ $contract['teilnehmer_id'] }}</strong></span>
+                                    @endif
+                                    @if(!empty($contract['teilnehmer_nr']))
+                                        <span>TN-Nr.: <strong>{{ $contract['teilnehmer_nr'] }}</strong></span>
+                                    @endif
+                                    @if($period)
+                                        <span>Zeitraum: <strong>{{ $period }}</strong></span>
+                                    @endif
+                                    @if(!empty($contract['person_id']))
+                                        <span>Person: <strong>{{ $contract['person_id'] }}</strong></span>
+                                    @endif
+                                </div>
+
+                                @if($isUnassigned)
+                                    <p class="mt-2 text-xs text-amber-800">
+                                        Diese Alt-Datens&auml;tze besitzen noch keine eindeutige Vertragskennung und werden deshalb nicht automatisch einem Vertrag zugeschlagen.
+                                    </p>
+                                @endif
+                            </div>
+
+                            @if(!empty($contract['person_name']))
+                                <div class="text-sm font-medium text-slate-700">{{ $contract['person_name'] }}</div>
+                            @endif
+                        </div>
+                    </header>
+                @endif
+
+                @if($groupCourses->isEmpty())
+                    <div class="px-4 py-5 text-sm text-slate-500">
+                        Diesem Vertrag sind aktuell keine Bausteine zugeordnet.
+                    </div>
+                @else
+        <div class="overflow-x-auto" x-data="{ openId: null }">
             <table class="min-w-full text-sm">
                 <thead class="border-b border-slate-200 bg-slate-50 text-gray-600">
                     <tr>
@@ -96,7 +127,7 @@
                     </tr>
                 </thead>
 
-                @foreach($courses as $course)
+                @foreach($groupCourses as $course)
                     @php
                         $rowKey = $course->id . '-' . ((int)($course->_person_id ?? 0)) . '-' . ((int)($course->_enrollment_id ?? 0));
                         $meta = $courseMeta[$rowKey] ?? [];
@@ -327,10 +358,16 @@
                 @endforeach
             </table>
         </div>
-
-        <div class="mt-3">
-            {{ $courses->withQueryString()->links('pagination::tailwind') }}
+                @endif
+            </section>
+        @endforeach
         </div>
+
+        @if($user->role === 'tutor' && method_exists($courses, 'links'))
+            <div class="mt-3">
+                {{ $courses->withQueryString()->links('pagination::tailwind') }}
+            </div>
+        @endif
     @endif
 
     <div

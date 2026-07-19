@@ -2,30 +2,31 @@
 
 namespace App\Livewire\Admin\UserProfile;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithoutUrlPagination;
-use App\Models\User;
 use App\Models\Course;
-use App\Models\Person;
 use App\Models\CourseDay;
-use App\Models\CourseResult;
 use App\Models\CourseMaterialAcknowledgement;
+use App\Models\CourseResult;
+use App\Models\Person;
+use App\Models\User;
 use App\Support\CurrentParticipantCourseScope;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Livewire\Component;
+use Livewire\WithoutUrlPagination;
+use Livewire\WithPagination;
 
 class UserCourses extends Component
 {
-    use WithPagination;
     use WithoutUrlPagination;
+    use WithPagination;
 
     protected string $pageName = 'coursesPage';
 
     public User $user;
 
     public string $search = '';
+
     public int $perPage = 10;
 
     protected $queryString = [
@@ -60,7 +61,8 @@ class UserCourses extends Component
     {
         $courses = collect();
         $courseMeta = [];
-        $currentContracts = $this->buildCurrentContractOverviews();
+        $contracts = $this->buildContractOverviews();
+        $contractCourseGroups = [];
 
         // Liste aller person_ids des Users (multi-person)
         $personIds = $this->user->persons->pluck('id')->toArray();
@@ -75,14 +77,14 @@ class UserCourses extends Component
                 ->orderBy('planned_start_date', 'desc');
 
             if ($this->search !== '') {
-                $s = '%' . $this->search . '%';
+                $s = '%'.$this->search.'%';
 
                 $query->where(function ($qq) use ($s) {
                     $qq->where('courses.title', 'like', $s)
-                       ->orWhere('courses.klassen_id', 'like', $s)
-                       ->orWhere('courses.termin_id', 'like', $s)
-                       ->orWhere('courses.vtz', 'like', $s)
-                       ->orWhere('courses.room', 'like', $s);
+                        ->orWhere('courses.klassen_id', 'like', $s)
+                        ->orWhere('courses.termin_id', 'like', $s)
+                        ->orWhere('courses.vtz', 'like', $s)
+                        ->orWhere('courses.room', 'like', $s);
                 });
             }
 
@@ -106,22 +108,14 @@ class UserCourses extends Component
                         ->where("$pivot.is_active", true);
                 })
                 ->whereNull('courses.deleted_at')
-                ->where(function ($personScope) use ($participantPersons, $pivot) {
-                    if ($participantPersons->isEmpty()) {
-                        $personScope->whereRaw('1 = 0');
-                        return;
-                    }
-
-                    foreach ($participantPersons as $person) {
-                        $personScope->orWhere(function ($singlePersonScope) use ($person, $pivot) {
-                            CurrentParticipantCourseScope::applyForPerson($singlePersonScope, $person, $pivot, 'courses');
-                        });
-                    }
-                })
+                ->whereIn("$pivot.person_id", $participantPersons->pluck('id'))
                 ->select([
                     'courses.*',
                     "$pivot.id as _enrollment_id",
                     "$pivot.person_id as _person_id",
+                    "$pivot.teilnehmer_id as _enrollment_teilnehmer_id",
+                    "$pivot.tn_baustein_id as _enrollment_tn_baustein_id",
+                    "$pivot.baustein_id as _enrollment_baustein_id",
                     "$pivot.klassen_id as _enrollment_klassen_id",
                     "$pivot.termin_id as _enrollment_termin_id",
                     "$pivot.kurzbez_ba as _enrollment_kurzbez_ba",
@@ -133,24 +127,28 @@ class UserCourses extends Component
                 ->orderBy('courses.planned_start_date', 'desc');
 
             if ($this->search !== '') {
-                $s = '%' . $this->search . '%';
+                $s = '%'.$this->search.'%';
 
                 $query->where(function ($qq) use ($s, $pivot) {
                     $qq->where('courses.title', 'like', $s)
-                       ->orWhere('courses.klassen_id', 'like', $s)
-                       ->orWhere('courses.termin_id', 'like', $s)
-                       ->orWhere("$pivot.klassen_id", 'like', $s)
-                       ->orWhere("$pivot.termin_id", 'like', $s)
-                       ->orWhere("$pivot.kurzbez_ba", 'like', $s)
-                       ->orWhere("$pivot.status", 'like', $s);
+                        ->orWhere('courses.klassen_id', 'like', $s)
+                        ->orWhere('courses.termin_id', 'like', $s)
+                        ->orWhere("$pivot.klassen_id", 'like', $s)
+                        ->orWhere("$pivot.termin_id", 'like', $s)
+                        ->orWhere("$pivot.kurzbez_ba", 'like', $s)
+                        ->orWhere("$pivot.status", 'like', $s);
                 });
             }
 
-            $courses = $query->paginate($this->perPage, ['*'], $this->pageName);
+            // Admin profiles must show complete contract groups. Global
+            // pagination would split a contract's modules across pages.
+            $courses = $query->get();
         }
 
         if ($courses->count() > 0) {
-            $rows = $courses->getCollection();
+            $rows = method_exists($courses, 'getCollection')
+                ? $courses->getCollection()
+                : collect($courses);
 
             $courseIds = $rows->pluck('id')->filter()->unique()->values();
             $contextPersonIds = $rows->pluck('_person_id')->filter()->unique()->values();
@@ -177,7 +175,7 @@ class UserCourses extends Component
                     ->whereNotNull('acknowledged_at')
                     ->orderByDesc('acknowledged_at')
                     ->get()
-                    ->groupBy(fn ($ack) => $this->pairKey((int)$ack->course_id, (int)$ack->person_id));
+                    ->groupBy(fn ($ack) => $this->pairKey((int) $ack->course_id, (int) $ack->person_id));
 
             $resultsByKey = ($courseIds->isEmpty() || $contextPersonIds->isEmpty())
                 ? collect()
@@ -186,11 +184,11 @@ class UserCourses extends Component
                     ->whereIn('person_id', $contextPersonIds)
                     ->orderByDesc('updated_at')
                     ->get()
-                    ->groupBy(fn ($result) => $this->pairKey((int)$result->course_id, (int)$result->person_id));
+                    ->groupBy(fn ($result) => $this->pairKey((int) $result->course_id, (int) $result->person_id));
 
             foreach ($rows as $course) {
                 $rowKey = $this->rowKeyForCourse($course);
-                $personId = isset($course->_person_id) ? (int)$course->_person_id : null;
+                $personId = isset($course->_person_id) ? (int) $course->_person_id : null;
 
                 $meta = [
                     'person' => null,
@@ -213,10 +211,10 @@ class UserCourses extends Component
                 if ($personId) {
                     $meta['person'] = $personsById->get($personId);
 
-                    $pairKey = $this->pairKey((int)$course->id, $personId);
+                    $pairKey = $this->pairKey((int) $course->id, $personId);
 
                     $ack = optional($acksByKey->get($pairKey))->first();
-                    $meta['material_ack'] = (bool)$ack;
+                    $meta['material_ack'] = (bool) $ack;
                     $meta['material_ack_at'] = $ack?->acknowledged_at;
 
                     $meta['course_result'] = optional($resultsByKey->get($pairKey))->first();
@@ -233,29 +231,129 @@ class UserCourses extends Component
 
                 $courseMeta[$rowKey] = $meta;
             }
+        } else {
+            $rows = collect();
+        }
+
+        if ($this->user->role !== 'tutor') {
+            $contractCourseGroups = $this->buildContractCourseGroups(
+                $contracts,
+                $rows,
+                trim($this->search) === ''
+            );
         }
 
         return view('livewire.admin.user-profile.user-courses', [
             'courses' => $courses,
             'courseMeta' => $courseMeta,
-            'currentContracts' => $currentContracts,
+            'contracts' => $contracts,
+            'contractCourseGroups' => $contractCourseGroups,
         ]);
     }
 
-    protected function buildCurrentContractOverviews(): array
+    protected function buildContractOverviews(): array
     {
         return $this->user->persons
-            ->map(fn (Person $person) => CurrentParticipantCourseScope::currentContractOverviewFor($person))
+            ->flatMap(fn (Person $person) => CurrentParticipantCourseScope::contractOverviewsFor($person))
             ->filter()
             ->map(function (array $contract) {
                 foreach (['beginn', 'ende', 'letzter_tag', 'kuendig_zum'] as $key) {
-                    $contract[$key . '_fmt'] = $this->formatContractDate($contract[$key] ?? null);
+                    $contract[$key.'_fmt'] = $this->formatContractDate($contract[$key] ?? null);
                 }
 
                 return $contract;
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $contracts
+     * @return array<int, array{key:string, contract:array<string, mixed>, courses:Collection}>
+     */
+    protected function buildContractCourseGroups(
+        array $contracts,
+        Collection $courses,
+        bool $includeEmptyContracts = true
+    ): array {
+        $remaining = $courses
+            ->groupBy(fn ($course) => $this->contractGroupKey(
+                (int) ($course->_person_id ?? 0),
+                $course->_enrollment_teilnehmer_id ?? null
+            ));
+        $groups = collect();
+
+        foreach ($contracts as $index => $contract) {
+            $personPk = (int) ($contract['person_pk'] ?? 0);
+            $teilnehmerId = trim((string) ($contract['teilnehmer_id'] ?? ''));
+
+            if ($teilnehmerId !== '') {
+                $key = $this->contractGroupKey($personPk, $teilnehmerId);
+                $contractCourses = collect($remaining->pull($key, collect()))->values();
+            } else {
+                // A contract without a participant id must not absorb all
+                // legacy enrollments whose participant id is also missing.
+                $key = 'contract|'.implode('|', [
+                    $personPk,
+                    $contract['beratung_id'] ?? '',
+                    $contract['teilnehmer_nr'] ?? '',
+                    $index,
+                ]);
+                $contractCourses = collect();
+            }
+
+            if (! $includeEmptyContracts && $contractCourses->isEmpty()) {
+                continue;
+            }
+
+            $groups->push([
+                'key' => $key,
+                'contract' => $contract,
+                'courses' => $contractCourses,
+            ]);
+        }
+
+        foreach ($remaining as $key => $unassignedCourses) {
+            $unassignedCourses = collect($unassignedCourses)->values();
+            if ($unassignedCourses->isEmpty()) {
+                continue;
+            }
+
+            $firstCourse = $unassignedCourses->first();
+            $personPk = (int) ($firstCourse->_person_id ?? 0);
+            $teilnehmerId = trim((string) ($firstCourse->_enrollment_teilnehmer_id ?? '')) ?: null;
+            $person = $this->user->persons->firstWhere('id', $personPk);
+
+            $groups->push([
+                'key' => (string) $key,
+                'contract' => [
+                    'person_pk' => $personPk,
+                    'person_name' => $person
+                        ? trim(($person->vorname ?? '').' '.($person->nachname ?? ''))
+                        : null,
+                    'person_id' => $person?->person_id,
+                    'teilnehmer_id' => $teilnehmerId,
+                    'teilnehmer_nr' => null,
+                    'beratung_id' => null,
+                    'beginn' => null,
+                    'ende' => null,
+                    'is_active' => null,
+                    'is_current' => false,
+                    'is_unassigned' => true,
+                    'contract_state' => 'unassigned',
+                ],
+                'courses' => $unassignedCourses,
+            ]);
+        }
+
+        return $groups->values()->all();
+    }
+
+    protected function contractGroupKey(int $personPk, mixed $teilnehmerId): string
+    {
+        $teilnehmerId = trim((string) ($teilnehmerId ?? ''));
+
+        return $personPk.'|'.($teilnehmerId !== '' ? $teilnehmerId : '__unassigned__');
     }
 
     protected function formatContractDate(mixed $value): ?string
@@ -283,15 +381,15 @@ class UserCourses extends Component
     protected function rowKeyForCourse(Course $course): string
     {
         return implode('-', [
-            (int)$course->id,
-            (int)($course->_person_id ?? 0),
-            (int)($course->_enrollment_id ?? 0),
+            (int) $course->id,
+            (int) ($course->_person_id ?? 0),
+            (int) ($course->_enrollment_id ?? 0),
         ]);
     }
 
     protected function pairKey(int $courseId, int $personId): string
     {
-        return $courseId . ':' . $personId;
+        return $courseId.':'.$personId;
     }
 
     protected function normalizeEnrollmentResults(mixed $raw): array
@@ -324,16 +422,16 @@ class UserCourses extends Component
         ];
 
         foreach ($days as $day) {
-            $row = data_get($day->attendance_data, 'participants.' . $personId);
+            $row = data_get($day->attendance_data, 'participants.'.$personId);
 
-            if (!is_array($row)) {
+            if (! is_array($row)) {
                 continue;
             }
 
             $stats['tracked_days']++;
 
-            $present = (bool)($row['present'] ?? false);
-            $excused = (bool)($row['excused'] ?? false);
+            $present = (bool) ($row['present'] ?? false);
+            $excused = (bool) ($row['excused'] ?? false);
 
             if ($present) {
                 $stats['present']++;
@@ -343,13 +441,13 @@ class UserCourses extends Component
                 $stats['absent']++;
             }
 
-            $lateMinutes = max(0, (int)($row['late_minutes'] ?? 0));
+            $lateMinutes = max(0, (int) ($row['late_minutes'] ?? 0));
             if ($lateMinutes > 0) {
                 $stats['late_count']++;
                 $stats['late_minutes'] += $lateMinutes;
             }
 
-            $leftEarlyMinutes = max(0, (int)($row['left_early_minutes'] ?? 0));
+            $leftEarlyMinutes = max(0, (int) ($row['left_early_minutes'] ?? 0));
             if ($leftEarlyMinutes > 0) {
                 $stats['left_early_count']++;
                 $stats['left_early_minutes'] += $leftEarlyMinutes;
