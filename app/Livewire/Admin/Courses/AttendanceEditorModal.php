@@ -150,13 +150,21 @@ class AttendanceEditorModal extends Component
         ]);
     }
 
-    public function saveArrival(int $personId): void
+    public function saveArrival(int $personId, ?string $time = null): void
     {
+        if ($time !== null) {
+            $this->arrivalInput[$personId] = $time;
+        }
+
         $this->saveTimeForPerson($personId, true);
     }
 
-    public function saveLeave(int $personId): void
+    public function saveLeave(int $personId, ?string $time = null): void
     {
+        if ($time !== null) {
+            $this->leaveInput[$personId] = $time;
+        }
+
         $this->saveTimeForPerson($personId, false);
     }
 
@@ -217,8 +225,12 @@ class AttendanceEditorModal extends Component
         ]);
     }
 
-    public function saveNote(int $personId): void
+    public function saveNote(int $personId, ?string $note = null): void
     {
+        if ($note !== null) {
+            $this->noteInput[$personId] = $note;
+        }
+
         $this->validate([
             'noteInput.'.$personId => ['nullable', 'string', 'max:1000'],
         ]);
@@ -300,15 +312,16 @@ class AttendanceEditorModal extends Component
 
         $this->rows = $day->course->participants
             ->sortBy(fn ($person) => mb_strtolower(trim(($person->nachname ?? '').' '.($person->vorname ?? ''))))
-            ->map(function ($person) use ($participantsData): array {
+            ->map(function ($person) use ($participantsData, $day): array {
                 $personId = (int) $person->id;
                 $hasEntry = array_key_exists($personId, $participantsData)
                     || array_key_exists((string) $personId, $participantsData);
                 $row = $participantsData[$personId] ?? $participantsData[(string) $personId] ?? [];
                 $row = is_array($row) ? $row : [];
+                [$arrivedAt, $leftAt, $lateMinutes, $leftEarlyMinutes] = $this->rowTiming($day, $row);
 
-                $this->arrivalInput[$personId] = $this->normalizeTime($row['arrived_at'] ?? null);
-                $this->leaveInput[$personId] = $this->normalizeTime($row['left_at'] ?? null);
+                $this->arrivalInput[$personId] = $arrivedAt;
+                $this->leaveInput[$personId] = $leftAt;
                 $this->noteInput[$personId] = (string) ($row['note'] ?? '');
 
                 return [
@@ -318,10 +331,10 @@ class AttendanceEditorModal extends Component
                     'has_entry' => $hasEntry,
                     'present' => (bool) ($row['present'] ?? false),
                     'excused' => (bool) ($row['excused'] ?? false),
-                    'late_minutes' => max(0, (int) ($row['late_minutes'] ?? 0)),
-                    'left_early_minutes' => max(0, (int) ($row['left_early_minutes'] ?? 0)),
-                    'arrived_at' => $this->displayTime($row['arrived_at'] ?? null, true, $row),
-                    'left_at' => $this->displayTime($row['left_at'] ?? null, false, $row),
+                    'late_minutes' => $lateMinutes,
+                    'left_early_minutes' => $leftEarlyMinutes,
+                    'arrived_at' => $arrivedAt,
+                    'left_at' => $leftAt,
                     'note' => (string) ($row['note'] ?? ''),
                     'state' => $row['state'] ?? null,
                 ];
@@ -330,6 +343,31 @@ class AttendanceEditorModal extends Component
             ->all();
 
         $this->stats = $this->calculateStats($this->rows);
+    }
+
+    protected function rowTiming(CourseDay $day, array $row): array
+    {
+        $arrivedAt = $this->displayTime($row['arrived_at'] ?? null, true, $row);
+        $leftAt = $this->displayTime($row['left_at'] ?? null, false, $row);
+        $lateMinutes = max(0, (int) ($row['late_minutes'] ?? 0));
+        $leftEarlyMinutes = max(0, (int) ($row['left_early_minutes'] ?? 0));
+        [$plannedStart, $plannedEnd] = $this->plannedDateTimes($day);
+
+        if ($arrivedAt && $plannedStart) {
+            $arrival = $this->timeOnDay($day, $arrivedAt);
+            $lateMinutes = $arrival && $arrival->gt($plannedStart)
+                ? $plannedStart->diffInMinutes($arrival)
+                : 0;
+        }
+
+        if ($leftAt && $plannedEnd) {
+            $leave = $this->timeOnDay($day, $leftAt);
+            $leftEarlyMinutes = $leave && $leave->lt($plannedEnd)
+                ? $leave->diffInMinutes($plannedEnd)
+                : 0;
+        }
+
+        return [$arrivedAt, $leftAt, $lateMinutes, $leftEarlyMinutes];
     }
 
     protected function calculateStats(array $rows): array

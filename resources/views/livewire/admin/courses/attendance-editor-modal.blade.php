@@ -1,4 +1,43 @@
 <div>
+    @once
+        <style>
+            .attendance-time-input,
+            .attendance-time-select {
+                height: 2.5rem;
+                border: 1px solid #d1d5db;
+                background-color: #f9fafb;
+                font-size: .875rem;
+                line-height: 1.25rem;
+                transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+            }
+            .attendance-time-input {
+                width: 100%;
+                border-right: 0;
+                border-radius: .5rem 0 0 .5rem;
+                padding: .625rem 2.5rem .625rem .625rem;
+                color: #111827;
+                font-variant-numeric: tabular-nums;
+            }
+            .attendance-time-select {
+                width: 2.5rem;
+                cursor: pointer;
+                border-radius: 0 .5rem .5rem 0;
+                padding: .5rem;
+                color: transparent;
+            }
+            .attendance-time-input:hover,
+            .attendance-time-select:hover { background-color: #fff; }
+            .attendance-time-input:focus,
+            .attendance-time-select:focus {
+                z-index: 1;
+                border-color: #3b82f6;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, .18);
+            }
+            .attendance-time-input:disabled,
+            .attendance-time-select:disabled { cursor: not-allowed; opacity: .55; }
+        </style>
+    @endonce
     <x-dialog-modal wire:model="showModal" maxWidth="6xl">
         <x-slot name="title">
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -11,10 +50,6 @@
                         @endif
                     </div>
                 </div>
-                <span class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                    <i class="fad fa-lock-open-alt" aria-hidden="true"></i>
-                    Admin-Bearbeitung
-                </span>
             </div>
         </x-slot>
 
@@ -116,6 +151,7 @@
                                         x-data="{
                                             lateOpen: false,
                                             noteOpen: false,
+                                            saving: false,
                                             arrive: @entangle('arrivalInput.' . $row['id']).live ?? '',
                                             leave: @entangle('leaveInput.' . $row['id']).live ?? '',
                                             note: @entangle('noteInput.' . $row['id']).live ?? '',
@@ -128,33 +164,37 @@
                                             <div class="mt-0.5 text-xs text-gray-500">{{ $row['teilnehmer_id'] ?: 'Keine Teilnehmer-ID' }}</div>
                                         </td>
                                         <td class="px-1 py-2 md:px-4">
-                                            <div class="inline-flex w-64 flex-col overflow-hidden rounded-xl border border-slate-300 bg-white text-[11px] font-semibold shadow-sm" title="Morgens: {{ $startLabel }} · Ende: {{ $endLabel }}">
+                                            <div
+                                                wire:key="admin-attendance-status-{{ $row['id'] }}-{{ (int) $row['present'] }}-{{ (int) $row['late_minutes'] }}-{{ (int) $row['left_early_minutes'] }}"
+                                                class="inline-flex w-64 flex-col overflow-hidden rounded-xl border border-slate-300 bg-white text-[11px] font-semibold shadow-sm"
+                                                title="Morgens: {{ $startLabel }} · Ende: {{ $endLabel }}"
+                                            >
                                                 <div class="flex w-full">
-                                                    <span class="inline-flex w-1/2 items-center justify-center gap-2 border-r border-slate-300 px-2 py-1.5 {{ $startClasses }}">
+                                                    <span class="inline-flex w-1/2 items-center justify-center gap-1.5 border-r border-slate-300 px-1.5 py-1 {{ $startClasses }}">
                                                         <i class="fad fa-play-circle w-4 text-center text-sm" aria-hidden="true"></i>
                                                         <span>{{ $startLabel }}</span>
                                                     </span>
-                                                    <span class="inline-flex w-1/2 items-center justify-center gap-2 px-2 py-1.5 {{ $endClasses }}">
+                                                    <span class="inline-flex w-1/2 items-center justify-center gap-1.5 px-1.5 py-1 {{ $endClasses }}">
                                                         <i class="fad fa-flag-checkered w-4 text-center text-sm" aria-hidden="true"></i>
                                                         <span>{{ $endLabel }}</span>
                                                     </span>
                                                 </div>
                                                 @if($row['excused'] || $row['late_minutes'] > 0 || $row['left_early_minutes'] > 0)
-                                                    <div class="flex w-full items-center divide-x divide-slate-200 border-t border-slate-300 bg-slate-50/70 px-0.5 py-0.5 text-[9px] font-medium tabular-nums">
+                                                    <div class="flex w-full items-center divide-x divide-slate-200 border-t border-slate-300 bg-slate-50/70 px-px py-px text-[9px] font-medium tabular-nums">
                                                         @if($row['excused'])
-                                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-blue-700" title="Entschuldigt">
+                                                            <span class="inline-flex items-center gap-1 px-1 py-px text-blue-700" title="Entschuldigt">
                                                                 <i class="fad fa-file-medical" aria-hidden="true"></i>
                                                                 Entsch.
                                                             </span>
                                                         @endif
                                                         @if($row['late_minutes'] > 0)
-                                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-amber-700" title="Gekommen um {{ $row['arrived_at'] ?? '–' }} Uhr">
+                                                            <span class="inline-flex items-center gap-1 px-1 py-px text-amber-700" title="Gekommen um {{ $row['arrived_at'] ?? '–' }} Uhr">
                                                                 <i class="fad fa-user-clock" aria-hidden="true"></i>
                                                                 {{ $row['arrived_at'] ?? '–' }}
                                                             </span>
                                                         @endif
                                                         @if($row['left_early_minutes'] > 0)
-                                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-orange-700" title="Gegangen um {{ $row['left_at'] ?? '–' }} Uhr">
+                                                            <span class="inline-flex items-center gap-1 px-1 py-px text-orange-700" title="Gegangen um {{ $row['left_at'] ?? '–' }} Uhr">
                                                                 <i class="fad fa-door-open" aria-hidden="true"></i>
                                                                 {{ $row['left_at'] ?? '–' }}
                                                             </span>
@@ -166,12 +206,10 @@
                                         <td class="px-1 py-2 pr-2 md:px-4">
                                             <div class="relative flex items-center justify-end gap-1">
                                                 <div class="flex w-8 items-center justify-center">
-                                                    <div wire:loading wire:target="markPresent({{ $row['id'] }})" class="flex items-center"><span class="loader2 h-4 w-4"></span></div>
-                                                    <div wire:loading wire:target="markAbsent({{ $row['id'] }})" class="flex items-center"><span class="loader2 h-4 w-4"></span></div>
-                                                    <div wire:loading wire:target="saveArrival({{ $row['id'] }})" class="flex items-center"><span class="loader2 h-4 w-4"></span></div>
-                                                    <div wire:loading wire:target="saveLeave({{ $row['id'] }})" class="flex items-center"><span class="loader2 h-4 w-4"></span></div>
-                                                    <div wire:loading wire:target="saveNote({{ $row['id'] }})" class="flex items-center"><span class="loader2 h-4 w-4"></span></div>
-                                                    <div wire:loading wire:target="clearTimes({{ $row['id'] }})" class="flex items-center"><span class="loader2 h-4 w-4"></span></div>
+                                                    <div x-cloak x-show="saving" class="flex items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
+                                                    <div wire:loading.flex wire:target="markPresent({{ $row['id'] }})" class="items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
+                                                    <div wire:loading.flex wire:target="markAbsent({{ $row['id'] }})" class="items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
+                                                    <div wire:loading.flex wire:target="clearTimes({{ $row['id'] }})" class="items-center"><i class="fad fa-spinner-third fa-spin text-base text-blue-500"></i></div>
                                                 </div>
 
                                                 @if(! $isPresent)
@@ -227,24 +265,21 @@
                                                                             x-model="arrive"
                                                                             type="time"
                                                                             id="admin-arrive-{{ $row['id'] }}"
-                                                                            class="block h-[40px] w-full cursor-pointer rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 p-2.5 text-sm leading-none text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+                                                                            class="attendance-time-input block"
                                                                             min="{{ $plannedStart }}"
                                                                             max="{{ $plannedEnd }}"
                                                                             step="60"
-                                                                            wire:model.live="arrivalInput.{{ $row['id'] }}"
-                                                                            wire:change="saveArrival({{ $row['id'] }})"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveArrival({{ $row['id'] }})"
+                                                                            @change="saving = true; $wire.saveArrival({{ $row['id'] }}, $event.target.value).finally(() => saving = false)"
+                                                                            :disabled="saving"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                     </div>
                                                                     <div class="w-10 shrink-0">
                                                                         <select
                                                                             id="admin-arrive-quick-{{ $row['id'] }}"
-                                                                            @change="arrive = $event.target.value; $wire.set('arrivalInput.{{ $row['id'] }}', arrive); $wire.saveArrival({{ $row['id'] }});"
-                                                                            class="block h-[40px] w-10 cursor-pointer rounded-r-lg border border-gray-300 bg-gray-50 p-2 text-sm text-white/0 focus:border-blue-500 focus:ring-blue-500"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveArrival({{ $row['id'] }})"
+                                                                            @change="arrive = $event.target.value; saving = true; $wire.saveArrival({{ $row['id'] }}, arrive).finally(() => saving = false);"
+                                                                            class="attendance-time-select block"
+                                                                            :disabled="saving"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                             <option class="text-gray-700" value="">Bitte wählen</option>
@@ -268,24 +303,21 @@
                                                                             x-model="leave"
                                                                             type="time"
                                                                             id="admin-leave-{{ $row['id'] }}"
-                                                                            class="block h-[40px] w-full cursor-pointer rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 p-2.5 text-sm leading-none text-gray-900 focus:border-blue-500 focus:ring-blue-500"
+                                                                            class="attendance-time-input block"
                                                                             min="{{ $plannedStart }}"
                                                                             max="{{ $plannedEnd }}"
                                                                             step="60"
-                                                                            wire:model.live="leaveInput.{{ $row['id'] }}"
-                                                                            wire:change="saveLeave({{ $row['id'] }})"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveLeave({{ $row['id'] }})"
+                                                                            @change="saving = true; $wire.saveLeave({{ $row['id'] }}, $event.target.value).finally(() => saving = false)"
+                                                                            :disabled="saving"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                     </div>
                                                                     <div class="w-10 shrink-0">
                                                                         <select
                                                                             id="admin-leave-quick-{{ $row['id'] }}"
-                                                                            @change="leave = $event.target.value; $wire.set('leaveInput.{{ $row['id'] }}', leave); $wire.saveLeave({{ $row['id'] }});"
-                                                                            class="block h-[40px] w-10 cursor-pointer rounded-r-lg border border-gray-300 bg-gray-50 p-2 text-sm text-white/0 focus:border-blue-500 focus:ring-blue-500"
-                                                                            wire:loading.attr="disabled"
-                                                                            wire:target="saveLeave({{ $row['id'] }})"
+                                                                            @change="leave = $event.target.value; saving = true; $wire.saveLeave({{ $row['id'] }}, leave).finally(() => saving = false);"
+                                                                            class="attendance-time-select block"
+                                                                            :disabled="saving"
                                                                             @disabled(! $canEditTime)
                                                                         >
                                                                             <option class="text-gray-700" value="">Bitte wählen</option>
@@ -347,9 +379,8 @@
                                                             rows="3"
                                                             maxlength="1000"
                                                             class="w-full rounded border-gray-300 text-sm"
-                                                            wire:change="saveNote({{ $row['id'] }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="saveNote({{ $row['id'] }})"
+                                                            @change="saving = true; $wire.saveNote({{ $row['id'] }}, $event.target.value).finally(() => saving = false)"
+                                                            :disabled="saving"
                                                         ></textarea>
                                                         @error('noteInput.'.$row['id']) <div class="mt-1 text-xs text-rose-600">{{ $message }}</div> @enderror
                                                         <div class="mt-2 flex justify-end"><button type="button" class="text-xs text-gray-600 underline" @click="noteOpen=false">Schließen</button></div>
@@ -368,12 +399,16 @@
 
         <x-slot name="footer">
             <div class="flex w-full items-center justify-between gap-3">
-                <button type="button" wire:click="refreshFromUvs" wire:loading.attr="disabled" class="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:opacity-50">
-                    <span wire:loading wire:target="refreshFromUvs" class="loader2 h-4 w-4"></span>
-                    <i wire:loading.remove wire:target="refreshFromUvs" class="fal fa-sync"></i>
-                    <span wire:loading.remove wire:target="refreshFromUvs">Aus UVS aktualisieren</span>
-                    <span wire:loading wire:target="refreshFromUvs">Wird aktualisiert…</span>
-                </button>
+                @if(auth()->user()?->isAdmin())
+                    <button type="button" wire:click="refreshFromUvs" wire:loading.attr="disabled" class="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:opacity-50">
+                        <i wire:loading wire:target="refreshFromUvs" class="fad fa-spinner-third fa-spin text-base"></i>
+                        <i wire:loading.remove wire:target="refreshFromUvs" class="fal fa-sync"></i>
+                        <span wire:loading.remove wire:target="refreshFromUvs">Aus UVS aktualisieren</span>
+                        <span wire:loading wire:target="refreshFromUvs">Wird aktualisiert…</span>
+                    </button>
+                @else
+                    <span></span>
+                @endif
                 <x-secondary-button wire:click="close">Schließen</x-secondary-button>
             </div>
         </x-slot>

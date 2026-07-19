@@ -105,6 +105,30 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         ], $stats);
     }
 
+    public function test_admin_attendance_derives_badge_status_from_entered_times(): void
+    {
+        $component = new AttendanceEditorModal();
+        $method = new ReflectionMethod($component, 'rowTiming');
+        $method->setAccessible(true);
+        $day = new CourseDay([
+            'date' => '2026-07-19',
+            'start_time' => '08:00',
+            'end_time' => '16:00',
+        ]);
+
+        [$arrival, $leave, $late, $early] = $method->invoke($component, $day, [
+            'arrived_at' => '08:15',
+            'left_at' => '15:30',
+            'late_minutes' => 0,
+            'left_early_minutes' => 0,
+        ]);
+
+        $this->assertSame('08:15', $arrival);
+        $this->assertSame('15:30', $leave);
+        $this->assertSame(15, $late);
+        $this->assertSame(30, $early);
+    }
+
     public function test_admin_attendance_tutor_style_row_renders_with_auto_save_controls(): void
     {
         Livewire::test(AttendanceEditorModal::class)
@@ -330,11 +354,17 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertStringContainsString('Gekommen um', $modalSource);
         $this->assertStringContainsString('Gegangen um', $modalSource);
         $this->assertStringNotContainsString('Keine Zusatzangabe', $modalSource);
-        $this->assertStringContainsString('wire:change="saveArrival', $modalSource);
-        $this->assertStringContainsString('wire:change="saveLeave', $modalSource);
-        $this->assertStringContainsString('wire:change="saveNote', $modalSource);
+        $this->assertStringContainsString('$wire.saveArrival', $modalSource);
+        $this->assertStringContainsString('$wire.saveLeave', $modalSource);
+        $this->assertStringContainsString('$wire.saveNote', $modalSource);
+        $this->assertStringContainsString('finally(() => saving = false)', $modalSource);
         $this->assertStringContainsString('wire:target="clearTimes', $modalSource);
-        $this->assertStringContainsString('loader2 h-4 w-4', $modalSource);
+        $this->assertStringContainsString('fad fa-spinner-third fa-spin', $modalSource);
+        $this->assertStringContainsString('attendance-time-input', $modalSource);
+        $this->assertStringContainsString('attendance-time-select', $modalSource);
+        $this->assertStringContainsString('$event.target.value', $modalSource);
+        $this->assertStringContainsString("auth()->user()?->isAdmin()", $modalSource);
+        $this->assertStringNotContainsString('Admin-Bearbeitung', $modalSource);
         $this->assertStringContainsString('Bitte wählen', $modalSource);
         $this->assertStringNotContainsString('wire:click="saveTimes', $modalSource);
         $this->assertStringNotContainsString('Anwesenheiten werden verarbeitet', $modalSource);
