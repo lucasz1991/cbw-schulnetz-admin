@@ -56,6 +56,20 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         }
     }
 
+    public function test_attendance_modal_accepts_scalar_and_livewire_array_day_ids_without_model_binding(): void
+    {
+        $component = new AttendanceEditorModal();
+        $method = new ReflectionMethod($component, 'normalizeCourseDayId');
+        $method->setAccessible(true);
+        $openMethod = new ReflectionMethod($component, 'open');
+
+        $this->assertNull($openMethod->getParameters()[0]->getType());
+        $this->assertSame(42, $method->invoke($component, 42));
+        $this->assertSame(42, $method->invoke($component, ['courseDayId' => 42]));
+        $this->assertSame(42, $method->invoke($component, [['courseDayId' => 42]]));
+        $this->assertNull($method->invoke($component, ['invalid' => 1, 'other' => 2]));
+    }
+
     public function test_vacation_uses_immediately_preceding_non_vacation_block(): void
     {
         $person = new Person();
@@ -246,12 +260,13 @@ class CourseVisibilityAndAttendanceTest extends TestCase
 
         $this->assertStringContainsString('wire:click="openAttendanceEditor', $panelSource);
         $this->assertStringNotContainsString('attendance_rows', $panelSource);
-        $this->assertStringContainsString('fad fa-sunrise', $modalSource);
-        $this->assertStringContainsString('fad fa-sunset', $modalSource);
-        $this->assertStringContainsString('w-28 shrink-0', $modalSource);
-        $this->assertStringContainsString('w-44 shrink-0', $modalSource);
+        $this->assertStringContainsString('fad fa-play-circle', $modalSource);
+        $this->assertStringContainsString('fad fa-flag-checkered', $modalSource);
+        $this->assertStringContainsString('w-64 flex-col', $modalSource);
+        $this->assertStringContainsString('border-t border-slate-300', $modalSource);
         $this->assertStringContainsString('Gekommen um', $modalSource);
         $this->assertStringContainsString('Gegangen um', $modalSource);
+        $this->assertStringNotContainsString('Keine Zusatzangabe', $modalSource);
         $this->assertStringNotContainsString('Nur heute bearbeitbar', $modalSource);
         $this->assertStringNotContainsString("->whereDate('date'", $modalComponentSource);
     }

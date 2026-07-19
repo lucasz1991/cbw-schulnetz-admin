@@ -26,8 +26,11 @@ class AttendanceEditorModal extends Component
     public ?string $syncError = null;
 
     #[On('openAdminAttendanceEditor')]
-    public function open(int $courseDayId): void
+    public function open($courseDayId = null): void
     {
+        $courseDayId = $this->normalizeCourseDayId($courseDayId);
+        abort_unless($courseDayId, 404);
+
         $day = $this->editableDay($courseDayId);
 
         $this->resetValidation();
@@ -220,6 +223,19 @@ class AttendanceEditorModal extends Component
         return CourseDay::query()
             ->with(['course.participants', 'course.tutor'])
             ->findOrFail($id);
+    }
+
+    protected function normalizeCourseDayId(mixed $payload): ?int
+    {
+        while (is_array($payload)) {
+            $payload = $payload['courseDayId'] ?? (count($payload) === 1 ? reset($payload) : null);
+        }
+
+        if (! is_numeric($payload) || (int) $payload <= 0) {
+            return null;
+        }
+
+        return (int) $payload;
     }
 
     protected function assertParticipantBelongsToDay(CourseDay $day, int $personId): void

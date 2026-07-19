@@ -225,7 +225,7 @@ class CourseDaysPanel extends Component
             ->where('course_id', $this->course->id)
             ->findOrFail($courseDayId);
 
-        $this->dispatch('openAdminAttendanceEditor', courseDayId: $day->id);
+        $this->dispatch('openAdminAttendanceEditor', (int) $day->id);
     }
 
     #[On('adminAttendanceUpdated')]
