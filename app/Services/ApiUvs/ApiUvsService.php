@@ -156,6 +156,20 @@ class ApiUvsService
         ]);
     }
 
+    public function syncCourseDayAttendanceData(
+        string $terminId,
+        string $date,
+        array $teilnehmerIds,
+        array $changes
+    ): array {
+        return $this->request('POST', '/api/course/courseday/syncattendancedata', [
+            'termin_id' => $terminId,
+            'date' => $date,
+            'teilnehmer_ids' => $teilnehmerIds,
+            'changes' => $changes,
+        ]);
+    }
+
         /**
      * Führt eine SQL-Leseabfrage über die UVS-API aus (POST /api/sql).
      *

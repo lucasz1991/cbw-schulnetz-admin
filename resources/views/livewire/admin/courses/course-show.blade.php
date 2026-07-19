@@ -399,4 +399,5 @@
     </x-ui.accordion.tabs>
 
     <livewire:admin.courses.deleted-course-transfer-modal />
+    <livewire:admin.courses.attendance-editor-modal />
 </div>  

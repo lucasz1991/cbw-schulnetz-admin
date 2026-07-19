@@ -53,7 +53,7 @@ class CourseExportModal extends Component
         // Exportname: bei einem Baustein sprechender Name, sonst Sammelname
         $isSingleCourse = count($courseIds) === 1;
         if ($isSingleCourse) {
-            $course = Course::find($courseIds[0]);
+            $course = Course::withoutHolidays()->find($courseIds[0]);
             $this->exportName = $course
                 ? $course->getExportBaseName()
                 : 'Baustein_Export_' . now()->format('Y-m-d');
@@ -207,7 +207,7 @@ class CourseExportModal extends Component
 
     public function getSelectedCoursesProperty()
     {
-        return Course::whereIn('id', $this->courseIds)->get();
+        return Course::withoutHolidays()->whereIn('id', $this->courseIds)->get();
     }
 
     public function render()

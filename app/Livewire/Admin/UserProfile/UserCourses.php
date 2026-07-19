@@ -150,6 +150,11 @@ class UserCourses extends Component
                 ? $courses->getCollection()
                 : collect($courses);
 
+            if ($this->user->role !== 'tutor') {
+                $rows = $this->filterVisibleVacationCourses($rows);
+                $courses = $rows;
+            }
+
             $courseIds = $rows->pluck('id')->filter()->unique()->values();
             $contextPersonIds = $rows->pluck('_person_id')->filter()->unique()->values();
 
@@ -455,5 +460,138 @@ class UserCourses extends Component
         }
 
         return $stats;
+    }
+
+    protected function filterVisibleVacationCourses(Collection $courses): Collection
+    {
+        $personsById = $this->user->persons->keyBy('id');
+
+        return $courses
+            ->filter(function (Course $course) use ($personsById): bool {
+                if (! $this->isVacationCourse($course)) {
+                    return true;
+                }
+
+                $personId = (int) ($course->_person_id ?? 0);
+                $person = $personsById->get($personId);
+
+                return $person instanceof Person
+                    && $this->vacationHasSyncedPredecessor($course, $person);
+            })
+            ->values();
+    }
+
+    protected function isVacationCourse(Course $course): bool
+    {
+        return mb_strtolower(trim((string) ($course->type ?? ''))) === 'ferien'
+            || mb_strtoupper(trim((string) ($course->_enrollment_kurzbez_ba ?? ''))) === 'FERI'
+            || str_starts_with(mb_strtoupper((string) ($course->klassen_id ?? '')), 'FERI-');
+    }
+
+    protected function vacationHasSyncedPredecessor(Course $vacation, Person $person): bool
+    {
+        $predecessorClassId = $this->vacationPredecessorClassId($vacation, $person);
+        if ($predecessorClassId === null) {
+            return false;
+        }
+
+        return Course::query()
+            ->where('klassen_id', $predecessorClassId)
+            ->where(function ($query) {
+                $query->whereNull('type')->orWhere('type', '!=', 'ferien');
+            })
+            ->whereHas('participants', fn ($query) => $query->where('persons.id', $person->id))
+            ->exists();
+    }
+
+    protected function vacationPredecessorClassId(Course $vacation, Person $person): ?string
+    {
+        $programData = is_array($person->programdata) ? $person->programdata : [];
+        $programParticipantId = trim((string) data_get($programData, 'teilnehmer_id', ''));
+        $enrollmentParticipantId = trim((string) ($vacation->_enrollment_teilnehmer_id ?? ''));
+        if (
+            $programParticipantId !== ''
+            && $enrollmentParticipantId !== ''
+            && $programParticipantId !== $enrollmentParticipantId
+        ) {
+            return null;
+        }
+
+        $blocks = collect(data_get($programData, 'tn_baust', []))
+            ->filter(fn ($block) => is_array($block))
+            ->map(function (array $block): array {
+                $block['_start'] = $this->parseBlockDate($block['beginn_baustein'] ?? null);
+                $block['_end'] = $this->parseBlockDate($block['ende_baustein'] ?? null);
+
+                return $block;
+            })
+            ->filter(fn (array $block) => $block['_start'] instanceof Carbon)
+            ->sortBy(fn (array $block) => $block['_start']->timestamp)
+            ->values();
+
+        if ($blocks->isEmpty()) {
+            return null;
+        }
+
+        $vacationStart = $vacation->planned_start_date instanceof Carbon
+            ? $vacation->planned_start_date->copy()->startOfDay()
+            : $this->parseBlockDate($vacation->planned_start_date);
+        $vacationEnd = $vacation->planned_end_date instanceof Carbon
+            ? $vacation->planned_end_date->copy()->startOfDay()
+            : $this->parseBlockDate($vacation->planned_end_date);
+        $vacationBlockId = trim((string) ($vacation->_enrollment_tn_baustein_id ?? ''));
+
+        $vacationIndex = $blocks->search(function (array $block) use ($vacationBlockId, $vacationStart, $vacationEnd): bool {
+            if (mb_strtoupper(trim((string) ($block['kurzbez'] ?? ''))) !== 'FERI') {
+                return false;
+            }
+
+            $blockId = trim((string) ($block['tn_baustein_id'] ?? ''));
+            if ($vacationBlockId !== '' && $blockId !== '' && $blockId === $vacationBlockId) {
+                return true;
+            }
+
+            return $vacationStart
+                && $block['_start']->isSameDay($vacationStart)
+                && (! $vacationEnd || ($block['_end'] && $block['_end']->isSameDay($vacationEnd)));
+        });
+
+        if ($vacationIndex === false) {
+            return null;
+        }
+
+        $predecessor = null;
+        for ($index = $vacationIndex - 1; $index >= 0; $index--) {
+            $candidate = $blocks->get($index);
+            if (mb_strtoupper(trim((string) ($candidate['kurzbez'] ?? ''))) !== 'FERI') {
+                $predecessor = $candidate;
+                break;
+            }
+        }
+
+        $predecessorClassId = trim((string) ($predecessor['klassen_id'] ?? ''));
+        return $predecessorClassId !== '' ? $predecessorClassId : null;
+    }
+
+    protected function parseBlockDate(mixed $value): ?Carbon
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        foreach (['Y/m/d', 'Y-m-d', 'd.m.Y', 'd/m/Y', 'd-m-Y'] as $format) {
+            try {
+                return Carbon::createFromFormat($format, $raw, 'Europe/Berlin')->startOfDay();
+            } catch (\Throwable) {
+                // try next known format
+            }
+        }
+
+        try {
+            return Carbon::parse(str_replace('/', '-', $raw), 'Europe/Berlin')->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

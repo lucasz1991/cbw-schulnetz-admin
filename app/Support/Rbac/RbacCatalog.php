@@ -47,6 +47,7 @@ class RbacCatalog
                 ['key' => 'courses.view', 'label' => 'Kurse anzeigen'],
                 ['key' => 'courses.export', 'label' => 'Kurse exportieren'],
                 ['key' => 'courses.ratings.view', 'label' => 'Kursbewertungen anzeigen'],
+                ['key' => 'courses.attendance.edit_today', 'label' => 'Anwesenheit heutiger Bausteine bearbeiten'],
                 ['key' => 'invoices.view', 'label' => 'Rechnungen anzeigen'],
             ],
             'Jobs' => [

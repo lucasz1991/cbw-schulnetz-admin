@@ -70,7 +70,9 @@ protected $queryString = [
     public function mount(): void
     {
         Gate::authorize('courses.view');
-        $this->coursesTotal = Course::where('planned_start_date', '>=', $this->from)->count();
+        $this->coursesTotal = Course::withoutHolidays()
+            ->where('planned_start_date', '>=', $this->from)
+            ->count();
         $this->terms = $this->loadTermOptionsFromCourses();
     }
 
@@ -108,7 +110,7 @@ public function updated($prop): void
     // defensiv: nur filtern, wenn Property existiert
     $contentFilter = property_exists($this, 'contentFilter') ? ($this->contentFilter ?? null) : null;
 
-    $q = Course::query()
+    $q = Course::withoutHolidays()
         ->leftJoin('persons as tutor', 'tutor.id', '=', 'courses.primary_tutor_person_id')
         ->select('courses.*')
         ->with(['tutor' => function ($q) {
@@ -384,7 +386,7 @@ public function updated($prop): void
      */
     protected function loadTermOptionsFromCourses()
     {
-        return Course::query()
+        return Course::withoutHolidays()
             ->whereNotNull('termin_id')
             ->where('planned_start_date', '>=', $this->from)
             ->groupBy('termin_id')
@@ -441,7 +443,7 @@ public function updated($prop): void
 
 public function exportAttendancePdf($courseId): void
 {
-    $course = Course::findOrFail($courseId);
+    $course = Course::withoutHolidays()->findOrFail($courseId);
     if (! $course->canExportAttendancePdf()) {
         $this->dispatch('swal:toast', type: 'error', text: 'Keine Unterrichtstage vorhanden.');
         return;
@@ -464,7 +466,7 @@ public function exportAttendancePdf($courseId): void
 
 public function exportDokuPdf($courseId): void
 {
-    $course = Course::findOrFail($courseId);
+    $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createDokuPdfForPreview();
     if (! $relPath) {
@@ -484,7 +486,7 @@ public function exportDokuPdf($courseId): void
 
 public function exportMaterialConfirmationsPdf($courseId): void
 {
-    $course = Course::findOrFail($courseId);
+    $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createMaterialConfirmationsPdfForPreview();
     if (! $relPath) {
@@ -504,7 +506,7 @@ public function exportMaterialConfirmationsPdf($courseId): void
 
 public function exportInvoicePdf($courseId): void
 {
-    $course = Course::findOrFail($courseId);
+    $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createInvoicePdfForPreview();
     if (! $relPath) {
@@ -524,7 +526,7 @@ public function exportInvoicePdf($courseId): void
 
 public function exportRedThreadPdf($courseId): void
 {
-    $course = Course::findOrFail($courseId);
+    $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createRedThreadPdfForPreview();
     if (! $relPath) {
@@ -544,7 +546,7 @@ public function exportRedThreadPdf($courseId): void
 
 public function exportExamResultsPdf($courseId): void
 {
-    $course = Course::findOrFail($courseId);
+    $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createExamResultsPdfForPreview();
     if (! $relPath) {
@@ -564,7 +566,7 @@ public function exportExamResultsPdf($courseId): void
 
 public function exportCourseRatingsPdf($courseId): void
 {
-    $course = Course::findOrFail($courseId);
+    $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createCourseRatingsPdfForPreview();
     if (! $relPath) {
@@ -585,7 +587,7 @@ public function exportCourseRatingsPdf($courseId): void
 
     public function exportCourse($courseId): ?StreamedResponse
     {
-        $this->course = Course::findOrFail($courseId);
+        $this->course = Course::withoutHolidays()->findOrFail($courseId);
         return $this->course->exportAllDocumentsZip();
     }
 }

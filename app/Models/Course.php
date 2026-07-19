@@ -418,6 +418,16 @@ class Course extends Model
         return $q->where('is_active', true);
     }
 
+    public function scopeWithoutHolidays($q)
+    {
+        $typeColumn = $q->getModel()->qualifyColumn('type');
+
+        return $q->where(function ($query) use ($typeColumn) {
+            $query->whereNull($typeColumn)
+                ->orWhere($typeColumn, '!=', 'ferien');
+        });
+    }
+
     public function scopeByKlassenId($q, string $klassenId)
     {
         return $q->where('klassen_id', $klassenId);
