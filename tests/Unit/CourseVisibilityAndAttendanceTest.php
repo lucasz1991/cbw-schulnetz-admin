@@ -81,6 +81,58 @@ class CourseVisibilityAndAttendanceTest extends TestCase
             ->assertSet('syncError', 'Hydration erfolgreich');
     }
 
+    public function test_admin_attendance_stats_match_the_tutor_status_groups(): void
+    {
+        $component = new AttendanceEditorModal();
+        $method = new ReflectionMethod($component, 'calculateStats');
+        $method->setAccessible(true);
+
+        $stats = $method->invoke($component, [
+            ['has_entry' => true, 'present' => true, 'excused' => false, 'late_minutes' => 0],
+            ['has_entry' => true, 'present' => true, 'excused' => false, 'late_minutes' => 15],
+            ['has_entry' => true, 'present' => false, 'excused' => true, 'late_minutes' => 0],
+            ['has_entry' => true, 'present' => false, 'excused' => false, 'late_minutes' => 0],
+            ['has_entry' => false, 'present' => false, 'excused' => false, 'late_minutes' => 0],
+        ]);
+
+        $this->assertSame([
+            'present' => 1,
+            'late' => 1,
+            'excused' => 1,
+            'absent' => 1,
+            'unknown' => 1,
+            'total' => 5,
+        ], $stats);
+    }
+
+    public function test_admin_attendance_tutor_style_row_renders_with_auto_save_controls(): void
+    {
+        Livewire::test(AttendanceEditorModal::class)
+            ->set('plannedStart', '08:00')
+            ->set('plannedEnd', '16:00')
+            ->set('arrivalInput', [42 => '08:15'])
+            ->set('leaveInput', [42 => '15:30'])
+            ->set('noteInput', [42 => 'Testnotiz'])
+            ->set('rows', [[
+                'id' => 42,
+                'name' => 'Mustermann, Erika',
+                'teilnehmer_id' => 'TN-42',
+                'has_entry' => true,
+                'present' => true,
+                'excused' => false,
+                'late_minutes' => 15,
+                'left_early_minutes' => 30,
+                'arrived_at' => '08:15',
+                'left_at' => '15:30',
+                'note' => 'Testnotiz',
+                'state' => 'synced',
+            ]])
+            ->assertSee('Mustermann, Erika')
+            ->assertSee('Gekommen (Uhrzeit)')
+            ->assertSee('Gegangen (Uhrzeit)')
+            ->assertSee('Notiz');
+    }
+
     public function test_vacation_uses_immediately_preceding_non_vacation_block(): void
     {
         $person = new Person();
@@ -278,7 +330,19 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $this->assertStringContainsString('Gekommen um', $modalSource);
         $this->assertStringContainsString('Gegangen um', $modalSource);
         $this->assertStringNotContainsString('Keine Zusatzangabe', $modalSource);
+        $this->assertStringContainsString('wire:change="saveArrival', $modalSource);
+        $this->assertStringContainsString('wire:change="saveLeave', $modalSource);
+        $this->assertStringContainsString('wire:change="saveNote', $modalSource);
+        $this->assertStringContainsString('wire:target="clearTimes', $modalSource);
+        $this->assertStringContainsString('loader2 h-4 w-4', $modalSource);
+        $this->assertStringContainsString('Bitte wählen', $modalSource);
+        $this->assertStringNotContainsString('wire:click="saveTimes', $modalSource);
+        $this->assertStringNotContainsString('Anwesenheiten werden verarbeitet', $modalSource);
         $this->assertStringNotContainsString('Nur heute bearbeitbar', $modalSource);
         $this->assertStringNotContainsString("->whereDate('date'", $modalComponentSource);
+        $this->assertStringContainsString('loadFromRemote($day)', $modalComponentSource);
+        $this->assertStringContainsString('function saveArrival(', $modalComponentSource);
+        $this->assertStringContainsString('function saveLeave(', $modalComponentSource);
+        $this->assertStringContainsString('function clearTimes(', $modalComponentSource);
     }
 }

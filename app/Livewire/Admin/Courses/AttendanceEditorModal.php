@@ -23,6 +23,14 @@ class AttendanceEditorModal extends Component
     public array $arrivalInput = [];
     public array $leaveInput = [];
     public array $noteInput = [];
+    public array $stats = [
+        'present' => 0,
+        'late' => 0,
+        'excused' => 0,
+        'absent' => 0,
+        'unknown' => 0,
+        'total' => 0,
+    ];
     public ?string $syncError = null;
 
     #[On('openAdminAttendanceEditor')]
@@ -70,6 +78,14 @@ class AttendanceEditorModal extends Component
         $this->arrivalInput = [];
         $this->leaveInput = [];
         $this->noteInput = [];
+        $this->stats = [
+            'present' => 0,
+            'late' => 0,
+            'excused' => 0,
+            'absent' => 0,
+            'unknown' => 0,
+            'total' => 0,
+        ];
         $this->syncError = null;
         $this->resetValidation();
     }
@@ -134,41 +150,70 @@ class AttendanceEditorModal extends Component
         ]);
     }
 
-    public function saveTimes(int $personId): void
+    public function saveArrival(int $personId): void
     {
+        $this->saveTimeForPerson($personId, true);
+    }
+
+    public function saveLeave(int $personId): void
+    {
+        $this->saveTimeForPerson($personId, false);
+    }
+
+    protected function saveTimeForPerson(int $personId, bool $arrival): void
+    {
+        $inputProperty = $arrival ? 'arrivalInput' : 'leaveInput';
+        $label = $arrival ? 'Kommen-Zeit' : 'Gehen-Zeit';
+
         $this->validate([
-            'arrivalInput.'.$personId => ['nullable', 'date_format:H:i'],
-            'leaveInput.'.$personId => ['nullable', 'date_format:H:i'],
+            $inputProperty.'.'.$personId => ['nullable', 'date_format:H:i'],
         ], [
-            'arrivalInput.'.$personId.'.date_format' => 'Die Kommen-Zeit muss im Format HH:MM angegeben werden.',
-            'leaveInput.'.$personId.'.date_format' => 'Die Gehen-Zeit muss im Format HH:MM angegeben werden.',
+            $inputProperty.'.'.$personId.'.date_format' => "Die {$label} muss im Format HH:MM angegeben werden.",
         ]);
 
         $day = $this->editableDay();
+        $this->assertParticipantBelongsToDay($day, $personId);
         $row = data_get($day->attendance_data, 'participants.'.$personId, []);
         if (! is_array($row) || ! (bool) ($row['present'] ?? false)) {
             $this->syncError = 'Zeiten können nur für anwesende Teilnehmer gespeichert werden.';
             return;
         }
 
-        $arrival = $this->normalizeTime($this->arrivalInput[$personId] ?? null);
-        $leave = $this->normalizeTime($this->leaveInput[$personId] ?? null);
+        $time = $this->normalizeTime($this->{$inputProperty}[$personId] ?? null);
         [$plannedStart, $plannedEnd] = $this->plannedDateTimes($day);
-        $arrivalAt = $this->timeOnDay($day, $arrival);
-        $leaveAt = $this->timeOnDay($day, $leave);
+        $timeAt = $this->timeOnDay($day, $time);
 
-        $lateMinutes = ($plannedStart && $arrivalAt && $arrivalAt->gt($plannedStart))
-            ? $plannedStart->diffInMinutes($arrivalAt)
-            : 0;
-        $leftEarlyMinutes = ($plannedEnd && $leaveAt && $leaveAt->lt($plannedEnd))
-            ? $leaveAt->diffInMinutes($plannedEnd)
+        if ($arrival) {
+            $lateMinutes = ($plannedStart && $timeAt && $timeAt->gt($plannedStart))
+                ? $plannedStart->diffInMinutes($timeAt)
+                : 0;
+
+            $this->persistAndSync($personId, [
+                'arrived_at' => $time,
+                'late_minutes' => $lateMinutes,
+            ]);
+
+            return;
+        }
+
+        $leftEarlyMinutes = ($plannedEnd && $timeAt && $timeAt->lt($plannedEnd))
+            ? $timeAt->diffInMinutes($plannedEnd)
             : 0;
 
         $this->persistAndSync($personId, [
-            'arrived_at' => $arrival,
-            'left_at' => $leave,
-            'late_minutes' => $lateMinutes,
+            'left_at' => $time,
             'left_early_minutes' => $leftEarlyMinutes,
+        ]);
+    }
+
+    public function clearTimes(int $personId): void
+    {
+        $this->persistAndSync($personId, [
+            'arrived_at' => null,
+            'left_at' => null,
+            'late_minutes' => 0,
+            'left_early_minutes' => 0,
+            'timestamps' => ['in' => null, 'out' => null],
         ]);
     }
 
@@ -277,11 +322,42 @@ class AttendanceEditorModal extends Component
                     'left_early_minutes' => max(0, (int) ($row['left_early_minutes'] ?? 0)),
                     'arrived_at' => $this->displayTime($row['arrived_at'] ?? null, true, $row),
                     'left_at' => $this->displayTime($row['left_at'] ?? null, false, $row),
+                    'note' => (string) ($row['note'] ?? ''),
                     'state' => $row['state'] ?? null,
                 ];
             })
             ->values()
             ->all();
+
+        $this->stats = $this->calculateStats($this->rows);
+    }
+
+    protected function calculateStats(array $rows): array
+    {
+        $stats = [
+            'present' => 0,
+            'late' => 0,
+            'excused' => 0,
+            'absent' => 0,
+            'unknown' => 0,
+            'total' => count($rows),
+        ];
+
+        foreach ($rows as $row) {
+            if (! ($row['has_entry'] ?? false)) {
+                $stats['unknown']++;
+            } elseif ($row['excused'] ?? false) {
+                $stats['excused']++;
+            } elseif (($row['present'] ?? false) && (int) ($row['late_minutes'] ?? 0) > 0) {
+                $stats['late']++;
+            } elseif ($row['present'] ?? false) {
+                $stats['present']++;
+            } else {
+                $stats['absent']++;
+            }
+        }
+
+        return $stats;
     }
 
     protected function displayTime(mixed $directTime, bool $arrival, array $row): ?string
