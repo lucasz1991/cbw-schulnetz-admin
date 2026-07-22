@@ -120,6 +120,20 @@
         .cell-content ul { margin: 0 0 2px 12px; padding: 0; }
         .cell-content li { margin: 0; }
 
+        .documentation-addendum {
+            margin-top: 5px;
+            padding-top: 4px;
+            border-top: 0.4px solid #93c5fd;
+            color: #1f2937;
+        }
+        .documentation-addendum-label {
+            margin-bottom: 2px;
+            color: #1d4ed8;
+            font-size: 7px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
         .sign-cell {
             text-align: center;
             font-size: 7px;
@@ -227,6 +241,12 @@
 
             <td class="col-content cell-content">
                 {!! $row['notes_html'] !!}
+                @if(!empty($row['documentation_addendum_html']))
+                    <div class="documentation-addendum">
+                        <div class="documentation-addendum-label">Ergänzung zur Dokumentation</div>
+                        {!! $row['documentation_addendum_html'] !!}
+                    </div>
+                @endif
             </td>
 
             <td class="col-ue" style="text-align:center;">

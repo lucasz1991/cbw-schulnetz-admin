@@ -400,4 +400,5 @@
 
     <livewire:admin.courses.deleted-course-transfer-modal />
     <livewire:admin.courses.attendance-editor-modal />
+    <livewire:admin.courses.documentation-addendum-editor-modal />
 </div>  

@@ -1104,6 +1104,7 @@ public function generateDokuPdfFile(): ?string
 
         // Default: nur aufzählen, keine Inhalte / keine Signatur
         $notesHtml    = '';
+        $documentationAddendumHtml = $day->publishedDocumentationAddendumHtml() ?? '';
         $ueValue      = null;
         $signatureSrc = null; // Base64 für <img src="...">
 
@@ -1130,6 +1131,7 @@ public function generateDokuPdfFile(): ?string
             'date'                => $date,
             'time_range'          => $start.'-'.$end,
             'notes_html'          => $notesHtml,
+            'documentation_addendum_html' => $documentationAddendumHtml,
             'ue'                  => $ueValue,
             'tutor_signature_src' => $signatureSrc,
             'note_status'         => $noteStatus,

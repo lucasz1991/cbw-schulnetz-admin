@@ -51,6 +51,8 @@ class TeamRbacModal extends Component
 
     public function setSelectedTeamToFalse(): void
     {
+        Gate::authorize('roles.manage');
+
         if ($this->selectedTeamId === null) {
             return;
         }
@@ -61,12 +63,14 @@ class TeamRbacModal extends Component
 
     public function setSelectedTeamToTrue(): void
     {
+        Gate::authorize('roles.manage');
+
         if ($this->selectedTeamId === null) {
             return;
         }
 
         $teamId = (int) $this->selectedTeamId;
-        $permissions = RbacCatalog::allPermissions();
+        $permissions = $this->permissionsForCurrentUser();
         $permissionMatrix = [];
         foreach ($permissions as $permission) {
             $encodedPermission = $this->permissionKey($permission);
@@ -83,11 +87,14 @@ class TeamRbacModal extends Component
         $teams = $this->teams();
         $teamIds = $teams->pluck('id')->map(fn ($id) => (int) $id)->all();
         $teamSet = array_flip($teamIds);
-        $permissions = RbacCatalog::allPermissions();
+        $permissions = $this->permissionsForCurrentUser();
         $permissionMap = [];
         foreach ($permissions as $permission) {
             $permissionMap[$this->permissionKey($permission)] = $permission;
         }
+
+        $legacy = \App\Models\Setting::getValue('rbac', 'team_permissions');
+        $legacy = is_array($legacy) ? $legacy : [];
 
         foreach ($this->matrix as $teamId => $permissionMatrix) {
             $teamId = (int) $teamId;
@@ -95,13 +102,14 @@ class TeamRbacModal extends Component
                 continue;
             }
 
-            $payload = [];
+            $team = $teams->firstWhere('id', $teamId);
+            $stored = is_array($team?->rbac_permissions) ? $team->rbac_permissions : [];
+            $payload = auth()->user()?->isAdmin()
+                ? []
+                : ($stored ?: (is_array($legacy[(string) $teamId] ?? null) ? $legacy[(string) $teamId] : []));
 
-            foreach ($permissionMatrix as $encodedPermission => $enabled) {
-                if (! isset($permissionMap[$encodedPermission])) {
-                    continue;
-                }
-                $payload[$permissionMap[$encodedPermission]] = (bool) $enabled;
+            foreach ($permissionMap as $encodedPermission => $permission) {
+                $payload[$permission] = (bool) ($permissionMatrix[$encodedPermission] ?? false);
             }
 
             Team::query()->where('id', $teamId)->update([
@@ -126,7 +134,7 @@ class TeamRbacModal extends Component
     protected function loadMatrix(): void
     {
         $this->matrix = [];
-        $permissions = RbacCatalog::allPermissions();
+        $permissions = $this->permissionsForCurrentUser();
         $legacy = \App\Models\Setting::getValue('rbac', 'team_permissions');
         $legacy = is_array($legacy) ? $legacy : [];
 
@@ -164,7 +172,7 @@ class TeamRbacModal extends Component
             return;
         }
 
-        $permissions = RbacCatalog::allPermissions();
+        $permissions = $this->permissionsForCurrentUser();
         foreach ($permissions as $permission) {
             $encodedPermission = $this->permissionKey($permission);
             $current = $this->matrix[$key][$encodedPermission] ?? false;
@@ -178,7 +186,12 @@ class TeamRbacModal extends Component
     protected function defaultMatrixForTeam(): array
     {
         $defaults = [];
+        $allowed = array_flip($this->permissionsForCurrentUser());
         foreach (RbacCatalog::defaultTeamPermissions() as $permission => $enabled) {
+            if (! isset($allowed[$permission])) {
+                continue;
+            }
+
             $defaults[$this->permissionKey($permission)] = (bool) $enabled;
         }
 
@@ -188,6 +201,20 @@ class TeamRbacModal extends Component
     public function permissionKey(string $permission): string
     {
         return str_replace('.', '__dot__', $permission);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function permissionsForCurrentUser(): array
+    {
+        $permissions = RbacCatalog::allPermissions();
+
+        if (auth()->user()?->isAdmin()) {
+            return $permissions;
+        }
+
+        return array_values(array_diff($permissions, RbacCatalog::adminOnlyPermissions()));
     }
 
     public function render()

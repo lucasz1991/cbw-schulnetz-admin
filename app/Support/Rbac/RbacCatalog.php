@@ -52,6 +52,11 @@ class RbacCatalog
                     'label' => 'Anwesenheitslisten bearbeiten',
                     'admin_only' => true,
                 ],
+                [
+                    'key' => 'courses.documentation_addendum.edit',
+                    'label' => 'Dokumentationszusätze bearbeiten',
+                    'admin_only' => true,
+                ],
                 ['key' => 'invoices.view', 'label' => 'Rechnungen anzeigen'],
             ],
             'Jobs' => [
@@ -96,6 +101,29 @@ class RbacCatalog
         }
 
         return $labels;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function adminOnlyPermissions(): array
+    {
+        $permissions = [];
+
+        foreach (self::permissionGroups() as $permissionItems) {
+            foreach ($permissionItems as $item) {
+                if (! ($item['admin_only'] ?? false)) {
+                    continue;
+                }
+
+                $key = (string) ($item['key'] ?? '');
+                if ($key !== '') {
+                    $permissions[] = $key;
+                }
+            }
+        }
+
+        return array_values(array_unique($permissions));
     }
 
     /**

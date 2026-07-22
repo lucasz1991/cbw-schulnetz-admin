@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
-
+ 
 class AttendanceEditorModal extends Component
 {
     public bool $showModal = false;

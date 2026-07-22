@@ -82,6 +82,13 @@ class CourseDaysPanel extends Component
                 $hasNotes  = filled($day->notes);
                 $noteStatus = (int)($day->note_status ?? CourseDay::NOTE_STATUS_MISSING);
                 $noteStatusMeta = $this->mapNoteStatus($noteStatus);
+                $addendumHtml = (string) ($day->documentation_addendum ?? '');
+                $hasAddendum = trim(strip_tags(html_entity_decode($addendumHtml))) !== '';
+                $addendumStatus = (int) (
+                    $day->documentation_addendum_status ?? CourseDay::DOCUMENTATION_ADDENDUM_STATUS_DRAFT
+                );
+                $addendumStatusMeta = $this->mapDocumentationAddendumStatus($addendumStatus, $hasAddendum);
+                $hasPublishedAddendum = $day->hasPublishedDocumentationAddendum();
 
                 // Anwesenheits-Statistik aus attendance_data JSON
                 $attendance = $this->buildAttendanceSummary($day->attendance_data ?? []);
@@ -97,6 +104,12 @@ class CourseDaysPanel extends Component
                     'note_status' => $noteStatus,
                     'note_status_label' => $noteStatusMeta['label'],
                     'note_status_classes' => $noteStatusMeta['classes'],
+                    'documentation_addendum_html' => $hasPublishedAddendum ? $addendumHtml : null,
+                    'has_documentation_addendum' => $hasAddendum,
+                    'has_published_documentation_addendum' => $hasPublishedAddendum,
+                    'documentation_addendum_status' => $addendumStatus,
+                    'documentation_addendum_status_label' => $addendumStatusMeta['label'],
+                    'documentation_addendum_status_classes' => $addendumStatusMeta['classes'],
                     'has_attendance' => $hasAttendance,
                     'attendance' => $attendance,
                     'participants_count' => $this->course->participants->count(),
@@ -159,6 +172,28 @@ class CourseDaysPanel extends Component
                 'classes' => 'bg-neutral-50 text-neutral-500 border border-neutral-200',
             ],
         };
+    }
+
+    protected function mapDocumentationAddendumStatus(int $status, bool $hasAddendum): array
+    {
+        if (! $hasAddendum) {
+            return [
+                'label' => 'Kein Zusatz',
+                'classes' => 'bg-neutral-50 text-neutral-500 border border-neutral-200',
+            ];
+        }
+
+        if ($status === CourseDay::DOCUMENTATION_ADDENDUM_STATUS_PUBLISHED) {
+            return [
+                'label' => 'Veröffentlicht',
+                'classes' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+            ];
+        }
+
+        return [
+            'label' => 'Entwurf',
+            'classes' => 'bg-amber-50 text-amber-700 border border-amber-200',
+        ];
     }
 
     /**
@@ -228,12 +263,32 @@ class CourseDaysPanel extends Component
         $this->dispatch('openAdminAttendanceEditor', (int) $day->id);
     }
 
+    public function openDocumentationAddendumEditor(int $courseDayId): void
+    {
+        Gate::authorize('courses.documentation_addendum.edit');
+
+        $day = CourseDay::query()
+            ->where('course_id', $this->course->id)
+            ->findOrFail($courseDayId);
+
+        $this->dispatch('openAdminDocumentationAddendumEditor', (int) $day->id);
+    }
+
     #[On('adminAttendanceUpdated')]
     public function refreshAttendance(int $courseDayId): void
     {
         if ($this->course->days()->whereKey($courseDayId)->exists()) {
             $this->course->unsetRelation('days');
             $this->course->unsetRelation('participants');
+            $this->loadDays();
+        }
+    }
+
+    #[On('adminDocumentationAddendumUpdated')]
+    public function refreshDocumentationAddendum(int $courseDayId): void
+    {
+        if ($this->course->days()->whereKey($courseDayId)->exists()) {
+            $this->course->unsetRelation('days');
             $this->loadDays();
         }
     }

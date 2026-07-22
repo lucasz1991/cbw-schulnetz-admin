@@ -28,6 +28,10 @@ class CourseDay extends Model
         'attendance_data',
         'topic',
         'notes',
+        'documentation_addendum',
+        'documentation_addendum_status',
+        'documentation_addendum_saved_by_user_id',
+        'documentation_addendum_saved_at',
         'note_status',
         'settings',
         'type',
@@ -42,12 +46,17 @@ class CourseDay extends Model
                 'attendance_updated_at' => 'datetime',
         'attendance_last_synced_at' => 'datetime',
         'note_status'     => 'integer',
+        'documentation_addendum_status' => 'integer',
+        'documentation_addendum_saved_at' => 'datetime',
         'settings'       => 'array',
     ];
 
     public const NOTE_STATUS_MISSING   = 0;
     public const NOTE_STATUS_DRAFT     = 1;
     public const NOTE_STATUS_COMPLETED = 2;
+
+    public const DOCUMENTATION_ADDENDUM_STATUS_DRAFT = 0;
+    public const DOCUMENTATION_ADDENDUM_STATUS_PUBLISHED = 1;
     /**
      * Beim Erstellen Defaults für Sessions & Attendance setzen.
      */
@@ -348,6 +357,31 @@ class CourseDay extends Model
     public function files()
     {
         return $this->morphMany(File::class, 'fileable');
+    }
+
+    public function documentationAddendumSavedBy()
+    {
+        return $this->belongsTo(User::class, 'documentation_addendum_saved_by_user_id');
+    }
+
+    public function hasPublishedDocumentationAddendum(): bool
+    {
+        $plainText = html_entity_decode(
+            strip_tags((string) $this->documentation_addendum),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        );
+        $plainText = str_replace("\u{00A0}", ' ', $plainText);
+
+        return (int) $this->documentation_addendum_status === self::DOCUMENTATION_ADDENDUM_STATUS_PUBLISHED
+            && trim($plainText) !== '';
+    }
+
+    public function publishedDocumentationAddendumHtml(): ?string
+    {
+        return $this->hasPublishedDocumentationAddendum()
+            ? (string) $this->documentation_addendum
+            : null;
     }
 
     /** Tutor-Signaturen für diesen Tag (Typ z. B. sign_courseday_tutor) */
