@@ -49,13 +49,11 @@ class RbacCatalog
                 ['key' => 'courses.ratings.view', 'label' => 'Kursbewertungen anzeigen'],
                 [
                     'key' => 'courses.attendance.edit_today',
-                    'label' => 'Anwesenheitslisten bearbeiten',
-                    'admin_only' => true,
+                    'label' => 'Anwesenheit bearbeiten',
                 ],
                 [
                     'key' => 'courses.documentation_addendum.edit',
-                    'label' => 'Dokumentationszusätze bearbeiten',
-                    'admin_only' => true,
+                    'label' => 'Dokumentationszusatz freigeben',
                 ],
                 ['key' => 'invoices.view', 'label' => 'Rechnungen anzeigen'],
             ],

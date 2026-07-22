@@ -34,16 +34,16 @@ class DocumentationAddendumTest extends TestCase
         $this->createSchema();
     }
 
-    public function test_permission_is_admin_only_and_disabled_for_existing_teams_by_default(): void
+    public function test_permission_is_available_for_teams_and_disabled_by_default(): void
     {
         $permission = collect(RbacCatalog::permissionGroups()['Kursverwaltung'])
             ->firstWhere('key', 'courses.documentation_addendum.edit');
 
         $this->assertNotNull($permission);
-        $this->assertSame('Dokumentationszusätze bearbeiten', $permission['label']);
-        $this->assertTrue((bool) ($permission['admin_only'] ?? false));
+        $this->assertSame('Dokumentationszusatz freigeben', $permission['label']);
+        $this->assertFalse((bool) ($permission['admin_only'] ?? false));
         $this->assertFalse(RbacCatalog::defaultTeamPermissions()['courses.documentation_addendum.edit']);
-        $this->assertContains('courses.documentation_addendum.edit', RbacCatalog::adminOnlyPermissions());
+        $this->assertNotContains('courses.documentation_addendum.edit', RbacCatalog::adminOnlyPermissions());
     }
 
     public function test_authorized_team_member_can_save_publish_and_clear_an_addendum_without_changing_original_notes(): void
@@ -94,7 +94,7 @@ class DocumentationAddendumTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_non_admin_role_manager_cannot_see_or_change_admin_only_permissions(): void
+    public function test_non_admin_role_manager_can_see_and_change_all_team_permissions(): void
     {
         DB::table('teams')->insert([
             'id' => 1,
@@ -130,14 +130,14 @@ class DocumentationAddendumTest extends TestCase
         $matrix = $component->get('matrix');
         $teamMatrix = $matrix[(string) $team->id] ?? [];
 
-        $this->assertArrayNotHasKey('courses__dot__documentation_addendum__dot__edit', $teamMatrix);
-        $this->assertArrayNotHasKey('courses__dot__attendance__dot__edit_today', $teamMatrix);
+        $this->assertTrue($teamMatrix['courses__dot__documentation_addendum__dot__edit']);
+        $this->assertTrue($teamMatrix['courses__dot__attendance__dot__edit_today']);
 
         $component->call('setSelectedTeamToFalse')->call('save');
 
         $permissions = $team->fresh()->rbac_permissions;
-        $this->assertTrue($permissions['courses.documentation_addendum.edit']);
-        $this->assertTrue($permissions['courses.attendance.edit_today']);
+        $this->assertFalse($permissions['courses.documentation_addendum.edit']);
+        $this->assertFalse($permissions['courses.attendance.edit_today']);
         $this->assertFalse($permissions['roles.manage']);
         $this->assertFalse($permissions['courses.view']);
     }

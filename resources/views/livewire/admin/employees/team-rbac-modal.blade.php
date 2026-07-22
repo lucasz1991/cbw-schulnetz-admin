@@ -50,7 +50,6 @@
                                         <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{{ $groupLabel }}</div>
                                         <div class="space-y-1">
                                             @foreach($permissions as $permissionItem)
-                                                @continue(($permissionItem['admin_only'] ?? false) && ! auth()->user()?->isAdmin())
                                                 @php
                                                     $permission = $permissionItem['key'];
                                                     $permissionLabel = $permissionItem['label'] ?? $permission;

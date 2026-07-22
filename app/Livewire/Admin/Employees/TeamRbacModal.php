@@ -208,13 +208,7 @@ class TeamRbacModal extends Component
      */
     protected function permissionsForCurrentUser(): array
     {
-        $permissions = RbacCatalog::allPermissions();
-
-        if (auth()->user()?->isAdmin()) {
-            return $permissions;
-        }
-
-        return array_values(array_diff($permissions, RbacCatalog::adminOnlyPermissions()));
+        return RbacCatalog::allPermissions();
     }
 
     public function render()

@@ -136,7 +136,7 @@
                                     @php $a = $day['attendance']; @endphp
                                     <div class="mb-2 text-[11px] uppercase tracking-wide text-neutral-400">Anwesenheit</div>
 
-                                    @if(auth()->user()?->isAdmin())
+                                    @can('courses.attendance.edit_today')
                                         <button
                                             type="button"
                                             wire:click="openAttendanceEditor({{ $day['id'] }})"
@@ -172,7 +172,7 @@
                                             <i class="fad fa-clipboard-user text-sky-700" aria-hidden="true"></i>
                                             <span>{{ $day['participants_count'] }} Teilnehmer · {{ $a['total'] }} Anwesenheitseinträge</span>
                                         </div>
-                                    @endif
+                                    @endcan
                                 </div>
                                 <div class="rounded-xl border border-neutral-100 bg-white p-3 shadow-inner/5">
                                     <div class="flex items-center justify-between mb-3">

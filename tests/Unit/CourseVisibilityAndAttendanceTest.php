@@ -12,12 +12,12 @@ use App\Services\ApiUvs\ApiUvsService;
 use App\Services\ApiUvs\CourseApiServices\CourseDayAttendanceSyncService;
 use App\Services\ApiUvs\CourseApiServices\CourseUvsDirectLoadService;
 use App\Support\Rbac\RbacCatalog;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
 use Mockery;
 use ReflectionMethod;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class CourseVisibilityAndAttendanceTest extends TestCase
@@ -37,10 +37,12 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $permission = collect(RbacCatalog::permissionGroups()['Kursverwaltung'])
             ->firstWhere('key', 'courses.attendance.edit_today');
 
-        $this->assertTrue((bool) ($permission['admin_only'] ?? false));
+        $this->assertSame('Anwesenheit bearbeiten', $permission['label']);
+        $this->assertFalse((bool) ($permission['admin_only'] ?? false));
+        $this->assertNotContains('courses.attendance.edit_today', RbacCatalog::adminOnlyPermissions());
     }
 
-    public function test_non_admin_cannot_open_attendance_editor_server_side(): void
+    public function test_user_without_permission_cannot_open_attendance_editor_server_side(): void
     {
         $user = new User();
         $user->role = 'employee';
@@ -49,12 +51,9 @@ class CourseVisibilityAndAttendanceTest extends TestCase
         $method = new ReflectionMethod(AttendanceEditorModal::class, 'editableDay');
         $method->setAccessible(true);
 
-        try {
-            $method->invoke(new AttendanceEditorModal(), 1);
-            $this->fail('Nicht-Admins dürfen den Anwesenheitseditor nicht öffnen.');
-        } catch (HttpException $exception) {
-            $this->assertSame(403, $exception->getStatusCode());
-        }
+        $this->expectException(AuthorizationException::class);
+
+        $method->invoke(new AttendanceEditorModal(), 1);
     }
 
     public function test_attendance_modal_accepts_scalar_and_livewire_array_day_ids_without_model_binding(): void
