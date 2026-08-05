@@ -14,3 +14,7 @@ Append-only communication log. Source and runtime evidence override stale entrie
 - Behavior: Eingabe von Dokumenttyp, UVS-Dateipfad und optionaler Item-ID; Signatur-POST plus echter PDF-GET; Ergebnisdetails und sicherer Link `PDF oeffnen`; passende HTTP-Fakes.
 - Verified: PHP-Lint fuer beide Klassen; fokussierte Blade-Kompilierung; HTTP-Fake-Smoke-Test mit korrekter API-Key-Trennung; Unit-Suite 27/27 und 149 Assertions; `git diff --check`.
 - Remaining: Globales `view:cache` scheitert weiterhin an der bestehenden fremden Komponente `admin-layout`. Fuer den Live-Test muessen API-Settings, Ability `documents.sign` und Dateisystem-Leserechte auf dem API-Server stimmen.
+
+## 2026-08-05T18:38:40Z | Codex -> all | handoff
+
+- Message: Removed the UVS document test completely from the CBW admin ApiTests view/component and ApiUvsService. No document test references remain; PHP lint and diff check passed. The test now lives in UVS API Settings -> Basis.
