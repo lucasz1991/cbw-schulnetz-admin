@@ -2,7 +2,7 @@
     <div class="flex items-start justify-between gap-4">
         <div>
             <h1 class="text-lg font-semibold">UVS-API Tests</h1>
-            <p class="text-sm text-gray-600">Hier kannst du JSON- und CSV-Endpunkte des <code>ApiUvsService</code> live testen.</p>
+            <p class="text-sm text-gray-600">Hier kannst du JSON-, CSV- und PDF-Endpunkte des <code>ApiUvsService</code> live testen.</p>
             @unless($hasConfig)
                 <div class="mt-2 text-sm text-red-600">Achtung: UVS API URL/KEY fehlen in den Settings (<code>api.uvs_api_url</code>, <code>api.uvs_api_key</code>).</div>
             @endunless
@@ -119,6 +119,44 @@
             </div>
         </div>
 
+        <div class="mt-5 border-t pt-4">
+            <div class="mb-3">
+                <h4 class="text-sm font-semibold">Dokumentdatei testen</h4>
+                <p class="mt-1 text-xs text-gray-500">
+                    Erzeugt per <code>POST /api/documents/sign</code> eine signierte URL und prueft danach, ob diese eine gueltige PDF ausliefert.
+                </p>
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <label class="text-sm">Dokumenttyp
+                    <select class="mt-1 w-full rounded border px-3 py-2" wire:model.defer="documentType">
+                        <option value="angebot">Angebot</option>
+                        <option value="vertrag">Vertrag</option>
+                    </select>
+                </label>
+                <label class="text-sm md:col-span-1 lg:col-span-2">UVS-Dateipfad
+                    <input
+                        type="text"
+                        class="mt-1 w-full rounded border px-3 py-2 font-mono text-xs"
+                        wire:model.defer="documentPath"
+                        placeholder="/uvs_dev/data/pdf/angebote/Angebot-....pdf"
+                    >
+                </label>
+                <label class="text-sm">Item-ID
+                    <input
+                        type="text"
+                        class="mt-1 w-full rounded border px-3 py-2"
+                        wire:model.defer="documentItemId"
+                        placeholder="optional"
+                    >
+                </label>
+            </div>
+
+            <p class="mt-2 text-xs text-gray-500">
+                Bei Typ <strong>Vertrag</strong> muss der Pfad unter <code>/uvs_dev/data/pdf/vertraege/</code> liegen.
+            </p>
+        </div>
+
         <div class="mt-3">
             <button class="px-3 py-2 rounded border bg-white" wire:click="$refresh">Parameter uebernehmen</button>
         </div>
@@ -136,7 +174,7 @@
             <tbody>
                 @foreach($this->testList() as $t)
                     @php $r = $results[$t['key']] ?? null; @endphp
-                    <tr class="border-t align-top">
+                    <tr class="border-t align-top" wire:key="api-test-{{ $t['key'] }}">
                         <td class="px-4 py-2">
                             <div class="font-medium">{{ $t['name'] }}</div>
                             <div class="text-xs text-gray-500">{{ $t['key'] }}</div>
@@ -163,6 +201,16 @@
                                             <pre class="text-[11px] whitespace-pre leading-5"><code>{{ $r['preview'] }}</code></pre>
                                         </div>
                                     </details>
+                                @endif
+                                @if($t['key'] === 'document_signed_pdf' && !empty($r['url']))
+                                    <a
+                                        href="{{ $r['url'] }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="mt-2 inline-flex items-center rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                                    >
+                                        PDF oeffnen
+                                    </a>
                                 @endif
                                 <div class="text-[11px] text-gray-400 mt-1">Stand: {{ $r['timestamp'] ?? '' }}</div>
                             @else

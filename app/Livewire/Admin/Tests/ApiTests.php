@@ -19,6 +19,11 @@ class ApiTests extends Component
     public string $personId = '1-0035645';       // "{institut_id}-{person_nr}"
     public string $courseClassId = '25V20-1-VBMG51';             // Beispielklasse
 
+    // Dokumentbereitstellung (signierte Angebots-/Vertrags-PDF)
+    public string $documentType = 'angebot';
+    public string $documentPath = '/uvs_dev/data/pdf/angebote/Angebot-00d63f22a5c047d1b951925ee49444e5-080726-094153.pdf';
+    public ?string $documentItemId = null;
+
     public string $sqlQuery = "SELECT person_id, nachname, vorname FROM person WHERE institut_id = 1 ORDER BY nachname";
 
 
@@ -66,6 +71,7 @@ class ApiTests extends Component
             ['key' => 'course_classes',           'name' => 'Kurs/Klassen Liste (Filter)'],
             ['key' => 'course_class_participants','name' => 'Teilnehmer einer Klasse'],
             ['key' => 'course_by_klassen_id',      'name' => 'Kurs (by klassen_id)'],
+            ['key' => 'document_signed_pdf',       'name' => 'Dokumentdatei: signierte PDF abrufen'],
             ['key' => 'uvs_due_dates_management',  'name' => 'UVS CSV: Faelligkeiten / GF'],
             ['key' => 'uvs_module_overview',       'name' => 'UVS CSV: Baustein Uebersicht'],
             ['key' => 'uvs_participant_rates',     'name' => 'UVS CSV: Teilnehmer-Satz-Auswahl'],
@@ -266,6 +272,11 @@ class ApiTests extends Component
                                           ),
             'course_class_participants' => $svc->getCourseClassParticipants($this->courseClassId),
             'course_by_klassen_id'      => $svc->getCourseByKlassenId($this->courseClassId),
+            'document_signed_pdf'       => $svc->testSignedDocument(
+                                                $this->documentType,
+                                                $this->documentPath,
+                                                $this->nullIfEmpty($this->documentItemId),
+                                            ),
             'uvs_due_dates_management'  => $svc->getDueDatesManagementCsv($this->buildDueDatesManagementFilters()),
             'uvs_module_overview'       => $svc->getModuleOverviewCsv($this->buildModuleOverviewFilters()),
             'uvs_participant_rates'     => $svc->getParticipantRateSelectionCsv($this->buildParticipantRateSelectionFilters()),
@@ -280,6 +291,9 @@ class ApiTests extends Component
         $status = $resp['status'] ?? null;
         $message = $resp['message'] ?? ($ok ? 'OK' : 'Fehler');
         $data = $resp['data'] ?? null;
+        $documentUrl = is_array($data) && is_string($data['url'] ?? null)
+            ? $data['url']
+            : null;
 
         $this->results[$key] = [
             'ok'         => $ok,
@@ -287,6 +301,7 @@ class ApiTests extends Component
             'duration'   => $ms,
             'message'    => $message,
             'preview'    => $this->preview($data),
+            'url'        => $documentUrl,
             'timestamp'  => now()->format('Y-m-d H:i:s'),
         ];
     }
@@ -324,7 +339,22 @@ class ApiTests extends Component
             return;
         }
 
+        $fakeDocumentUrl = "{$base}/api/documents/{$this->documentType}/pdf"
+            . '?p=ZmFrZS5wZGY&expires=' . now()->addMinutes(30)->timestamp
+            . '&signature=fake-signature';
+
         Http::fake([
+            // POST /api/documents/sign und anschliessender GET der PDF
+            "{$base}/api/documents/sign" => Http::response([
+                'url' => $fakeDocumentUrl,
+                'expires_at' => now()->addMinutes(30)->toIso8601String(),
+            ], 200),
+            "{$base}/api/documents/*/pdf*" => Http::response(
+                "%PDF-1.4\n% Fake UVS document test\n",
+                200,
+                ['Content-Type' => 'application/pdf']
+            ),
+
             // GET /api/participants?mail=...
             "{$base}/api/participants*" => Http::response([
                 'participant' => [
