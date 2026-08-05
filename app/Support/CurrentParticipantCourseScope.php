@@ -7,17 +7,27 @@ use Illuminate\Support\Carbon;
 
 class CurrentParticipantCourseScope
 {
-    public static function currentContractOverviewFor(?Person $person): ?array
-    {
+    public static function currentContractOverviewFor(
+        ?Person $person,
+        ?int $openBeforeDays = null,
+        ?int $closeAfterDays = null,
+        ?Carbon $today = null
+    ): ?array {
         if (! $person) {
             return null;
         }
 
+        [$openBeforeDays, $closeAfterDays] = self::resolveAccessDays($openBeforeDays, $closeAfterDays);
+
         $programData = is_array($person->programdata) ? $person->programdata : [];
         $statusData = is_array($person->statusdata) ? $person->statusdata : [];
-        $activeContract = self::currentContract($statusData);
+        $activeContract = self::currentContract($statusData, $openBeforeDays, $closeAfterDays, $today);
         $programData = self::programDataForContract($programData, $activeContract);
-        $identifiers = self::identifiersFor($person);
+        $identifiers = self::identifiersFor($person, $openBeforeDays, $closeAfterDays, $today);
+
+        if (! empty($identifiers['restrict_to_none'])) {
+            return null;
+        }
 
         if (! $activeContract && ! self::hasCurrentContractFilter($identifiers) && empty($programData)) {
             return null;
@@ -106,11 +116,17 @@ class CurrentParticipantCourseScope
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function contractOverviewsFor(?Person $person): array
-    {
+    public static function contractOverviewsFor(
+        ?Person $person,
+        ?int $openBeforeDays = null,
+        ?int $closeAfterDays = null,
+        ?Carbon $today = null
+    ): array {
         if (! $person) {
             return [];
         }
+
+        [$openBeforeDays, $closeAfterDays] = self::resolveAccessDays($openBeforeDays, $closeAfterDays);
 
         $statusData = is_array($person->statusdata) ? $person->statusdata : [];
         $contracts = collect(data_get($statusData, 'vertraege', []))
@@ -118,7 +134,12 @@ class CurrentParticipantCourseScope
             ->values();
 
         if ($contracts->isEmpty()) {
-            $fallback = self::currentContractOverviewFor($person);
+            $fallback = self::currentContractOverviewFor(
+                $person,
+                $openBeforeDays,
+                $closeAfterDays,
+                $today
+            );
 
             if (! $fallback) {
                 return [];
@@ -131,8 +152,13 @@ class CurrentParticipantCourseScope
             return [$fallback];
         }
 
-        $currentContract = self::currentContract($statusData);
-        $currentOverview = self::currentContractOverviewFor($person);
+        $currentContract = self::currentContract($statusData, $openBeforeDays, $closeAfterDays, $today);
+        $currentOverview = self::currentContractOverviewFor(
+            $person,
+            $openBeforeDays,
+            $closeAfterDays,
+            $today
+        );
         $personName = self::firstFilled([
             trim(($person->vorname ?? '').' '.($person->nachname ?? '')),
             data_get($person->programdata, 'name'),
@@ -146,8 +172,8 @@ class CurrentParticipantCourseScope
 
         return $contracts
             ->map(function (array $contract) use ($person, $currentContract, $currentOverview, $personName, $personStatus) {
-                $isCurrent = self::isSelectedContract($contract)
-                    || self::sameContract($contract, $currentContract);
+                $isCurrent = $currentContract
+                    && self::sameContract($contract, $currentContract);
                 $isActive = filter_var($contract['is_active'] ?? false, FILTER_VALIDATE_BOOL);
 
                 if ($isCurrent && $currentOverview) {
@@ -242,20 +268,40 @@ class CurrentParticipantCourseScope
             ->all();
     }
 
-    public static function identifiersFor(?Person $person): array
-    {
+    public static function identifiersFor(
+        ?Person $person,
+        ?int $openBeforeDays = null,
+        ?int $closeAfterDays = null,
+        ?Carbon $today = null
+    ): array {
         if (! $person) {
             return [
                 'teilnehmer_id' => null,
                 'tn_baustein_ids' => [],
                 'klassen_ids' => [],
                 'baustein_ids' => [],
+                'restrict_to_none' => false,
             ];
         }
 
+        [$openBeforeDays, $closeAfterDays] = self::resolveAccessDays($openBeforeDays, $closeAfterDays);
+
         $programData = is_array($person->programdata) ? $person->programdata : [];
         $statusData = is_array($person->statusdata) ? $person->statusdata : [];
-        $activeContract = self::currentContract($statusData);
+        $activeContract = self::currentContract($statusData, $openBeforeDays, $closeAfterDays, $today);
+        $hasKnownContracts = collect(data_get($statusData, 'vertraege', []))
+            ->contains(fn ($contract) => is_array($contract));
+
+        if (! $activeContract && $hasKnownContracts) {
+            return [
+                'teilnehmer_id' => null,
+                'tn_baustein_ids' => [],
+                'klassen_ids' => [],
+                'baustein_ids' => [],
+                'restrict_to_none' => true,
+            ];
+        }
+
         $programData = self::programDataForContract($programData, $activeContract);
 
         $teilnehmerId = self::firstFilled([
@@ -273,6 +319,7 @@ class CurrentParticipantCourseScope
             'tn_baustein_ids' => self::cleanIdentifierList($blocks->pluck('tn_baustein_id')->all()),
             'klassen_ids' => self::cleanIdentifierList($blocks->pluck('klassen_id')->all()),
             'baustein_ids' => self::cleanIdentifierList($blocks->pluck('baustein_id')->all()),
+            'restrict_to_none' => false,
         ];
     }
 
@@ -289,6 +336,10 @@ class CurrentParticipantCourseScope
 
         $identifiers = self::identifiersFor($person);
         if (! self::hasCurrentContractFilter($identifiers)) {
+            if (! empty($identifiers['restrict_to_none'])) {
+                $query->whereRaw('1 = 0');
+            }
+
             return;
         }
 
@@ -344,61 +395,43 @@ class CurrentParticipantCourseScope
         });
     }
 
-    protected static function currentContract(array $statusData): ?array
-    {
-        return self::openContracts($statusData)
-            ->sort(function (array $left, array $right) {
-                $leftSelected = self::isSelectedContract($left);
-                $rightSelected = self::isSelectedContract($right);
+    protected static function currentContract(
+        array $statusData,
+        ?int $openBeforeDays = null,
+        ?int $closeAfterDays = null,
+        ?Carbon $today = null
+    ): ?array {
+        $contracts = collect(data_get($statusData, 'vertraege', []))
+            ->filter(fn ($contract) => is_array($contract))
+            ->values();
 
-                if ($leftSelected !== $rightSelected) {
-                    return $leftSelected ? -1 : 1;
-                }
+        if ($contracts->isEmpty()) {
+            return null;
+        }
 
-                $leftSequence = self::contractSequenceTimestamp($left);
-                $rightSequence = self::contractSequenceTimestamp($right);
+        [$openBeforeDays, $closeAfterDays] = self::resolveAccessDays($openBeforeDays, $closeAfterDays);
 
-                if ($leftSequence !== $rightSequence) {
-                    return $leftSequence <=> $rightSequence;
-                }
-
-                $leftEnd = self::effectiveContractEnd($left)?->timestamp ?? PHP_INT_MAX;
-                $rightEnd = self::effectiveContractEnd($right)?->timestamp ?? PHP_INT_MAX;
-
-                if ($leftEnd !== $rightEnd) {
-                    return $leftEnd <=> $rightEnd;
-                }
-
-                return strcmp(
-                    self::firstFilled([$left['teilnehmer_id'] ?? null, $left['teilnehmer_nr'] ?? null]) ?? '',
-                    self::firstFilled([$right['teilnehmer_id'] ?? null, $right['teilnehmer_nr'] ?? null]) ?? '',
-                );
-            })
-            ->first();
+        return ParticipantContractAccess::currentContract(
+            $contracts,
+            $openBeforeDays,
+            $closeAfterDays,
+            $today
+        );
     }
 
-    protected static function openContracts(array $statusData)
+    /** @return array{0: int, 1: int} */
+    protected static function resolveAccessDays(?int $openBeforeDays, ?int $closeAfterDays): array
     {
-        $today = Carbon::today('Europe/Berlin');
+        if ($openBeforeDays !== null && $closeAfterDays !== null) {
+            return [$openBeforeDays, $closeAfterDays];
+        }
 
-        return collect(data_get($statusData, 'vertraege', []))
-            ->filter(fn ($contract) => is_array($contract))
-            ->filter(function (array $contract) use ($today) {
-                if (
-                    ! self::isSelectedContract($contract)
-                    && ! filter_var($contract['is_active'] ?? false, FILTER_VALIDATE_BOOL)
-                ) {
-                    return false;
-                }
+        $configuredDays = ParticipantContractAccess::configuredDays();
 
-                $effectiveEnd = self::effectiveContractEnd($contract);
-                if ($effectiveEnd && $effectiveEnd->endOfDay()->lt($today)) {
-                    return false;
-                }
-
-                return true;
-            })
-            ->values();
+        return [
+            $openBeforeDays ?? $configuredDays['open_before_days'],
+            $closeAfterDays ?? $configuredDays['close_after_days'],
+        ];
     }
 
     protected static function isSelectedContract(array $contract): bool

@@ -9,6 +9,7 @@ use App\Models\CourseResult;
 use App\Models\Person;
 use App\Models\User;
 use App\Support\CurrentParticipantCourseScope;
+use App\Support\ParticipantContractAccess;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -258,8 +259,14 @@ class UserCourses extends Component
 
     protected function buildContractOverviews(): array
     {
+        $configuredDays = ParticipantContractAccess::configuredDays();
+
         return $this->user->persons
-            ->flatMap(fn (Person $person) => CurrentParticipantCourseScope::contractOverviewsFor($person))
+            ->flatMap(fn (Person $person) => CurrentParticipantCourseScope::contractOverviewsFor(
+                $person,
+                $configuredDays['open_before_days'],
+                $configuredDays['close_after_days']
+            ))
             ->filter()
             ->map(function (array $contract) {
                 foreach (['beginn', 'ende', 'letzter_tag', 'kuendig_zum'] as $key) {

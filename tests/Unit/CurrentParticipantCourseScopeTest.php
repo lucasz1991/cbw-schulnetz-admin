@@ -9,6 +9,10 @@ use PHPUnit\Framework\TestCase;
 
 class CurrentParticipantCourseScopeTest extends TestCase
 {
+    private const OPEN_BEFORE_DAYS = 14;
+
+    private const CLOSE_AFTER_DAYS = 7;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,8 +41,8 @@ class CurrentParticipantCourseScopeTest extends TestCase
             programData: $this->programData('5-004570200', '004570200', '2025/08/01', '2026/07/18'),
         );
 
-        $overview = CurrentParticipantCourseScope::currentContractOverviewFor($person);
-        $identifiers = CurrentParticipantCourseScope::identifiersFor($person);
+        $overview = $this->overview($person);
+        $identifiers = $this->identifiers($person);
 
         $this->assertSame('5-004570200', $overview['teilnehmer_id']);
         $this->assertSame('004570200', $overview['teilnehmer_nr']);
@@ -49,7 +53,7 @@ class CurrentParticipantCourseScopeTest extends TestCase
         $this->assertSame(['BLOCK-200'], $identifiers['tn_baustein_ids']);
     }
 
-    public function test_it_strictly_prefers_the_contract_marked_current_by_the_api(): void
+    public function test_api_current_flag_cannot_replace_a_contract_that_is_already_running(): void
     {
         $older = $this->contract('5-004570200', '004570200', '2025/08/01', '2026/12/31');
         $older['is_current'] = false;
@@ -58,18 +62,18 @@ class CurrentParticipantCourseScopeTest extends TestCase
 
         $person = $this->person(
             statusData: ['vertraege' => [$older, $newer]],
-            programData: $this->programData('5-004570201', '004570201', '2026/08/03', '2028/07/19'),
+            programData: $this->programData('5-004570200', '004570200', '2025/08/01', '2026/12/31'),
         );
 
-        $overview = CurrentParticipantCourseScope::currentContractOverviewFor($person);
+        $overview = $this->overview($person);
 
-        $this->assertSame('5-004570201', $overview['teilnehmer_id']);
-        $this->assertSame('2026/08/03', $overview['beginn']);
+        $this->assertSame('5-004570200', $overview['teilnehmer_id']);
+        $this->assertSame('2025/08/01', $overview['beginn']);
     }
 
     public function test_it_switches_to_the_future_follow_up_contract_after_the_first_contract_ends(): void
     {
-        Carbon::setTestNow(Carbon::create(2026, 7, 19, 12, 0, 0, 'Europe/Berlin'));
+        Carbon::setTestNow(Carbon::create(2026, 7, 26, 12, 0, 0, 'Europe/Berlin'));
 
         $person = $this->person(
             statusData: [
@@ -81,7 +85,7 @@ class CurrentParticipantCourseScopeTest extends TestCase
             programData: $this->programData('5-004570201', '004570201', '2026/08/03', '2028/07/19'),
         );
 
-        $identifiers = CurrentParticipantCourseScope::identifiersFor($person);
+        $identifiers = $this->identifiers($person);
 
         $this->assertSame('5-004570201', $identifiers['teilnehmer_id']);
         $this->assertSame(['BLOCK-201'], $identifiers['tn_baustein_ids']);
@@ -99,7 +103,7 @@ class CurrentParticipantCourseScopeTest extends TestCase
             programData: $this->programData('5-004570200', '004570200', '2025/08/01', '2026/07/18'),
         );
 
-        $overview = CurrentParticipantCourseScope::currentContractOverviewFor($person);
+        $overview = $this->overview($person);
 
         $this->assertSame('5-004570200', $overview['teilnehmer_id']);
     }
@@ -118,8 +122,8 @@ class CurrentParticipantCourseScopeTest extends TestCase
             programData: $this->programData('5-004570201', '004570201', '2026/08/03', '2028/07/19'),
         );
 
-        $overview = CurrentParticipantCourseScope::currentContractOverviewFor($person);
-        $identifiers = CurrentParticipantCourseScope::identifiersFor($person);
+        $overview = $this->overview($person);
+        $identifiers = $this->identifiers($person);
 
         $this->assertSame('5-004570200', $overview['teilnehmer_id']);
         $this->assertSame('004570200', $overview['teilnehmer_nr']);
@@ -143,7 +147,7 @@ class CurrentParticipantCourseScopeTest extends TestCase
             programData: $this->programData('5-004570200', '004570200', '2025/08/01', '2026/07/18'),
         );
 
-        $contracts = CurrentParticipantCourseScope::contractOverviewsFor($person);
+        $contracts = $this->contractOverviews($person);
 
         $this->assertCount(2, $contracts);
         $this->assertSame('5-004570200', $contracts[0]['teilnehmer_id']);
@@ -154,6 +158,93 @@ class CurrentParticipantCourseScopeTest extends TestCase
         $this->assertFalse($contracts[1]['is_current']);
         $this->assertSame('open', $contracts[1]['contract_state']);
         $this->assertNull($contracts[1]['program_title']);
+    }
+
+    public function test_a_long_post_closing_window_cannot_hide_a_new_contract_that_has_started(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 8, 3, 12, 0, 0, 'Europe/Berlin'));
+
+        $old = $this->contract('5-004570200', '004570200', '2024/07/18', '2026/07/17', false);
+        $old['is_current'] = true;
+        $new = $this->contract('5-004570201', '004570201', '2026/08/03', '2028/07/19');
+        $new['is_current'] = false;
+
+        $person = $this->person(
+            statusData: ['vertraege' => [$old, $new]],
+            programData: $this->programData('5-004570201', '004570201', '2026/08/03', '2028/07/19'),
+        );
+
+        $overview = CurrentParticipantCourseScope::currentContractOverviewFor(
+            $person,
+            self::OPEN_BEFORE_DAYS,
+            20 * 356
+        );
+        $contracts = CurrentParticipantCourseScope::contractOverviewsFor(
+            $person,
+            self::OPEN_BEFORE_DAYS,
+            20 * 356
+        );
+
+        $this->assertSame('5-004570201', $overview['teilnehmer_id']);
+        $this->assertSame('5-004570201', $contracts[0]['teilnehmer_id']);
+        $this->assertTrue($contracts[0]['is_current']);
+        $this->assertFalse($contracts[1]['is_current']);
+    }
+
+    public function test_a_real_gap_has_no_current_contract_or_stale_course_identifiers(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 7, 10, 12, 0, 0, 'Europe/Berlin'));
+
+        $old = $this->contract('OLD', '000000100', '2025/01/01', '2026/07/01', false);
+        $old['is_current'] = false;
+        $future = $this->contract('FUTURE', '000000101', '2026/08/03', '2028/07/19');
+        $future['is_current'] = true;
+
+        $person = $this->person(
+            statusData: [
+                'teilnehmer_id' => 'FUTURE',
+                'vertraege' => [$old, $future],
+            ],
+            programData: $this->programData('FUTURE', '000000101', '2026/08/03', '2028/07/19'),
+        );
+
+        $overview = $this->overview($person);
+        $identifiers = $this->identifiers($person);
+        $contracts = $this->contractOverviews($person);
+
+        $this->assertNull($overview);
+        $this->assertNull($identifiers['teilnehmer_id']);
+        $this->assertSame([], $identifiers['tn_baustein_ids']);
+        $this->assertTrue($identifiers['restrict_to_none']);
+        $this->assertCount(2, $contracts);
+        $this->assertFalse(collect($contracts)->contains(fn (array $contract) => $contract['is_current']));
+    }
+
+    private function overview(Person $person): ?array
+    {
+        return CurrentParticipantCourseScope::currentContractOverviewFor(
+            $person,
+            self::OPEN_BEFORE_DAYS,
+            self::CLOSE_AFTER_DAYS
+        );
+    }
+
+    private function identifiers(Person $person): array
+    {
+        return CurrentParticipantCourseScope::identifiersFor(
+            $person,
+            self::OPEN_BEFORE_DAYS,
+            self::CLOSE_AFTER_DAYS
+        );
+    }
+
+    private function contractOverviews(Person $person): array
+    {
+        return CurrentParticipantCourseScope::contractOverviewsFor(
+            $person,
+            self::OPEN_BEFORE_DAYS,
+            self::CLOSE_AFTER_DAYS
+        );
     }
 
     private function person(array $statusData, array $programData): Person

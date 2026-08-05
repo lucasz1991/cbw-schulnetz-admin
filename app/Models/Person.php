@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Services\ApiUvs\ApiUvsService;
+use App\Support\ParticipantContractAccess;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\ApiUpdates\PersonApiUpdate;
 use App\Models\CourseResult;
@@ -174,9 +175,10 @@ class Person extends Model
     public function hasPortalIdentity(): bool
     {
         $statusData = is_array($this->statusdata) ? $this->statusdata : [];
+        $currentContract = $this->currentParticipantContract();
 
-        $teilnehmerId = $statusData['teilnehmer_id']
-            ?? data_get($statusData, 'vertraege.0.teilnehmer_id')
+        $teilnehmerId = data_get($currentContract, 'teilnehmer_id')
+            ?? $statusData['teilnehmer_id']
             ?? $this->teilnehmer_id
             ?? data_get($this->programdata, 'teilnehmer_id');
         $mitarbeiterId = $statusData['mitarbeiter_id'] ?? data_get($this->programdata, 'tutor.mitarbeiter_id');
@@ -193,18 +195,17 @@ class Person extends Model
         };
     }
 
-    public function portalRoleSortTimestamp(): int
-    {
-        $activeContracts = $this->activeParticipantContracts();
+    public function portalRoleSortTimestamp(
+        ?int $openBeforeDays = null,
+        ?int $closeAfterDays = null,
+        ?Carbon $today = null
+    ): int {
+        $currentContractEnd = $this->effectiveParticipantContractEnd(
+            $this->currentParticipantContract($openBeforeDays, $closeAfterDays, $today)
+        );
 
-        if ($activeContracts->isNotEmpty()) {
-            $maxContractTs = $activeContracts
-                ->map(fn (array $vertrag) => $this->parsePortalContractDate($vertrag['vertrag_ende'] ?? null)?->endOfDay()->timestamp ?? 0)
-                ->max();
-
-            if (is_numeric($maxContractTs) && (int) $maxContractTs > 0) {
-                return (int) $maxContractTs;
-            }
+        if ($currentContractEnd) {
+            return $currentContractEnd->endOfDay()->timestamp;
         }
 
         $programEnd = $this->parsePortalContractDate(data_get($this->programdata, 'vertrag_ende'));
@@ -236,8 +237,8 @@ class Person extends Model
             return false;
         }
 
-        $teilnehmerId = $statusData['teilnehmer_id']
-            ?? data_get($statusData, 'vertraege.0.teilnehmer_id')
+        $teilnehmerId = data_get($this->currentParticipantContract(), 'teilnehmer_id')
+            ?? $statusData['teilnehmer_id']
             ?? $this->teilnehmer_id
             ?? data_get($this->programdata, 'teilnehmer_id');
         $teilnehmerNr = $statusData['teilnehmer_nr'] ?? $this->teilnehmer_nr ?? data_get($this->programdata, 'teilnehmer_nr');
@@ -312,8 +313,24 @@ class Person extends Model
         $user->syncPortalRoleFromPersons();
     }
 
-    protected function activeParticipantContracts(): Collection
-    {
+    /**
+     * Der Vertrag, dessen Kontext das Admin-Portal aktuell verwenden soll.
+     * Vor-/Nachlaufzeiten gewähren Zugriff, ein real begonnener neuer Vertrag
+     * ersetzt jedoch den älteren Vertragskontext.
+     */
+    public function currentParticipantContract(
+        ?int $openBeforeDays = null,
+        ?int $closeAfterDays = null,
+        ?Carbon $today = null
+    ): ?array {
+        return $this->activeParticipantContracts($openBeforeDays, $closeAfterDays, $today)->first();
+    }
+
+    protected function activeParticipantContracts(
+        ?int $openBeforeDays = null,
+        ?int $closeAfterDays = null,
+        ?Carbon $today = null
+    ): Collection {
         $statusContracts = collect(data_get($this->statusdata, 'vertraege', []))
             ->filter(fn ($vertrag) => is_array($vertrag));
 
@@ -321,17 +338,37 @@ class Person extends Model
             return collect();
         }
 
-        $today = Carbon::today('Europe/Berlin');
+        if ($openBeforeDays === null || $closeAfterDays === null) {
+            $configuredDays = ParticipantContractAccess::configuredDays();
+            $openBeforeDays ??= $configuredDays['open_before_days'];
+            $closeAfterDays ??= $configuredDays['close_after_days'];
+        }
 
-        return $statusContracts->filter(function (array $vertrag) use ($today) {
-            if (! filter_var($vertrag['is_active'] ?? false, FILTER_VALIDATE_BOOL)) {
-                return false;
-            }
+        $currentContract = ParticipantContractAccess::currentContract(
+            $statusContracts,
+            $openBeforeDays,
+            $closeAfterDays,
+            $today
+        );
 
-            $vertragEnde = $this->parsePortalContractDate($vertrag['vertrag_ende'] ?? null);
+        return $currentContract ? collect([$currentContract]) : collect();
+    }
 
-            return ! $vertragEnde || $vertragEnde->endOfDay()->gte($today);
-        })->values();
+    protected function effectiveParticipantContractEnd(?array $vertrag): ?Carbon
+    {
+        if (! $vertrag) {
+            return null;
+        }
+
+        $contractEnd = $this->parsePortalContractDate($vertrag['vertrag_ende'] ?? null)
+            ?? $this->parsePortalContractDate($vertrag['letzter_tag'] ?? null);
+        $cancelledAt = $this->parsePortalContractDate($vertrag['kuendig_zum'] ?? null);
+
+        if ($contractEnd && $cancelledAt) {
+            return $contractEnd->lte($cancelledAt) ? $contractEnd : $cancelledAt;
+        }
+
+        return $contractEnd ?? $cancelledAt;
     }
 
     protected function parsePortalContractDate(mixed $value): ?Carbon
