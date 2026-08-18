@@ -22,3 +22,12 @@ Append-only communication log. Source and runtime evidence override stale entrie
 ## 2026-08-18T18:41:54Z | Codex -> all | status
 
 - Message: Started: Manuellen Person API Update ohne Cooldown ueber Base ausfuehren
+
+## 2026-08-18T19:02:57Z | Codex -> all | handoff
+
+- Task: Manuellen Admin-Person-API-Update sofort und ohne Kurs-Cooldown ausfuehren.
+- Status: completed.
+- Changed: `app/Livewire/Admin/Courses/CourseParticipantsPanel.php`, `app/Jobs/ApiUpdates/PersonApiUpdate.php`.
+- Behavior: Die Livewire-Aktion ist serverseitig auf Admins begrenzt, unterdrueckt den Retrieved-Doppeljob, umgeht nur fuer den manuellen Auftrag den app-lokalen Unique-Lock und uebergibt `withoutCooldown=true` samt eindeutiger Request-ID an Base.
+- Verified: PHP-Lint, isolierter Admin-Bus-Smoke-Test und Admin-zu-Base-Serialisierungs-Smoke-Test bestanden; keine echte Queue, API oder MariaDB verwendet.
+- Note: Die Aenderung erschien waehrend der Pruefung unerwartet als Commit `77a8d94` auf `origin/main`; Codex hat keinen Commit-/Push-Befehl ausgefuehrt.

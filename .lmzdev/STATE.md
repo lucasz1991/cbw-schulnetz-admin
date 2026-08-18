@@ -4,6 +4,7 @@
 
 - LMZ Dev workspace initialized.
 - Der zuvor ergaenzte UVS-Dokumenttest wurde aus der CBW-Admin-API-Testoberflaeche, der Livewire-Komponente und `ApiUvsService` wieder vollstaendig entfernt. Die Pruefung liegt stattdessen in der UVS-API unter Einstellungen -> Basis.
+- Der manuelle `Person API Update` im Kursteilnehmer-Panel ist serverseitig auf Admins begrenzt, wird ohne Eloquent-Retrieved-Doppeljob direkt in die gemeinsame Queue gelegt und traegt ein serialisiertes `withoutCooldown`-Flag mit eindeutiger manueller Request-ID.
 
 ## Verification
 
@@ -14,8 +15,10 @@
 - `php artisan test --testsuite=Unit --stop-on-failure`: 27 passed, 149 assertions.
 - `git diff --check`: passed.
 - Nach Entfernung: PHP-Lint fuer `ApiTests.php` und `ApiUvsService.php`; keine Referenz auf `document_signed_pdf`, `testSignedDocument` oder die Dokumenttest-UI; `git diff --check` passed.
+- Person-Update: PHP-Lint bestanden; isolierter SQLite/Bus-Fake-Smoke-Test bestaetigt genau einen manuellen Force-Job; Admin/Base-Serialisierungs-Smoke-Test bestanden.
 
 ## Risks and blockers
 
 - Globales `php artisan view:cache` bleibt durch eine bereits vorhandene, nicht zu dieser Aenderung gehoerende fehlende Blade-Komponente `admin-layout` blockiert; Cache wurde danach geleert.
 - Kein UVS-Dokumenttest verbleibt im CBW-Admin; der echte Servercheck erfolgt in der UVS-API selbst.
+- Die komplette Admin-Unit-Suite scheitert unter dem sicheren SQLite-Override an einer bestehenden MySQL-Backtick-Erwartung in `CourseVisibilityAndAttendanceTest`; der neue Pfad wurde deshalb separat ohne MariaDB geprueft.

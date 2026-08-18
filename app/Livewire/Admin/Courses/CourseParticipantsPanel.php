@@ -256,6 +256,8 @@ class CourseParticipantsPanel extends Component
 
     public function triggerPersonApiUpdate(int $personId): void
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
         $person = Person::withoutEvents(fn () => Person::find($personId));
 
         if (! $person) {
