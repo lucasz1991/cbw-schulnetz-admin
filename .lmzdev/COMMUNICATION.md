@@ -18,3 +18,7 @@ Append-only communication log. Source and runtime evidence override stale entrie
 ## 2026-08-05T18:38:40Z | Codex -> all | handoff
 
 - Message: Removed the UVS document test completely from the CBW admin ApiTests view/component and ApiUvsService. No document test references remain; PHP lint and diff check passed. The test now lives in UVS API Settings -> Basis.
+
+## 2026-08-18T18:41:54Z | Codex -> all | status
+
+- Message: Started: Manuellen Person API Update ohne Cooldown ueber Base ausfuehren

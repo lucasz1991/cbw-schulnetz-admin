@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Courses;
 
+use App\Jobs\ApiUpdates\PersonApiUpdate;
 use Livewire\Component;
 use App\Models\Course;
 use App\Models\Person;
@@ -9,6 +10,7 @@ use App\Models\CourseResult;
 use App\Models\CourseRating;
 use App\Services\ApiUvs\CourseApiServices\CourseResultsLoadService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Bus;
 
 class CourseParticipantsPanel extends Component
 {
@@ -254,7 +256,7 @@ class CourseParticipantsPanel extends Component
 
     public function triggerPersonApiUpdate(int $personId): void
     {
-        $person = Person::find($personId);
+        $person = Person::withoutEvents(fn () => Person::find($personId));
 
         if (! $person) {
             $this->dispatch('swal:toast', type: 'error', text: 'Person nicht gefunden.');
@@ -262,7 +264,9 @@ class CourseParticipantsPanel extends Component
         }
 
         try {
-            $person->apiupdate();
+            // Der manuelle Admin-Aufruf muss unabhaengig von bestehenden
+            // Unique-Locks direkt in der gemeinsamen Base-Queue landen.
+            Bus::dispatch(new PersonApiUpdate($person->id, withoutCooldown: true));
             $this->dispatch('swal:toast', type: 'success', text: 'Person API Update wurde gestartet.');
         } catch (\Throwable $e) {
             \Log::error('Person API Update konnte nicht gestartet werden.', [
