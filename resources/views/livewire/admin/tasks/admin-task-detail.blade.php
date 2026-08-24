@@ -141,7 +141,13 @@
             <div class="flex gap-2">
 
                 {{-- Kontext einsehen / zurück --}}
-                @if($task->context && (int) $task->assigned_to === (int) $currentUserId || Auth::user()->role == "admin")
+                @if(
+                    $task->context &&
+                    (
+                        (int) $task->assigned_to === (int) $currentUserId ||
+                        Auth::user()?->isAdmin()
+                    )
+                )
                     <x-ui.buttons.button-basic
                         :mode="'blue'"
                         :size="'sm'"
@@ -158,16 +164,41 @@
                 @endif
 
                 {{-- Übernehmen --}}
-                @if(is_null($task->assigned_to))
+                @if(
+                    is_null($task->assigned_to) &&
+                    (int) $task->status !== (int) \App\Models\AdminTask::STATUS_COMPLETED
+                )
                     <x-ui.buttons.button-basic
                         :mode="'primary'"
                         :size="'sm'"
                         wire:click="assignToMe"
+                        wire:loading.attr="disabled"
+                        wire:target="assignToMe"
                         class="flex items-center gap-1"
                     >
                         <i class="fal fa-user-plus text-sm"></i>
                         Übernehmen
                     </x-ui.buttons.button-basic>
+                @elseif(
+                    $task->task_type === \App\Models\AdminTask::TYPE_REPORTBOOK_REVIEW &&
+                    (int) $task->status === (int) \App\Models\AdminTask::STATUS_IN_PROGRESS &&
+                    !is_null($task->assigned_to) &&
+                    (int) $task->assigned_to !== (int) $currentUserId
+                )
+                    @can('jobs.view')
+                        <x-ui.buttons.button-basic
+                            :mode="'primary'"
+                            :size="'sm'"
+                            wire:click="takeOver"
+                            wire:confirm="Diese Aufgabe ist bereits zugewiesen. Möchtest du sie wirklich übernehmen?"
+                            wire:loading.attr="disabled"
+                            wire:target="takeOver"
+                            class="flex items-center gap-1"
+                        >
+                            <i class="fal fa-user-pen text-sm"></i>
+                            Von {{ $task->assignedAdmin?->name ?? 'anderem Bearbeiter' }} übernehmen
+                        </x-ui.buttons.button-basic>
+                    @endcan
                 @endif
 
                 {{-- Zurückgeben (wieder freigeben) --}}
@@ -177,7 +208,7 @@
                     (int) $task->status !== (int) \App\Models\AdminTask::STATUS_COMPLETED &&
                     (
                         (int) $task->assigned_to === (int) $currentUserId ||
-                        Auth::user()->role == "admin"
+                        Auth::user()?->isAdmin()
                     )
                 )
                     <x-ui.buttons.button-basic

@@ -470,10 +470,26 @@ class TransferDeletedCourseReportBooks
             return 0;
         }
 
+        // Derselbe Parent-Lock wie im Base-Job serialisiert auch die
+        // Erzeugungsentscheidung, wenn noch keine AdminTask-Zeile existiert.
+        $lockedBooks = ReportBook::query()
+            ->whereIn('id', $bookIds->all())
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy(fn (ReportBook $book) => (int) $book->id);
+
+        $canonicalBook = $lockedBooks->get((int) $canonicalBook->id);
+
+        if (! $canonicalBook) {
+            return 0;
+        }
+
         $tasks = AdminTask::query()
-            ->where('task_type', 'reportbook_review')
+            ->where('task_type', AdminTask::TYPE_REPORTBOOK_REVIEW)
             ->where('context_type', ReportBook::class)
             ->whereIn('context_id', $bookIds->all())
+            ->lockForUpdate()
             ->get();
 
         if (! $this->shouldHaveReviewTask($canonicalBook)) {
@@ -492,7 +508,7 @@ class TransferDeletedCourseReportBooks
                 'created_by' => $canonicalBook->user_id,
                 'context_type' => ReportBook::class,
                 'context_id' => $canonicalBook->id,
-                'task_type' => 'reportbook_review',
+                'task_type' => AdminTask::TYPE_REPORTBOOK_REVIEW,
                 'description' => "Baustein Berichtsheft {$canonicalBook->id} vollstaendig eingereicht - Pruefung & Freigabe erforderlich.",
                 'status' => AdminTask::STATUS_OPEN,
                 'assigned_to' => null,

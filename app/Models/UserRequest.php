@@ -25,6 +25,17 @@ class UserRequest extends Model
     public const EXAM_MODALITY_RETAKE      = 'retake';
     public const EXAM_MODALITY_IMPROVEMENT = 'improvement';
 
+    public const REASON_CERTIFICATION_FAILED = 'certification_failed';
+    public const LEGACY_REASON_CERTIFICATION_FAILED = 'zert_faild';
+
+    public const REASON_LABELS = [
+        self::REASON_CERTIFICATION_FAILED => 'Ursprüngliche Prüfung nicht bestanden',
+        self::LEGACY_REASON_CERTIFICATION_FAILED => 'Ursprüngliche Prüfung nicht bestanden',
+        'krankMitAtest' => 'Krankheit am Prüfungstag, mit Attest',
+        'krankOhneAtest' => 'Krankheit am Prüfungstag, ohne Attest',
+        'unter51' => 'Ursprüngliche Prüfung unter 51 Punkte',
+    ];
+
     public const MAKEUP_EXAM_MODALITY_LABELS = [
         self::EXAM_MODALITY_RETAKE      => 'Interne Wiederholungsprüfung',
         self::EXAM_MODALITY_IMPROVEMENT => 'Interne Nachprüfung',
@@ -124,6 +135,71 @@ class UserRequest extends Model
             : number_format($feeCents / 100, 2, ',', '.') . ' €';
     }
 
+    public static function reasonLabel(?string $reason): ?string
+    {
+        if ($reason === null || trim($reason) === '') {
+            return null;
+        }
+
+        return self::REASON_LABELS[$reason] ?? str_replace('_', ' ', $reason);
+    }
+
+    public function getReasonLabelAttribute(): ?string
+    {
+        return self::reasonLabel($this->reason);
+    }
+
+    public function getExternalExamInstitutionAttribute(): ?string
+    {
+        return $this->firstFilledString([
+            $this->attributes['external_institution'] ?? null,
+            data_get($this->data, 'external_institution'),
+            $this->institute,
+        ]);
+    }
+
+    public function getExternalExamNameAttribute(): ?string
+    {
+        return $this->firstFilledString([
+            $this->attributes['external_exam_name'] ?? null,
+            data_get($this->data, 'external_exam_name'),
+            $this->certification_label,
+        ]);
+    }
+
+    public function getExternalExamDateAttribute(): mixed
+    {
+        return $this->attributes['external_exam_date']
+            ?? data_get($this->data, 'external_exam_date')
+            ?? $this->scheduled_at;
+    }
+
+    public function getExternalExamFeeCentsAttribute(): ?int
+    {
+        $feeCents = $this->attributes['external_exam_fee_cents']
+            ?? data_get($this->data, 'external_exam_fee_cents')
+            ?? data_get($this->data, 'fee_cents')
+            ?? $this->fee_cents;
+
+        return $feeCents === null ? null : (int) $feeCents;
+    }
+
+    public function getExternalExamFeeFormattedAttribute(): ?string
+    {
+        return self::formatFeeCents($this->external_exam_fee_cents);
+    }
+
+    private function firstFilledString(array $values): ?string
+    {
+        foreach ($values as $value) {
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return null;
+    }
+
     public static function makeupExamDisplayLabel(?string $examModality, ?int $feeCents): ?string
     {
         $modalityLabel = self::MAKEUP_EXAM_MODALITY_LABELS[$examModality] ?? null;
@@ -179,7 +255,7 @@ class UserRequest extends Model
         return match ($this->type) {
             self::TYPE_ABSENCE         => 'Fehlzeit Meldung',
             self::TYPE_MAKEUP          => 'Nachholtermin Anfrage',
-            self::TYPE_EXTERNAL_MAKEUP => 'Externer Nachholtermin',
+            self::TYPE_EXTERNAL_MAKEUP => 'Anmeldung externe Prüfung',
             self::TYPE_GENERAL         => 'Allgemeine Anfrage',
             default                    => 'Sonstiger Antrag',
         };

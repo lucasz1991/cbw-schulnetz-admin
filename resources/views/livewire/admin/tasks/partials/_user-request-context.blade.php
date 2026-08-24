@@ -10,7 +10,8 @@
         ? trim(($person->nachname ?? '') . ', ' . ($person->vorname ?? ''))
         : ($user?->name ?? 'Unbekannt');
 
-    $klasse = $req->class_code
+    $klasse = $req->class_label
+        ?? $req->class_code
         ?? $course?->courseClassName
         ?? $course?->klassen_id
         ?? '—';
@@ -22,7 +23,7 @@
         ?? match($type) {
             'absence'       => 'Fehlzeitmeldung',
             'makeup'        => 'Antrag Nachprüfung',
-            'external_exam' => 'Anmeldung externe Prüfung',
+            'external_exam', 'external_makeup' => 'Anmeldung externe Prüfung',
             default         => 'Antrag',
         };
 @endphp
@@ -201,10 +202,10 @@
         @endif
 
     {{-- 3) EXTERNE PRÜFUNG --}}
-    @elseif($type === 'external_exam')
+    @elseif(in_array($type, ['external_exam', 'external_makeup'], true))
         @php
             $externalExamDate = $req->external_exam_date
-                ? \Carbon\Carbon::parse($req->external_exam_date)->format('d.m.Y')
+                ? \Carbon\Carbon::parse($req->external_exam_date)->format('d.m.Y H:i').' Uhr'
                 : '—';
 
             $courseLabel = $course?->courseShortName
@@ -229,7 +230,7 @@
                     Prüfungsinstitution
                 </h4>
                 <div class="mt-1 rounded border border-slate-200 bg-slate-50 px-3 py-2">
-                    {{ $req->external_institution ?? '—' }}
+                    {{ $req->external_exam_institution ?? '—' }}
                 </div>
 
                 <h4 class="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -237,6 +238,13 @@
                 </h4>
                 <div class="mt-1 rounded border border-slate-200 bg-slate-50 px-3 py-2">
                     {{ $req->external_exam_name ?? '—' }}
+                </div>
+
+                <h4 class="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Prüfungsgebühr
+                </h4>
+                <div class="mt-1 rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                    {{ $req->external_exam_fee_formatted ?? 'Nicht hinterlegt' }}
                 </div>
             </div>
         </div>
@@ -247,7 +255,7 @@
                     Zusätzliche Hinweise / Begründung
                 </h4>
                 <div class="mt-1 rounded border border-slate-200 bg-slate-50 px-3 py-2 whitespace-pre-line">
-                    {{ $req->reason }}
+                    {{ $req->reason_label ?? $req->reason }}
                 </div>
             </div>
         @endif

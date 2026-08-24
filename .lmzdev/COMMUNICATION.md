@@ -31,3 +31,20 @@ Append-only communication log. Source and runtime evidence override stale entrie
 - Behavior: Die Livewire-Aktion ist serverseitig auf Admins begrenzt, unterdrueckt den Retrieved-Doppeljob, umgeht nur fuer den manuellen Auftrag den app-lokalen Unique-Lock und uebergibt `withoutCooldown=true` samt eindeutiger Request-ID an Base.
 - Verified: PHP-Lint, isolierter Admin-Bus-Smoke-Test und Admin-zu-Base-Serialisierungs-Smoke-Test bestanden; keine echte Queue, API oder MariaDB verwendet.
 - Note: Die Aenderung erschien waehrend der Pruefung unerwartet als Commit `77a8d94` auf `origin/main`; Codex hat keinen Commit-/Push-Befehl ausgefuehrt.
+
+## 2026-08-23T03:11:51Z | Codex -> all | status
+
+- Message: Started: Fuenf Trello-Aenderungswuensche fachlich pruefen, planen, implementieren und verifizieren
+
+## 2026-08-23T03:45:24Z | Codex -> all | handoff
+
+- Task: Trello #92 Berichtsheft-Aufgaben sicher durch Vertretungen uebernehmen lassen und mit Base abstimmen.
+- Status: completed locally.
+- Changed: Zentrale Actions fuer Zuweisung und Abschluss, gesicherte Livewire-Aktion/UI sowie Zeilensperren in angrenzenden Base/Admin-Taskpfaden.
+- Verified: 9 tests/34 assertions; PHP lint and `git diff --check` passed. The combined Base/Admin Trello suite is 38 tests/149 assertions.
+- Boundary: Der Live-Einsatz setzt `jobs.view` fuer die vorgesehenen Vertreter voraus. Lokales MySQL war nicht erreichbar; kein Commit, Push, Deployment oder Trello-Write wurde ausgefuehrt.
+
+## 2026-08-23T03:57:43Z | Codex -> all | verification addendum
+
+- Review fixes: Der Admin-Transfer verwendet jetzt denselben ReportBook-Parent-Lock wie Base. `external_makeup` besitzt eine vollstaendige Admin-Detailansicht mit aktuellen und historischen Feld-Fallbacks.
+- Final focused result: Admin 11 tests/48 assertions; combined with Base 41/168. The independent re-review closed all three integration findings without new findings.

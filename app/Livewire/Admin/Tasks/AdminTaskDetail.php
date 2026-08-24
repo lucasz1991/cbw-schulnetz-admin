@@ -2,19 +2,29 @@
 
 namespace App\Livewire\Admin\Tasks;
 
+use App\Actions\AdminTasks\AssignAdminTask;
+use App\Actions\AdminTasks\CompleteReportBookReview;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use App\Models\AdminTask;
 use App\Models\Mail;
 use App\Models\Setting;
+use Closure;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 // Falls dein Context wirklich App\Models\ReportBook ist:
 use App\Models\ReportBook as ReportBookModel;
 
 class AdminTaskDetail extends Component
 {
+    #[Locked]
     public ?int $taskId = null;
+
+    #[Locked]
+    public ?int $loadedAssignedTo = null;
+
     public ?AdminTask $task = null;
 
     public bool $showDetailModal = false;
@@ -31,6 +41,11 @@ class AdminTaskDetail extends Component
         'openAdminTaskDetail' => 'open',
     ];
 
+    public function boot(): void
+    {
+        Gate::authorize('jobs.view');
+    }
+
     public function open(int|array $payload): void
     {
         if (is_int($payload)) {
@@ -45,11 +60,11 @@ class AdminTaskDetail extends Component
 
         $this->taskId = $taskId;
 
-        $this->task = AdminTask::with([
-            'creator',
-            'assignedAdmin',
-            'context',
-        ])->find($taskId);
+        $this->refreshTask();
+
+        if (! $this->task) {
+            return;
+        }
 
         $this->payload = $meta;
         $this->initializeEntryApprovals();
@@ -70,7 +85,11 @@ class AdminTaskDetail extends Component
 
     public function switchToContext(): void
     {
-        if ($this->task && $this->task->context) {
+        $task = $this->refreshTask();
+        $isAssignee = $task && (int) $task->assigned_to === (int) Auth::id();
+        $isAdmin = (bool) Auth::user()?->isAdmin();
+
+        if ($task?->context && ($isAssignee || $isAdmin)) {
             $this->viewMode = 'context';
         }
     }
@@ -79,17 +98,66 @@ class AdminTaskDetail extends Component
     {
         if (! $this->taskId) return;
 
-        $task = AdminTask::findOrFail($this->taskId);
-
-        if (! is_null($task->assigned_to)) {
+        if ($this->loadedAssignedTo !== null) {
+            $this->refreshTask();
             return;
         }
 
-        $task->assignTo(Auth::id());
+        $task = app(AssignAdminTask::class)->claim($this->taskId, (int) Auth::id());
 
-        $this->switchToContext();
+        if (! $task) {
+            $this->refreshTask();
+            $this->dispatch(
+                'swal:toast',
+                type: 'warning',
+                title: 'Nicht übernommen',
+                text: 'Die Aufgabe wurde zwischenzeitlich geändert. Bitte prüfe die aktuelle Zuordnung.'
+            );
 
-        $this->task = $task->fresh(['creator', 'assignedAdmin', 'context']);
+            return;
+        }
+
+        $this->refreshTask();
+        $this->viewMode = $this->task?->context ? 'context' : 'task';
+
+
+        $this->dispatch('taskAssigned');
+
+        $this->dispatch('swal:toast', type: 'success', title: 'Übernommen', text: 'Aufgabe erfolgreich übernommen.');
+    }
+
+    public function takeOver(): void
+    {
+        if (! $this->taskId || $this->loadedAssignedTo === null) {
+            return;
+        }
+
+        $userId = (int) Auth::id();
+
+        if ($this->loadedAssignedTo === $userId) {
+            return;
+        }
+
+        $task = app(AssignAdminTask::class)->takeOver(
+            $this->taskId,
+            $userId,
+            $this->loadedAssignedTo
+        );
+
+        if (! $task) {
+            $this->refreshTask();
+            $this->dispatch(
+                'swal:toast',
+                type: 'warning',
+                title: 'Nicht übernommen',
+                text: 'Die Aufgabe wurde zwischenzeitlich geändert oder ist nicht mehr aktiv.'
+            );
+
+            return;
+        }
+
+        $this->refreshTask();
+        $this->viewMode = $this->task?->context ? 'context' : 'task';
 
         $this->dispatch('taskAssigned');
 
@@ -98,17 +166,27 @@ class AdminTaskDetail extends Component
 
     public function markAsCompleted(): void
     {
-        if (! $this->taskId) return;
+        if (! $this->taskId || $this->loadedAssignedTo === null) return;
 
-        $task = AdminTask::findOrFail($this->taskId);
+        $task = app(AssignAdminTask::class)->complete(
+            $this->taskId,
+            (int) Auth::id(),
+            $this->loadedAssignedTo
+        );
 
-        if ((int) $task->assigned_to !== (int) Auth::id()) {
+        if (! $task) {
+            $this->refreshTask();
+            $this->dispatch(
+                'swal:toast',
+                type: 'warning',
+                title: 'Nicht abgeschlossen',
+                text: 'Die Aufgabe wurde zwischenzeitlich geändert oder von jemand anderem übernommen.'
+            );
+
             return;
         }
 
-        $task->complete();
-
-        $this->task = $task->fresh(['creator', 'assignedAdmin', 'context']);
+        $this->refreshTask();
 
         $this->dispatch('taskCompleted');
 
@@ -119,29 +197,29 @@ class AdminTaskDetail extends Component
 
     public function releaseTask(): void
     {
-        if (! $this->taskId) return;
+        if (! $this->taskId || $this->loadedAssignedTo === null) return;
 
-        $task = AdminTask::findOrFail($this->taskId);
+        $task = app(AssignAdminTask::class)->release(
+            $this->taskId,
+            (int) Auth::id(),
+            $this->loadedAssignedTo,
+            (bool) Auth::user()?->isAdmin()
+        );
 
-        $isAdmin = (Auth::user()?->role === 'admin');
-        $isAssignee = ((int) $task->assigned_to === (int) Auth::id());
+        if (! $task) {
+            $this->refreshTask();
+            $this->dispatch(
+                'swal:toast',
+                type: 'warning',
+                title: 'Nicht zurückgegeben',
+                text: 'Die Aufgabe wurde zwischenzeitlich geändert oder von jemand anderem übernommen.'
+            );
 
-        if (! $task->assigned_to) {
             return;
         }
-
-        if ((int) $task->status !== AdminTask::STATUS_IN_PROGRESS) {
-            return;
-        }
-
-        if (! $isAdmin && ! $isAssignee) {
-            return;
-        }
-
-        $task->release();
 
         $this->viewMode = 'task';
-        $this->task = $task->fresh(['creator', 'assignedAdmin', 'context']);
+        $this->refreshTask();
 
         // Existing listener in list uses this event to refresh.
         $this->dispatch('taskAssigned');
@@ -174,13 +252,17 @@ class AdminTaskDetail extends Component
      */
     public function approveReportBook(): void
     {
-        if (! $this->taskId || ! $this->task) return;
+        if (! $this->taskId) return;
 
-        if ($this->task->task_type !== 'reportbook_review') return;
+        $task = $this->refreshTask();
 
-        if ((int) $this->task->assigned_to !== (int) Auth::id()) return;
+        if (! $task) return;
 
-        $reportBook = $this->task->context;
+        if ($task->task_type !== AdminTask::TYPE_REPORTBOOK_REVIEW) return;
+
+        if ((int) $task->assigned_to !== (int) Auth::id()) return;
+
+        $reportBook = $task->context;
 
         if (! $reportBook) return;
 
@@ -199,18 +281,26 @@ class AdminTaskDetail extends Component
         }
 
         // Wenn Signatur schon existiert -> direkt freigeben
-        $this->applyReportBookReview($reportBook);
-
-        $this->finalizeApprovedReportBook($reportBook);
+        $this->completeReportBookReviewAtomically(
+            (int) $reportBook->id,
+            function (ReportBookModel $currentReportBook): void {
+                $this->applyReportBookReview($currentReportBook);
+                $this->sendApprovalMessage($currentReportBook);
+            }
+        );
     }
 
     public function rejectReportBook(): void
     {
-        if (! $this->taskId || ! $this->task) return;
-        if ($this->task->task_type !== 'reportbook_review') return;
-        if ((int) $this->task->assigned_to !== (int) Auth::id()) return;
+        if (! $this->taskId) return;
 
-        $reportBook = $this->task->context;
+        $task = $this->refreshTask();
+
+        if (! $task) return;
+        if ($task->task_type !== AdminTask::TYPE_REPORTBOOK_REVIEW) return;
+        if ((int) $task->assigned_to !== (int) Auth::id()) return;
+
+        $reportBook = $task->context;
 
         if (! $reportBook) return;
 
@@ -219,14 +309,17 @@ class AdminTaskDetail extends Component
         }
 
 
-        $this->applyReportBookReview($reportBook);
-        $this->sendReportBookRejectionMessage($reportBook);
+        $completed = $this->completeReportBookReviewAtomically(
+            (int) $reportBook->id,
+            function (ReportBookModel $currentReportBook): void {
+                $this->applyReportBookReview($currentReportBook);
+                $this->sendReportBookRejectionMessage($currentReportBook);
+            }
+        );
 
-        $this->task = $this->task->fresh(['creator', 'assignedAdmin', 'context']);
-        $this->viewMode = 'context';
-        $this->rejectionComment = '';
-
-        $this->markAsCompleted();
+        if ($completed) {
+            $this->rejectionComment = '';
+        }
     }
 
     /**
@@ -270,13 +363,17 @@ class AdminTaskDetail extends Component
             return;
         }
 
-        if (! $this->taskId || ! $this->task) return;
+        if (! $this->taskId) return;
+
+        $task = $this->refreshTask();
+
+        if (! $task) return;
 
         // sicherstellen: Task passt + assigned user passt
-        if ($this->task->task_type !== 'reportbook_review') return;
-        if ((int) $this->task->assigned_to !== (int) Auth::id()) return;
+        if ($task->task_type !== AdminTask::TYPE_REPORTBOOK_REVIEW) return;
+        if ((int) $task->assigned_to !== (int) Auth::id()) return;
 
-        $reportBook = $this->task->context;
+        $reportBook = $task->context;
 
         if (! $reportBook || (int) $reportBook->id !== (int) $fileableId) {
             return;
@@ -288,8 +385,13 @@ class AdminTaskDetail extends Component
         }
 
         // Jetzt freigeben
-        $this->applyReportBookReview($reportBook);
-        $this->finalizeApprovedReportBook($reportBook);
+        $this->completeReportBookReviewAtomically(
+            (int) $reportBook->id,
+            function (ReportBookModel $currentReportBook): void {
+                $this->applyReportBookReview($currentReportBook);
+                $this->sendApprovalMessage($currentReportBook);
+            }
+        );
     }
 
     #[On('signatureAborted')]
@@ -337,13 +439,34 @@ class AdminTaskDetail extends Component
 
     }
 
-    protected function finalizeApprovedReportBook($reportBook): void
+    protected function completeReportBookReviewAtomically(int $reportBookId, Closure $review): bool
     {
-        $this->sendApprovalMessage($reportBook);
+        $task = app(CompleteReportBookReview::class)->handle(
+            (int) $this->taskId,
+            (int) Auth::id(),
+            $reportBookId,
+            $review
+        );
 
-        $this->task = $this->task?->fresh(['creator', 'assignedAdmin', 'context']);
+        if (! $task) {
+            $this->refreshTask();
+            $this->dispatch(
+                'swal:toast',
+                type: 'warning',
+                title: 'Prüfung nicht gespeichert',
+                text: 'Die Aufgabe wurde zwischenzeitlich geändert oder von jemand anderem übernommen.'
+            );
+
+            return false;
+        }
+
+        $this->refreshTask();
         $this->viewMode = 'context';
-        $this->markAsCompleted();
+        $this->dispatch('taskCompleted');
+        $this->close();
+        $this->dispatch('swal:toast', type: 'success', title: 'Abgeschlossen', text: 'Aufgabe erfolgreich abgeschlossen.');
+
+        return true;
     }
 
 
@@ -445,7 +568,7 @@ class AdminTaskDetail extends Component
         ]);
     }
 
-    public function sendApprovalMessage($reportBook): void
+    protected function sendApprovalMessage($reportBook): void
     {
         $recipientId = (int) data_get($reportBook, 'user_id');
 
@@ -509,6 +632,28 @@ class AdminTaskDetail extends Component
         }
 
         return false;
+    }
+
+    protected function refreshTask(): ?AdminTask
+    {
+        if (! $this->taskId) {
+            $this->task = null;
+            $this->loadedAssignedTo = null;
+
+            return null;
+        }
+
+        $this->task = AdminTask::with([
+            'creator',
+            'assignedAdmin',
+            'context',
+        ])->find($this->taskId);
+
+        $this->loadedAssignedTo = $this->task?->assigned_to === null
+            ? null
+            : (int) $this->task->assigned_to;
+
+        return $this->task;
     }
 
     public function render()
