@@ -47,9 +47,20 @@
                 >
                     Api's
                 </button>
+                <button type="button"
+                    class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
+                    :class="{ 'border-blue-500 text-blue-600': activeTab === 'coaching', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'coaching' }"
+                    @click="activeTab = 'coaching'">
+                    Einzelcoaching
+                </button>
                 @endif
             </nav>
         </div>
+        @if(Auth::user()->role === 'admin')
+            <div x-show="activeTab === 'coaching'" x-cloak class="space-y-10" x-collapse.duration.400ms>
+                @livewire('admin.config.coaching-settings')
+            </div>
+        @endif
         <!-- Tab Content -->
         <div>
             <!-- Kein Tab ausgewählt -->

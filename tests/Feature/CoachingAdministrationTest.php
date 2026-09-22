@@ -19,23 +19,26 @@ class CoachingAdministrationTest extends TestCase
         $app = require __DIR__.'/../../bootstrap/app.php';
         $app->afterBootstrapping(LoadConfiguration::class, function ($app) {
             $app['config']->set(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:',
-                'cache.default' => 'array', 'session.driver' => 'array', 'coaching.enabled' => true]);
+                'cache.default' => 'array', 'session.driver' => 'array']);
         });
         $app->make(Kernel::class)->bootstrap(); return $app;
     }
 
     protected function setUp(): void
     {
-        parent::setUp(); Queue::fake();
+        parent::setUp(); Queue::fake(); \Illuminate\Support\Facades\Notification::fake();
         $this->assertSame(':memory:', config('database.connections.sqlite.database'));
         Schema::create('users', function (Blueprint $t) { $t->id(); $t->string('name'); $t->string('role'); $t->integer('current_team_id')->nullable(); $t->timestamps(); });
         Schema::create('teams', function (Blueprint $t) { $t->id(); $t->integer('user_id'); $t->string('name'); $t->boolean('personal_team')->default(false); $t->json('rbac_permissions')->nullable(); $t->timestamps(); });
         Schema::create('persons', function (Blueprint $t) { $t->id(); $t->integer('user_id'); $t->integer('institut_id'); $t->string('person_id'); $t->string('role'); $t->string('nachname')->default('Test'); $t->string('vorname')->default('Person'); $t->timestamps(); $t->softDeletes(); });
+        Schema::create('settings', function (Blueprint $t) { $t->id(); $t->string('type'); $t->string('key'); $t->text('value')->nullable(); $t->timestamps(); });
+        \App\Models\Setting::setValue('coaching', 'enabled', true);
         // Base owns the shared schema; run its migration only against this isolated test database.
         $migration = dirname(base_path()).'/base/database/migrations/2026_09_17_080000_create_coaching_planning_tables.php';
         $this->assertFileExists($migration, 'Die Admin-Integrationstests benötigen den benachbarten Base-Checkout.');
         (require $migration)->up();
         (require dirname(base_path()).'/base/database/migrations/2026_09_17_110000_add_uvs_tutor_to_coaching_contracts.php')->up();
+        (require dirname(base_path()).'/base/database/migrations/2026_09_22_100000_create_coaching_notices.php')->up();
     }
 
     private function user(string $role, int $institute = 1, bool $permission = false): User
@@ -48,6 +51,68 @@ class CoachingAdministrationTest extends TestCase
             $user->forceFill(['current_team_id' => $team->id])->save();
         }
         return $user;
+    }
+
+    public function test_superadmin_can_toggle_the_shared_setting_without_config_or_cache_changes(): void
+    {
+        $this->actingAs($this->user('admin'));
+        \App\Models\Setting::where('type', 'coaching')->delete();
+        config(['coaching.enabled' => true]); // A stale config cache must not enable the feature.
+        \Illuminate\Support\Facades\Cache::put('settings.coaching.enabled', true, 3600);
+        $this->assertFalse(\App\Services\Coaching\Access::available());
+        $component = Livewire::test(\App\Livewire\Admin\Config\CoachingSettings::class)
+            ->assertSet('enabled', false)->assertSee('Einzelcoaching im Schulnetz aktivieren');
+        $component->set('enabled', true)->call('save')->assertHasNoErrors()->assertSee('Einzelcoaching-Einstellung gespeichert.');
+        $this->assertTrue(\App\Services\Coaching\Access::available());
+        Livewire::test(\App\Livewire\Admin\Config\CoachingSettings::class)->assertSet('enabled', true);
+        $component->set('enabled', false)->call('save')->assertHasNoErrors();
+        $this->assertFalse(\App\Services\Coaching\Access::available());
+    }
+
+    public function test_other_roles_cannot_open_coaching_settings_even_with_settings_permission(): void
+    {
+        Gate::define('settings.manage', fn () => true);
+        foreach (['staff', 'tutor', 'guest'] as $role) {
+            $this->actingAs($this->user($role));
+            Livewire::test(\App\Livewire\Admin\Config\CoachingSettings::class)->assertForbidden();
+        }
+    }
+
+    public function test_settings_navigation_only_renders_coaching_for_the_api_superadmin_role(): void
+    {
+        $view = file_get_contents(resource_path('views/livewire/admin-config.blade.php'));
+        $navigation = substr($view, 0, strpos($view, '        <!-- Tab Content -->'));
+        $this->actingAs($this->user('admin'));
+        $html = \Illuminate\Support\Facades\Blade::render($navigation);
+        $this->assertStringContainsString("activeTab = 'coaching'", $html);
+        $this->assertStringContainsString('coaching-enabled', $html);
+        $this->actingAs($this->user('staff'));
+        $html = \Illuminate\Support\Facades\Blade::render($navigation);
+        $this->assertStringNotContainsString("activeTab = 'coaching'", $html);
+        $this->assertStringNotContainsString('coaching-enabled', $html);
+    }
+
+    public function test_coaching_save_rechecks_role_after_page_was_opened(): void
+    {
+        $admin = $this->user('admin');
+        $this->actingAs($admin);
+        $component = Livewire::test(\App\Livewire\Admin\Config\CoachingSettings::class)->set('enabled', false);
+        $admin->update(['role' => 'staff']);
+        $this->actingAs($admin->fresh());
+        $component->call('save')->assertForbidden();
+        $this->assertTrue(\App\Services\Coaching\Access::enabled());
+    }
+
+    public function test_disabled_setting_stops_management_and_sync_without_deleting_contracts(): void
+    {
+        $this->actingAs($this->user('admin'));
+        $this->contract();
+        \App\Models\Setting::setValue('coaching', 'enabled', false);
+        Livewire::test(Contracts::class)->assertNotFound();
+        $this->artisan('coaching:sync')->expectsOutput('Einzelcoaching-Abgleich ist ausgeschaltet.')->assertSuccessful();
+        $this->assertSame(0, app(\App\Services\Coaching\SyncService::class)->import());
+        $this->assertSame(0, app(\App\Services\Coaching\SyncService::class)->sendPending());
+        $this->assertDatabaseCount('coaching_contracts', 1);
     }
 
     private function contract(int $institute = 1): CoachingContract
@@ -66,6 +131,18 @@ class CoachingAdministrationTest extends TestCase
             ->assertSee('Mitteilung im Schulnetz zugestellt')->assertDontSee('Zuordnen');
         $this->assertFalse(method_exists(Contracts::class, 'assign'));
         $this->assertDatabaseCount('coaching_assignment_history', 0);
+    }
+
+    public function test_admin_coaching_email_uses_cbw_base_layout_without_replacing_general_mail_templates(): void
+    {
+        \App\Models\Setting::setValue('api', 'base_api_url', 'https://schulnetz.example.test');
+        $mail = (new \App\Notifications\CoachingNotification(['subject' => 'Einzelcoaching', 'lines' => ['Bitte alle Termine abstimmen.']], 'https://schulnetz.example.test/register', true))->toMail(new \stdClass());
+        $html = (string)$mail->view['html'];
+        $this->assertStringContainsString('CBW College Berufliche Weiterbildung', $html);
+        $this->assertStringContainsString('Im Schulnetz registrieren', $html);
+        $this->assertStringContainsString('https://schulnetz.example.test', $html);
+        $this->assertStringContainsString('Bitte alle Termine abstimmen.', (string)$mail->view['text']);
+        $this->assertStringContainsString('# {{ $greeting }}', file_get_contents(resource_path('views/vendor/notifications/email.blade.php')));
     }
 
     public function test_staff_without_dedicated_permission_cannot_open_management(): void
@@ -93,7 +170,6 @@ class CoachingAdministrationTest extends TestCase
     public function test_admin_import_delivers_once_and_links_to_the_configured_base_site(): void
     {
         $this->user('admin'); $tutor = $this->user('tutor');
-        Schema::create('settings', function (Blueprint $t) { $t->id(); $t->string('type'); $t->string('key'); $t->text('value')->nullable(); $t->timestamps(); });
         Schema::create('messages', function (Blueprint $t) { $t->id(); $t->string('subject'); $t->text('message'); $t->integer('from_user'); $t->integer('to_user'); $t->integer('status'); $t->timestamps(); });
         \App\Models\Setting::setValue('api', 'base_api_url', 'https://schulnetz.example.test/portal');
         $row = ['id' => 11, 'institut_id' => 1, 'person_id' => '1-900', 'beratung_id' => 'test',
@@ -101,10 +177,13 @@ class CoachingAdministrationTest extends TestCase
             'agreed_minutes' => 180, 'unit_minutes' => 45, 'version' => str_repeat('a',64), 'status' => 'active'];
         app(\App\Services\Coaching\SyncService::class)->importContract($row);
         app(\App\Services\Coaching\SyncService::class)->importContract($row);
+        app(\App\Services\Coaching\NoticeService::class)->deliverPending();
         $this->assertDatabaseCount('messages', 1);
         $message = \App\Models\Message::firstOrFail();
         $this->assertSame($tutor->id, (int)$message->to_user);
         $this->assertStringContainsString('https://schulnetz.example.test/portal/coaching?contract=', $message->message);
+        $this->actingAs(User::where('role', 'admin')->first());
+        Livewire::test(Contracts::class)->assertSee('Versandvorgänge offen')->assertSee('Gültige Empfänger-E-Mail fehlt.');
     }
 
     public function test_admin_projects_standard_course_and_keeps_attendance_local(): void

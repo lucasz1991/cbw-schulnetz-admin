@@ -36,13 +36,15 @@ class Contracts extends Component
         $this->authorizePage();
         $contract = $this->scoped()->findOrFail($id);
         CoachingOutbox::where('coaching_contract_id', $contract->id)->whereNull('sent_at')->update(['available_at' => now()]);
+        $contract->notices()->whereNull('dismissed_at')->update(['available_at' => now()]);
+        app(\App\Services\Coaching\NoticeService::class)->deliverPending($contract->id);
         $this->synchronize();
     }
 
     public function render()
     {
         $this->authorizePage();
-        $contracts = $this->scoped()->with(['participant', 'tutor', 'latestPlan', 'course'])
+        $contracts = $this->scoped()->withCount(['notices as pending_notices_count' => fn ($q) => $q->whereNull('dismissed_at')->where(fn ($q) => $q->whereNull('mail_sent_at')->orWhereNull('message_id'))])->with(['participant', 'tutor', 'latestPlan', 'course', 'notices' => fn ($q) => $q->whereNull('dismissed_at')->whereNotNull('last_error')->where(fn ($q) => $q->whereNull('mail_sent_at')->orWhereNull('message_id'))])
             ->when($this->search !== '', fn ($q) => $q->where(fn ($q) => $q->where('title', 'like', '%'.$this->search.'%')->orWhere('uvs_person_id', 'like', '%'.$this->search.'%')->orWhere('beratung_id', 'like', '%'.$this->search.'%')))
             ->orderByDesc('id')->paginate(25);
         return view('livewire.admin.coaching.contracts', [
