@@ -33,6 +33,7 @@ class CourseUvsDirectLoadService
 
     public function loadResults(Course $course): bool
     {
+        if ($course->type === 'coaching') return true;
         if (! $course->termin_id || ! $course->klassen_id) {
             Log::warning('CourseUvsDirectLoadService.loadResults: fehlende termin_id/klassen_id.', [
                 'course_id' => $course->id,
@@ -77,6 +78,7 @@ class CourseUvsDirectLoadService
 
     public function loadAttendances(Course $course): bool
     {
+        if ($course->type === 'coaching') return true;
         $course->loadMissing(['days', 'participants']);
 
         if ($course->days->isEmpty()) {
@@ -100,6 +102,7 @@ class CourseUvsDirectLoadService
 
     public function loadAttendanceForDay(CourseDay $day, ?array $onlyLocalPersonIds = null): bool
     {
+        if ($day->course?->type === 'coaching') return true;
         $day->loadMissing('course.participants');
 
         if (! $this->isAttendanceLoadable($day)) {

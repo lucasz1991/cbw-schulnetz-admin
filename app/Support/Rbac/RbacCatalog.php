@@ -44,6 +44,7 @@ class RbacCatalog
                 ['key' => 'users.messages.delete', 'label' => 'Nachrichten löschen'],
             ],
             'Kursverwaltung' => [
+                ['key' => 'coaching.manage', 'label' => 'Einzelcoaching verwalten'],
                 ['key' => 'courses.view', 'label' => 'Kurse anzeigen'],
                 ['key' => 'courses.export', 'label' => 'Kurse exportieren'],
                 ['key' => 'courses.ratings.view', 'label' => 'Kursbewertungen anzeigen'],

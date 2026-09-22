@@ -95,6 +95,11 @@
                         </li>
                     @endcan
 
+                    @if(\App\Services\Coaching\Access::available())
+                        @can('coaching.manage')
+                        <li><a href="{{ route('admin.coaching') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 hover:text-blue-500"><i data-feather="calendar" fill="#545a6d33"></i><span>Einzelcoaching</span></a></li>
+                        @endcan
+                    @endif
                     @can('courses.view')
                         <li>
                             <a href="{{ route('courses.index') }}" class="block py-2.5 px-6 text-sm font-medium text-gray-600 transition-all duration-150 ease-linear hover:text-blue-500 ">

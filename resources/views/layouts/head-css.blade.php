@@ -11,3 +11,5 @@
         <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js" defer></script>
         
    <link rel="stylesheet" href="{{ asset('adminresources/fontawesome6/css/all.min.css') }}">
+
+<x-ui.forms.date-picker-assets />

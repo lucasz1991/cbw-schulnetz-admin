@@ -26,6 +26,7 @@ class CourseDayAttendanceSyncService
     public function syncToRemote(CourseDay $day, ?array $onlyLocalPersonIds = null): bool
     {
         $this->lastError = null;
+        if ($day->course?->type === 'coaching') return true;
         $day->loadMissing(['course.participants', 'course.tutor']);
 
         if (! $day->course || ! $day->course->termin_id || ! $day->date) {
@@ -98,6 +99,7 @@ class CourseDayAttendanceSyncService
 
     public function loadFromRemote(CourseDay $day, ?array $onlyLocalPersonIds = null): bool
     {
+        if ($day->course?->type === 'coaching') return true;
         return $this->directLoadService->loadAttendanceForDay($day, $onlyLocalPersonIds);
     }
 

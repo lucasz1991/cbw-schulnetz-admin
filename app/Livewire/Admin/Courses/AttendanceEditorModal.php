@@ -32,6 +32,8 @@ class AttendanceEditorModal extends Component
         'total' => 0,
     ];
     public ?string $syncError = null;
+    #[\Livewire\Attributes\Locked]
+    public bool $isCoaching = false;
 
     #[On('openAdminAttendanceEditor')]
     public function open($courseDayId = null): void
@@ -40,6 +42,7 @@ class AttendanceEditorModal extends Component
         abort_unless($courseDayId, 404);
 
         $day = $this->editableDay($courseDayId);
+        $this->isCoaching = $day->course->type === 'coaching';
 
         $this->resetValidation();
         $this->syncError = null;
@@ -69,6 +72,7 @@ class AttendanceEditorModal extends Component
     {
         $this->showModal = false;
         $this->courseDayId = null;
+        $this->isCoaching = false;
         $this->courseId = null;
         $this->courseTitle = '';
         $this->dayLabel = '';
@@ -245,7 +249,7 @@ class AttendanceEditorModal extends Component
         $day = $this->editableDay();
         $this->assertParticipantBelongsToDay($day, $personId);
         $this->syncError = null;
-        $patch['state'] = CourseDayAttendanceSyncService::STATE_SYNCED;
+        $patch['state'] = $day->course->type === 'coaching' ? CourseDayAttendanceSyncService::STATE_LOCAL : CourseDayAttendanceSyncService::STATE_SYNCED;
         $originalAttendance = $day->attendance_data;
         $originalUpdatedAt = $day->attendance_updated_at;
         $originalLastSyncedAt = $day->attendance_last_synced_at;
@@ -278,7 +282,7 @@ class AttendanceEditorModal extends Component
                 'person_id' => $personId,
                 'error' => $exception->getMessage(),
             ]);
-            $this->syncError = 'UVS-Speicherung fehlgeschlagen: '.$exception->getMessage();
+            $this->syncError = ($day->course->type === 'coaching' ? 'Speicherung fehlgeschlagen: ' : 'UVS-Speicherung fehlgeschlagen: ').$exception->getMessage();
         }
 
         $freshDay = $day->fresh(['course.participants.user']);

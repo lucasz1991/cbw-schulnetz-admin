@@ -102,6 +102,7 @@
 
   {{-- Panel --}}
   <div
+    data-anchor-panel
     x-show="open"
     x-transition:enter="transition ease-out duration-200"
     x-transition:enter-start="transform opacity-0 scale-95"
@@ -119,5 +120,6 @@
     <div x-ref="panelScroll" class="rounded-md ring-1 ring-black ring-opacity-5 overflow-hidden {{ $contentClasses }}">
       {{ $content }}
     </div>
+    <div data-date-picker-portal wire:ignore></div>
   </div>
 </div>

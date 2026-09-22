@@ -436,7 +436,7 @@
                     <button type="button" wire:click="refreshFromUvs" wire:loading.attr="disabled" class="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1 disabled:opacity-50">
                         <i wire:loading wire:target="refreshFromUvs" class="fad fa-spinner-third fa-spin text-base"></i>
                         <i wire:loading.remove wire:target="refreshFromUvs" class="fal fa-sync"></i>
-                        <span wire:loading.remove wire:target="refreshFromUvs">Aus UVS aktualisieren</span>
+                        <span wire:loading.remove wire:target="refreshFromUvs">{{ $isCoaching ? 'Aktualisieren' : 'Aus UVS aktualisieren' }}</span>
                         <span wire:loading wire:target="refreshFromUvs">Wird aktualisiert…</span>
                     </button>
                 @else

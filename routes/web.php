@@ -61,6 +61,8 @@ Route::middleware(['auth:sanctum', 'auth.status', config('jetstream.auth_session
         //Route::get('/admin/contacts', ManageContacts::class)->name('admin.contacts');
         Route::get('/admin/cms/edit-project/{projectId?}', EditProject::class)->name('admin.cms.edit-project');
 
+        Route::get('/coaching', \App\Livewire\Admin\Coaching\Contracts::class)->name('admin.coaching');
+
         Route::get('/courses', CourseList::class)->name('courses.index');
 
         Route::get('/admin/courses/{course}', CourseShow::class)->name('admin.courses.show');
