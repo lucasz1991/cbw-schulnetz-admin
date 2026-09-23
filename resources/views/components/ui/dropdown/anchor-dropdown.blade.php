@@ -72,10 +72,9 @@
       }
     });
 
-    // Bei Resize Breite nachziehen, solange offen
-    window.addEventListener('resize', () => { if (open) setPanelWidth() }, { passive:true });
   "
   x-cloak
+  @resize.window="if (open) setPanelWidth()"
   @keydown.escape.window="open=false"
   @close.window.stop="open=false"
 >

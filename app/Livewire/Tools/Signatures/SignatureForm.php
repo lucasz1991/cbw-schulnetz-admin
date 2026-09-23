@@ -115,6 +115,14 @@ class SignatureForm extends Component
             $this->errorMsg = 'Datensatz nicht gefunden.';
             return;
         }
+        if ($fileable instanceof \App\Models\CourseDay && $fileable->course?->type === 'coaching') {
+            \App\Services\Coaching\Access::guardTutorCourse($fileable->course_id);
+            \App\Services\Coaching\Access::guardDayWrite($fileable, false);
+            abort_unless(in_array($this->fileType, ['sign_courseday_doku_tutor', 'courseday_doku_tutor'], true), 403);
+            if (trim((string)$fileable->notes) === '') {
+                throw \Illuminate\Validation\ValidationException::withMessages(['signatureDataUrl' => 'Bitte erst die Dokumentation speichern.']);
+            }
+        }
         // disk bleibt wie vorher für Signaturen
         $disk = 'private';
 

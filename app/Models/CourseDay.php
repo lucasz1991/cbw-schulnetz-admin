@@ -66,7 +66,9 @@ class CourseDay extends Model
     protected static function booted(): void
     {
         static::saving(function (CourseDay $day) {
-            if ($day->isDirty(['notes', 'note_status', 'attendance_data', 'documentation_addendum', 'date', 'start_time', 'end_time', 'day_sessions', 'std'])) {
+            if ($day->isDirty(['topic', 'notes', 'note_status', 'attendance_data', 'documentation_addendum',
+                'documentation_addendum_status', 'documentation_addendum_saved_by_user_id', 'documentation_addendum_saved_at',
+                'date', 'start_time', 'end_time', 'day_sessions', 'std'])) {
                 \App\Services\Coaching\Access::guardDayWrite($day);
             }
         });
@@ -241,6 +243,7 @@ class CourseDay extends Model
      */
     public function setAttendance(int $participantId, array $data): void
     {
+        \App\Services\Coaching\Access::guardAttendanceParticipant($this, $participantId);
         $att = $this->attendance_data ?? [];
 
         // Container sicherstellen
@@ -314,14 +317,14 @@ class CourseDay extends Model
     /** Notes lesen für eine Session-ID */
     public function getSessionNotes(string|int $sessionId): ?string
     {
-        return data_get($this->day_sessions, [(string)$sessionId, 'notes']);
+        return data_get($this->day_sessions, [(string)$this->sessionStorageKey($sessionId), 'notes']);
     }
 
     /** Notes setzen + in day_sessions JSON zurückschreiben */
     public function setSessionNotes(string|int $sessionId, ?string $notes): void
     {
         $data = $this->day_sessions ?? [];
-        $sid = (string)$sessionId;
+        $sid = $this->sessionStorageKey($sessionId, true);
         $data[$sid] = array_merge([
             'label' => null, 'start' => null, 'end' => null, 'break' => null,
             'room' => null, 'topic' => null, 'notes' => null,
@@ -334,13 +337,13 @@ class CourseDay extends Model
     /** Topic lesen für eine Session-ID */
     public function getSessionTopic(string|int $sessionId): ?string
     {
-        return data_get($this->day_sessions, [(string)$sessionId, 'topic']);
+        return data_get($this->day_sessions, [(string)$this->sessionStorageKey($sessionId), 'topic']);
     }
 
     public function setSessionTopic(string|int $sessionId, ?string $topic): void
     {
         $data = $this->day_sessions ?? [];
-        $sid = (string)$sessionId;
+        $sid = $this->sessionStorageKey($sessionId, true);
         $data[$sid] = array_merge([
             'label' => null, 'start' => null, 'end' => null, 'break' => null,
             'room' => null, 'topic' => null, 'notes' => null,
@@ -348,6 +351,18 @@ class CourseDay extends Model
         $data[$sid]['topic'] = $topic;
         $this->day_sessions = $data; // <- wichtig: Feld am Model setzen
         $this->save(); // Speichern, damit Änderungen persistiert werden
+    }
+
+    private function sessionStorageKey(string|int $sessionId, bool $writing = false): string|int
+    {
+        $sessions = $this->day_sessions ?? [];
+        if ($this->type === 'coaching') {
+            foreach ($sessions as $key => $session) {
+                if ((string)($session['id'] ?? $key) === (string)$sessionId) return $key;
+            }
+            if ($writing) throw \Illuminate\Validation\ValidationException::withMessages(['coaching' => 'Der ausgewählte Coaching-Termin existiert nicht.']);
+        }
+        return $sessionId;
     }
 
     public function getAttendanceData()

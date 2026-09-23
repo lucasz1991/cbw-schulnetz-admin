@@ -209,7 +209,7 @@ class CoachingAdministrationTest extends TestCase
         });
         $participant = $this->user('participant')->persons()->first(); $tutor = $this->user('tutor')->persons()->first();
         $contract = $this->contract();
-        $contract->update(['participant_person_id' => $participant->id, 'tutor_person_id' => $tutor->id, 'revision' => 1]);
+        $contract->update(['contract_status' => 'active', 'participant_person_id' => $participant->id, 'tutor_person_id' => $tutor->id, 'revision' => 1]);
         $items = app(\App\Services\Coaching\PlanValidator::class)->validate([
             ['id' => (string)Str::uuid(), 'date' => '2026-09-21', 'start' => '09:00', 'end' => '12:00',
              'topic' => 'Coaching', 'format' => 'online', 'location' => 'Online'],
