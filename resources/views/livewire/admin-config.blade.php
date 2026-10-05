@@ -152,6 +152,40 @@
                             </button>
                         </x-slot>
                     </x-settings-collapse>
+                    <x-settings-collapse>
+                        <x-slot name="trigger">
+                            Kursbewertungen E-Mail
+                        </x-slot>
+                        <x-slot name="content">
+                            <form wire:submit="saveCourseRatingsMailSettings" class="space-y-4">
+                                <p class="text-sm text-gray-600">
+                                    Wöchentlicher Sammelversand montags um 06:00 Uhr: PDF-Bewertungen der am Freitag der Vorwoche abgeschlossenen Bausteine als ZIP mit zusätzlichem Downloadlink. Berücksichtigt werden Abschlüsse ab der Aktivierung.
+                                </p>
+                                <label for="course_ratings_mail_enabled" class="relative inline-flex items-center cursor-pointer">
+                                    <input id="course_ratings_mail_enabled" type="checkbox" wire:model="courseRatingsMailEnabled" class="sr-only peer">
+                                    <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></span>
+                                    <span class="ml-3 text-sm font-medium text-gray-700">Automatischen Versand aktivieren</span>
+                                </label>
+                                @error('courseRatingsMailEnabled')
+                                    <p class="text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                                <div>
+                                    <label for="course_ratings_mail_recipients" class="block text-sm font-medium text-gray-700">Kursbewertungen E-Mail-Adressen</label>
+                                    <input type="text" id="course_ratings_mail_recipients" wire:model="courseRatingsMailRecipients" maxlength="2000"
+                                        placeholder="bewertung@example.de, qualitaet@example.de" aria-describedby="course_ratings_mail_help"
+                                        class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    <p id="course_ratings_mail_help" class="mt-1 text-sm text-gray-500">Mehrere Adressen mit Komma trennen.</p>
+                                    @error('courseRatingsMailRecipients')
+                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <button type="submit" wire:loading.attr="disabled" wire:target="saveCourseRatingsMailSettings"
+                                    class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 disabled:opacity-50">
+                                    Einstellungen speichern
+                                </button>
+                            </form>
+                        </x-slot>
+                    </x-settings-collapse>
                     <!-- Automatische Admin Mails -->
                     <x-settings-collapse>
                         <x-slot name="trigger">

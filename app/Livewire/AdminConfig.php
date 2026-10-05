@@ -4,7 +4,9 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Setting;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class AdminConfig extends Component
 {
@@ -14,6 +16,9 @@ class AdminConfig extends Component
 
     /** @var string|null */
     public $adminEmail;
+
+    public $courseRatingsMailEnabled = false;
+    public $courseRatingsMailRecipients = '';
 
     // ------------------------------------------------------------------
     // Admin-Notifications: META (statisch, NICHT überschreiben)
@@ -140,11 +145,24 @@ class AdminConfig extends Component
 
     public function loadSettings(): void
     {
+        $this->courseRatingsMailEnabled = false;
+        $this->courseRatingsMailRecipients = '';
+
         // ---- Mails allgemein ----
         $mailSettings = Setting::where('type', 'mails')->get();
 
         foreach ($mailSettings as $setting) {
             $key = $setting->key;
+
+            if ($key === 'course_ratings_mail_enabled') {
+                $this->courseRatingsMailEnabled = filter_var($setting->value, FILTER_VALIDATE_BOOLEAN);
+                continue;
+            }
+
+            if ($key === 'course_ratings_mail_recipients') {
+                $this->courseRatingsMailRecipients = is_string($setting->value) ? $setting->value : '';
+                continue;
+            }
 
             // Admin E-Mail
             if ($key === 'admin_email') {
@@ -224,6 +242,47 @@ class AdminConfig extends Component
         );
 
         $this->dispatch('showAlert', 'Admin E-Mail Adresse wurde gespeichert.', 'success');
+    }
+
+    public function saveCourseRatingsMailSettings(): void
+    {
+        Gate::authorize('settings.manage');
+
+        $this->validate([
+            'courseRatingsMailEnabled' => 'required|boolean',
+            'courseRatingsMailRecipients' => [
+                'bail',
+                'nullable',
+                Rule::requiredIf((bool) $this->courseRatingsMailEnabled),
+                'string',
+                'max:2000',
+                function ($attribute, $value, $fail) {
+                    foreach (explode(',', $value) as $address) {
+                        if (! filter_var(trim($address), FILTER_VALIDATE_EMAIL)) {
+                            $fail('Bitte gültige E-Mail-Adressen mit Komma getrennt eingeben.');
+                            return;
+                        }
+                    }
+                },
+            ],
+        ], [
+            'courseRatingsMailRecipients.required' => 'Bitte mindestens eine E-Mail-Adresse für den Versand eingeben.',
+        ]);
+
+        $recipients = array_unique(array_map('trim', explode(',', (string) $this->courseRatingsMailRecipients)));
+        $this->courseRatingsMailRecipients = implode(', ', $recipients);
+
+        DB::transaction(function () {
+            $wasEnabled = filter_var(Setting::getValueUncached('mails', 'course_ratings_mail_enabled'), FILTER_VALIDATE_BOOLEAN);
+            if ($this->courseRatingsMailEnabled && ! $wasEnabled) {
+                Setting::setValue('mails', 'course_ratings_mail_start_date', now('Europe/Berlin')->toDateString());
+            }
+
+            Setting::setValue('mails', 'course_ratings_mail_recipients', $this->courseRatingsMailRecipients);
+            Setting::setValue('mails', 'course_ratings_mail_enabled', (bool) $this->courseRatingsMailEnabled);
+        });
+
+        $this->dispatch('showAlert', 'Kursbewertungen E-Mail Einstellungen wurden gespeichert.', 'success');
     }
 
     // ------------------------------------------------------------------
