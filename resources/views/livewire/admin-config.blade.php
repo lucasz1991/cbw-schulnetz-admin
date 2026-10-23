@@ -66,7 +66,7 @@
         @endif
         <!-- Tab Content -->
         <div x-show="activeTab === 'reportbooks'" x-cloak class="space-y-10">
-            @livewire('admin.config.report-book-location-settings', [], key('reportbook-location-settings'))
+            @livewire('admin.config.report-book-location-settings', ['lazy' => true], key('reportbook-location-settings'))
         </div>
         <div>
             <!-- Kein Tab ausgewählt -->

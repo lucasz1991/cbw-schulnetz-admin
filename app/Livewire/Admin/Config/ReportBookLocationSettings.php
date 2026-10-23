@@ -42,6 +42,11 @@ class ReportBookLocationSettings extends Component
         $this->publicationDate = now('Europe/Berlin')->toDateString();
     }
 
+    public function placeholder(): string
+    {
+        return '<section class="reportbook-location-settings" aria-busy="true" role="status"><p class="rb-help">Berichtsheft-Einstellungen werden geladen …</p></section>';
+    }
+
     public function updatedInstituteId(): void
     {
         $this->loadState();

@@ -18,7 +18,6 @@ class OpenJobs extends Component
     public function mount(bool $autoRefresh = true): void
     {
         $this->autoRefresh = $autoRefresh;
-        $this->loadJobs();
     }
 
     public function render()

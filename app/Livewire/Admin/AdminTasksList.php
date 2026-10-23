@@ -132,9 +132,10 @@ class AdminTasksList extends Component
         }
 
         $tasks = AdminTaskVisibility::apply($query, $institution)->paginate(20);
+        $contexts = LocationPolicy::forBooks($tasks->pluck('context')->filter(fn ($book) => $book instanceof ReportBook));
         foreach ($tasks as $task) {
             $task->setAttribute('location_policy_mode', $task->context instanceof ReportBook
-                ? LocationPolicy::forBook($task->context)['mode'] : 'normal');
+                ? $contexts[$task->context_id]['mode'] : 'normal');
         }
         $openCount = AdminTaskVisibility::apply(AdminTask::open()
             ->where('task_type', 'reportbook_review'), $institution)->count();

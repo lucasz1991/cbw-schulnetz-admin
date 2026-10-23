@@ -83,6 +83,64 @@ class ReportBookLocationSettingsTest extends TestCase
         $this->assertSame(1, DB::table('report_book_policy_audit')->count());
     }
 
+    public function test_config_tab_only_renders_a_lazy_placeholder_before_opening(): void
+    {
+        $this->instance(InstitutionsLoadService::class, \Mockery::mock(InstitutionsLoadService::class)
+            ->shouldNotReceive('getInstitutionOptions')->getMock());
+
+        $view = file_get_contents(resource_path('views/livewire/admin-config.blade.php'));
+        $start = strpos($view, '<div x-show="activeTab === \'reportbooks\'"');
+        $end = strpos($view, '</div>', $start) + strlen('</div>');
+        $html = \Illuminate\Support\Facades\Blade::render(substr($view, $start, $end - $start));
+
+        $this->assertStringContainsString('x-show="activeTab === \'reportbooks\'"', $html);
+        $this->assertStringContainsString('<section', $html);
+        $this->assertStringContainsString('x-intersect=', $html);
+        $this->assertStringNotContainsString('x-init=', $html);
+        $this->assertStringContainsString('Berichtsheft-Einstellungen werden geladen', $html);
+        $this->assertStringNotContainsString('id="reportbook-institute"', $html);
+    }
+
+    public function test_lazy_activation_loads_institutions_once_and_keeps_the_component_mounted(): void
+    {
+        $this->instance(InstitutionsLoadService::class, \Mockery::mock(InstitutionsLoadService::class)
+            ->shouldReceive('getInstitutionOptions')->once()
+            ->andReturn([['value' => '2', 'label' => 'Berlin']])->getMock());
+        $component = Livewire::test(ReportBookLocationSettings::class, ['lazy' => true])
+            ->assertSet('institutions', [])->assertSee('Berichtsheft-Einstellungen werden geladen');
+        preg_match('/\$wire\.__lazyLoad\(\'([^\']+)\'\)/', html_entity_decode($component->html()), $match);
+        $this->assertNotEmpty($match[1] ?? null);
+
+        $component->call('__lazyLoad', $match[1])->assertSee('Berichtshefte je Standort')
+            ->assertSet('institutions', [['value' => '2', 'label' => 'Berlin']])
+            ->set('instituteId', '2')->assertHasNoErrors()
+            ->call('$refresh')->assertSee('Berichtsheftpflicht');
+    }
+
+    public function test_dashboard_loads_jobs_once_initially_and_refreshes_changed_tasks(): void
+    {
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $component = Livewire::test(OpenJobs::class, ['autoRefresh' => false])
+            ->assertSet('autoRefresh', false)->assertSee('Keine offenen Jobs vorhanden.');
+        $jobReads = fn () => collect(DB::getQueryLog())->filter(fn ($query) =>
+            str_contains($query['query'], 'admin_tasks') && preg_match('/\blimit\s+6\b/i', $query['query']))->count();
+        $this->assertSame(1, $jobReads());
+
+        $taskId = DB::table('admin_tasks')->insertGetId(['created_by' => auth()->id(),
+            'context_type' => User::class, 'context_id' => auth()->id(),
+            'task_type' => 'user_request_review', 'status' => 0, 'priority' => 2]);
+        DB::flushQueryLog();
+        $component->call('$refresh')->assertSee('Teilnehmer Antrag');
+        $this->assertSame(1, $jobReads());
+
+        DB::table('admin_tasks')->where('id', $taskId)->update(['status' => 2]);
+        DB::flushQueryLog();
+        $component->call('$refresh')->assertDontSee('Teilnehmer Antrag')->assertSee('Keine offenen Jobs vorhanden.');
+        $this->assertSame(1, $jobReads());
+        DB::disableQueryLog();
+    }
+
     public function test_changing_fields_invalidates_preview_and_unknown_sites_are_rejected(): void
     {
         $component = Livewire::test(ReportBookLocationSettings::class)->set('instituteId', '2')->call('preview');
@@ -265,6 +323,23 @@ class ReportBookLocationSettingsTest extends TestCase
         $this->assertStringContainsString('21 offene Aufgaben', view('components.navigation.open-tasks-counter')->render());
         DB::table('admin_tasks')->update(['assigned_to' => null]);
         $this->assertSame(21, AdminTaskVisibility::apply(AdminTask::whereNull('assigned_to'))->count());
+    }
+
+    public function test_batched_visibility_preserves_missing_context_history_and_other_task_types(): void
+    {
+        [, $task] = $this->bookAndTask();
+        $addTask = fn ($type, $context, $contextId, $status) => DB::table('admin_tasks')->insertGetId([
+            'created_by' => auth()->id(), 'task_type' => $type, 'context_type' => $context,
+            'context_id' => $contextId, 'status' => $status,
+        ]);
+        $addTask(AdminTask::TYPE_REPORTBOOK_REVIEW, ReportBook::class, 999, AdminTask::STATUS_OPEN);
+        $addTask(AdminTask::TYPE_REPORTBOOK_REVIEW, User::class, auth()->id(), AdminTask::STATUS_IN_PROGRESS);
+        $history = $addTask(AdminTask::TYPE_REPORTBOOK_REVIEW, ReportBook::class, 999, AdminTask::STATUS_COMPLETED);
+        $other = $addTask('user_request_review', User::class, auth()->id(), AdminTask::STATUS_OPEN);
+
+        $this->assertSame([$task->id, $history, $other], AdminTaskVisibility::apply(AdminTask::orderBy('id'))->pluck('id')->all());
+        $this->assertSame([$task->id, $other], AdminTaskVisibility::apply(AdminTask::orderBy('id'), 2)->pluck('id')->all());
+        $this->assertSame([$other], AdminTaskVisibility::apply(AdminTask::orderBy('id'), 1)->pluck('id')->all());
     }
 
     public function test_disabled_task_direct_access_and_already_open_dialog_are_blocked(): void

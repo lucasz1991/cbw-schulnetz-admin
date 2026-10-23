@@ -13,17 +13,25 @@ class AdminTaskVisibility
     {
         $excluded = [];
         $contexts = [];
-        $candidates = (clone $query)->reorder()->setEagerLoads([])->with('context')
+        $missingContext = null;
+        $bookType = (new ReportBook)->getMorphClass();
+        $candidates = (clone $query)->reorder()->setEagerLoads([])
+            ->select(['admin_tasks.id', 'admin_tasks.context_type', 'admin_tasks.context_id', 'admin_tasks.status'])
             ->where('task_type', AdminTask::TYPE_REPORTBOOK_REVIEW);
         if ($institution === null) {
             $candidates->whereIn('status', [AdminTask::STATUS_OPEN, AdminTask::STATUS_IN_PROGRESS]);
         }
-        $candidates->chunkById(200, function ($tasks) use (&$excluded, &$contexts, $institution): void {
+        $candidates->chunkById(500, function ($tasks) use (&$excluded, &$contexts, &$missingContext, $institution, $bookType): void {
+            $bookIds = $tasks->filter(fn ($task) => in_array($task->context_type, [$bookType, ReportBook::class], true))
+                ->pluck('context_id')->unique()->reject(fn ($id) => isset($contexts[$id]))->values();
+            if ($bookIds->isNotEmpty()) {
+                $books = ReportBook::whereKey($bookIds)->get(['id', 'user_id', 'course_id', 'massnahme_id']);
+                $contexts += LocationPolicy::forBooks($books);
+            }
             foreach ($tasks as $task) {
-                $book = $task->context;
-                $context = $book instanceof ReportBook
-                    ? ($contexts[$book->id] ??= LocationPolicy::forBook($book))
-                    : ['mode' => LocationPolicy::schemaReady() ? 'conflict' : 'normal', 'institute_ids' => []];
+                $context = in_array($task->context_type, [$bookType, ReportBook::class], true) && isset($contexts[$task->context_id])
+                    ? $contexts[$task->context_id]
+                    : ($missingContext ??= ['mode' => LocationPolicy::schemaReady() ? 'conflict' : 'normal', 'institute_ids' => []]);
                 if ((in_array((int) $task->status, [AdminTask::STATUS_OPEN, AdminTask::STATUS_IN_PROGRESS], true)
                         && $context['mode'] !== 'normal')
                     || ($institution !== null && ! in_array($institution, $context['institute_ids'], true))) {
@@ -32,6 +40,6 @@ class AdminTaskVisibility
             }
         });
 
-        return $query->whereNotIn('id', $excluded);
+        return $query->whereIntegerNotInRaw('admin_tasks.id', $excluded);
     }
 }
