@@ -14,7 +14,7 @@ const folder = {
 
 export default defineConfig({
     build: {
-        manifest: true,
+        manifest: 'manifest.json',
         rtl: true,
         outDir: 'public/build/',
         cssCodeSplit: true,
