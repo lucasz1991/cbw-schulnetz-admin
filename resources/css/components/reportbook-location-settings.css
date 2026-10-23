@@ -1,0 +1,131 @@
+.reportbook-location-settings {
+  --rb-ink: #1f2937;
+  --rb-muted: #4b5563;
+  --rb-faint: #626b78;
+  --rb-paper: #fff;
+  --rb-inset: #f8fafc;
+  --rb-line: #e5e7eb;
+  --rb-control-line: #cbd5e1;
+  --rb-action: #2e5b9e;
+  --rb-action-hover: #1f3f73;
+  --rb-action-soft: #f2f6fc;
+  --rb-success: #1e6f2a;
+  --rb-success-soft: #f1fbf4;
+  --rb-warning: #854d0e;
+  --rb-warning-soft: #fffbeb;
+  --rb-error: #a13e3c;
+  color: var(--rb-ink);
+  font-size: 14px;
+  line-height: 1.55;
+  min-width: 0;
+}
+.reportbook-location-settings h2 { font-size: 24px; font-weight: 700; line-height: 1.3; letter-spacing: -.025em; margin: 4px 0 8px; }
+.reportbook-location-settings h3 { font-size: 18px; font-weight: 700; line-height: 1.4; }
+.reportbook-location-settings h4 { font-size: 14px; font-weight: 700; }
+.reportbook-location-settings .rb-header { margin-bottom: 28px; }
+.reportbook-location-settings .rb-eyebrow { color: var(--rb-faint); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.reportbook-location-settings .rb-help { color: var(--rb-muted); font-size: 13px; line-height: 1.6; }
+.reportbook-location-settings .rb-footnote { color: var(--rb-faint); font-size: 12px; line-height: 1.6; }
+.reportbook-location-settings .rb-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.reportbook-location-settings .rb-location-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.reportbook-location-settings .rb-location-field { width: 100%; max-width: 360px; min-width: 0; }
+.reportbook-location-settings .rb-location-field .rb-footnote { margin-top: 6px; }
+.reportbook-location-settings .rb-control { display: block; width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--rb-control-line); border-radius: 6px; background-color: var(--rb-paper); padding: 10px 12px; color: var(--rb-ink); font-size: 14px; line-height: 22px; }
+.reportbook-location-settings select.rb-control { padding-right: 32px; }
+.reportbook-location-settings .rb-control:hover { border-color: var(--rb-action); }
+.reportbook-location-settings :is(input, select, button, summary, a):focus-visible { outline: 2px solid var(--rb-action) !important; outline-offset: 3px !important; box-shadow: none !important; }
+.reportbook-location-settings :is(input, select, button):disabled { opacity: .6; cursor: wait; }
+.reportbook-location-settings .rb-saved-state { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rb-line); border-radius: 8px; margin-bottom: 32px; overflow: hidden; }
+.reportbook-location-settings .rb-saved-item { padding: 20px; min-width: 0; }
+.reportbook-location-settings .rb-saved-item h3 { font-size: 15px; margin: 8px 0 4px; }
+.reportbook-location-settings .rb-planned-state { border-left: 1px solid var(--rb-line); background: var(--rb-inset); }
+.reportbook-location-settings .rb-state-label { display: flex; align-items: center; gap: 7px; color: var(--rb-muted); font-size: 12px; font-weight: 600; }
+.reportbook-location-settings .rb-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rb-success); flex: none; }
+.reportbook-location-settings .rb-text-button { min-height: 44px; padding: 8px 0; color: var(--rb-action-hover); font-weight: 600; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.reportbook-location-settings .rb-workspace { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr); gap: 32px; align-items: start; }
+.reportbook-location-settings .rb-editor, .reportbook-location-settings fieldset { min-width: 0; }
+.reportbook-location-settings .rb-section-heading { margin-bottom: 20px; }
+.reportbook-location-settings .rb-section-heading .rb-help { margin-top: 4px; }
+.reportbook-location-settings .rb-setting { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; padding: 24px 0; border-top: 1px solid var(--rb-line); }
+.reportbook-location-settings .rb-setting:first-of-type { padding-top: 0; border-top: 0; }
+.reportbook-location-settings .rb-step { color: var(--rb-faint); font-size: 12px; font-weight: 600; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.reportbook-location-settings .rb-setting-content { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.reportbook-location-settings .rb-setting-title { display: block; font-size: 15px; font-weight: 700; line-height: 1.4; }
+.reportbook-location-settings .rb-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.reportbook-location-settings .rb-title-row .rb-label { margin-bottom: 0; }
+.reportbook-location-settings .rb-tag { display: inline-block; flex: none; padding: 3px 8px; background: #f3f4f6; border-radius: 4px; font-size: 11px; font-weight: 600; color: var(--rb-muted); }
+.reportbook-location-settings .rb-tag-success { color: var(--rb-success); background: var(--rb-success-soft); }
+.reportbook-location-settings .rb-tag-warning { color: var(--rb-warning); background: var(--rb-warning-soft); }
+.reportbook-location-settings .rb-checkbox-label { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-size: 14px; font-weight: 600; }
+.reportbook-location-settings .rb-checkbox-label input { width: 18px; height: 18px; flex: none; border: 1px solid var(--rb-control-line); border-radius: 4px; color: var(--rb-action); }
+.reportbook-location-settings .rb-upload { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; background: var(--rb-inset); border: 1px solid var(--rb-line); border-radius: 8px; }
+.reportbook-location-settings .rb-upload .rb-title-row { width: 100%; }
+.reportbook-location-settings .rb-file { max-width: 100%; width: 100%; min-width: 0; color: var(--rb-muted); font-size: 12px; }
+.reportbook-location-settings .rb-file::file-selector-button { min-height: 44px; margin-right: 8px; padding: 8px 12px; background: var(--rb-paper); border: 1px solid var(--rb-control-line); border-radius: 6px; color: var(--rb-ink); cursor: pointer; font: inherit; }
+.reportbook-location-settings .rb-stamp-preview { width: 100%; }
+.reportbook-location-settings .rb-stamp-preview img { max-width: 100%; max-height: 144px; object-fit: contain; padding: 8px; background: var(--rb-paper); border: 1px solid var(--rb-line); border-radius: 4px; }
+.reportbook-location-settings .rb-stamp-preview figcaption { margin-top: 6px; }
+.reportbook-location-settings .rb-date { max-width: 230px; }
+.reportbook-location-settings .rb-preview { display: flex; flex-direction: column; gap: 16px; padding: 20px; background: var(--rb-action-soft); border: 1px solid #d6e1f1; border-radius: 8px; min-width: 0; }
+.reportbook-location-settings .rb-preview-content { display: flex; flex-direction: column; gap: 16px; }
+.reportbook-location-settings .rb-preservation-note { border-top: 1px solid #d6e1f1; padding-top: 16px; color: var(--rb-muted); font-size: 12px; line-height: 1.6; }
+.reportbook-location-settings .rb-summary { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
+.reportbook-location-settings .rb-summary dt { color: var(--rb-muted); font-size: 12px; }
+.reportbook-location-settings .rb-summary dd { font-weight: 700; margin-top: 2px; }
+.reportbook-location-settings .rb-summary small { display: block; font-size: 12px; font-weight: 400; margin-top: 2px; }
+.reportbook-location-settings .rb-inventory { padding-top: 16px; border-top: 1px solid #d6e1f1; }
+.reportbook-location-settings .rb-inventory dl { margin-top: 8px; }
+.reportbook-location-settings .rb-inventory dl > div, .reportbook-location-settings .rb-outcomes > div { display: flex; justify-content: space-between; gap: 16px; padding: 5px 0; font-size: 13px; }
+.reportbook-location-settings .rb-inventory dt, .reportbook-location-settings .rb-outcomes dt { color: var(--rb-muted); }
+.reportbook-location-settings .rb-inventory dd, .reportbook-location-settings .rb-outcomes dd { font-weight: 700; font-variant-numeric: tabular-nums; }
+.reportbook-location-settings .rb-release { display: flex; gap: 12px; align-items: center; padding-top: 16px; border-top: 1px solid #d6e1f1; }
+.reportbook-location-settings .rb-release-count { font-size: 28px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; color: var(--rb-action-hover); }
+.reportbook-location-settings .rb-release strong { font-size: 12px; }
+.reportbook-location-settings .rb-button { min-height: 44px !important; padding: 10px 16px !important; border: 1px solid var(--rb-control-line) !important; border-radius: 6px !important; background: var(--rb-paper) !important; color: var(--rb-ink) !important; font-size: 13px !important; font-weight: 600 !important; line-height: 1.4 !important; letter-spacing: 0 !important; text-transform: none !important; justify-content: center; transform: none !important; box-shadow: none !important; transition: background-color 120ms, border-color 120ms !important; }
+.reportbook-location-settings .rb-button:hover { background: var(--rb-inset) !important; border-color: var(--rb-action) !important; }
+.reportbook-location-settings .rb-button-primary { background: var(--rb-action) !important; color: #fff !important; border-color: var(--rb-action) !important; }
+.reportbook-location-settings .rb-button-primary:hover { background: var(--rb-action-hover) !important; }
+.reportbook-location-settings .rb-button-quiet { background: transparent !important; border-color: transparent !important; color: var(--rb-action-hover) !important; }
+.reportbook-location-settings .rb-button-quiet:hover { border-color: var(--rb-control-line) !important; }
+.reportbook-location-settings .rb-button:disabled { cursor: wait !important; }
+.reportbook-location-settings .rb-alert { padding: 12px 16px; margin: 12px 0; border: 1px solid var(--rb-line); border-radius: 6px; font-size: 13px; overflow-wrap: anywhere; }
+.reportbook-location-settings .rb-alert-success { background: var(--rb-success-soft); color: var(--rb-success); }
+.reportbook-location-settings .rb-alert-warning { background: var(--rb-warning-soft); color: var(--rb-warning); }
+.reportbook-location-settings .rb-alert-error { color: var(--rb-error); background: #fef2f2; }
+.reportbook-location-settings .rb-error { color: var(--rb-error); font-size: 13px; overflow-wrap: anywhere; }
+.reportbook-location-settings .rb-error-link { display: inline-block; min-height: 44px; padding: 10px 0; color: inherit; text-decoration: underline; text-underline-offset: 3px; font-weight: 600; }
+.reportbook-location-settings .rb-runs { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--rb-line); }
+.reportbook-location-settings .rb-run { border-top: 1px solid var(--rb-line); }
+.reportbook-location-settings .rb-run summary, .reportbook-location-settings .rb-history > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 52px; padding: 10px 0; cursor: pointer; font-weight: 600; list-style: none; }
+.reportbook-location-settings :is(.rb-run, .rb-history) > summary::-webkit-details-marker { display: none; }
+.reportbook-location-settings :is(.rb-run, .rb-history) > summary::before { content: "+"; width: 16px; flex: none; color: var(--rb-faint); font-size: 18px; font-weight: 400; text-align: center; }
+.reportbook-location-settings :is(.rb-run, .rb-history)[open] > summary::before { content: "−"; }
+.reportbook-location-settings .rb-run-body { padding: 0 0 20px 26px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.reportbook-location-settings .rb-outcomes { width: 100%; max-width: 450px; }
+.reportbook-location-settings .rb-history { margin-top: 24px; border-top: 1px solid var(--rb-line); }
+.reportbook-location-settings .rb-history-body { padding-left: 26px; }
+.reportbook-location-settings .rb-history-row { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--rb-line); padding: 16px 0; font-size: 13px; }
+.reportbook-location-settings .rb-exclusions { font-size: 12px; color: var(--rb-muted); }
+.reportbook-location-settings .rb-exclusions summary { cursor: pointer; min-height: 44px; padding: 12px 0; font-weight: 600; }
+.reportbook-location-settings .rb-exclusions ul { padding-left: 16px; list-style: disc; }
+.reportbook-location-settings .rb-exclusions li { padding-bottom: 6px; overflow-wrap: anywhere; }
+.reportbook-location-settings .rb-empty { padding: 28px 0; border-top: 1px solid var(--rb-line); }
+.reportbook-location-settings .rb-empty .rb-help { margin-top: 8px; }
+@media (max-width: 959px) {
+  .reportbook-location-settings .rb-workspace { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+}
+@media (max-width: 539px) {
+  .reportbook-location-settings h2 { font-size: 22px; }
+  .reportbook-location-settings .rb-location-bar { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .reportbook-location-settings .rb-location-field { max-width: none; }
+  .reportbook-location-settings .rb-saved-state { grid-template-columns: minmax(0, 1fr); margin-bottom: 24px; }
+  .reportbook-location-settings .rb-saved-item, .reportbook-location-settings .rb-preview { padding: 16px; }
+  .reportbook-location-settings .rb-planned-state { border-left: 0; border-top: 1px solid var(--rb-line); }
+  .reportbook-location-settings .rb-setting { grid-template-columns: 20px minmax(0, 1fr); gap: 8px; }
+  .reportbook-location-settings .rb-upload { padding: 12px; }
+  .reportbook-location-settings .rb-history-row { flex-direction: column; gap: 4px; }
+  .reportbook-location-settings .rb-run-body, .reportbook-location-settings .rb-history-body { padding-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reportbook-location-settings .rb-button { transition: none !important; }
+}

@@ -3,6 +3,8 @@
 namespace App\Actions\AdminTasks;
 
 use App\Models\AdminTask;
+use App\Models\ReportBook;
+use App\Services\ReportBooks\LocationPolicy;
 use Illuminate\Support\Facades\DB;
 
 class AssignAdminTask
@@ -10,6 +12,7 @@ class AssignAdminTask
     public function claim(int $taskId, int $userId): ?AdminTask
     {
         return DB::transaction(function () use ($taskId, $userId): ?AdminTask {
+            if (! $this->lockWritableContext($taskId)) return null;
             $task = AdminTask::query()
                 ->lockForUpdate()
                 ->findOrFail($taskId);
@@ -25,6 +28,7 @@ class AssignAdminTask
     public function takeOver(int $taskId, int $userId, int $expectedAssigneeId): ?AdminTask
     {
         return DB::transaction(function () use ($taskId, $userId, $expectedAssigneeId): ?AdminTask {
+            if (! $this->lockWritableContext($taskId)) return null;
             $task = AdminTask::query()
                 ->lockForUpdate()
                 ->findOrFail($taskId);
@@ -48,6 +52,7 @@ class AssignAdminTask
     public function complete(int $taskId, int $userId, int $expectedAssigneeId): ?AdminTask
     {
         return DB::transaction(function () use ($taskId, $userId, $expectedAssigneeId): ?AdminTask {
+            if (! $this->lockWritableContext($taskId)) return null;
             $task = AdminTask::query()
                 ->lockForUpdate()
                 ->findOrFail($taskId);
@@ -73,6 +78,7 @@ class AssignAdminTask
         bool $canReleaseAny
     ): ?AdminTask {
         return DB::transaction(function () use ($taskId, $userId, $expectedAssigneeId, $canReleaseAny): ?AdminTask {
+            if (! $this->lockWritableContext($taskId)) return null;
             $task = AdminTask::query()
                 ->lockForUpdate()
                 ->findOrFail($taskId);
@@ -89,5 +95,19 @@ class AssignAdminTask
 
             return $task;
         }, 3);
+    }
+
+    private function lockWritableContext(int $taskId): bool
+    {
+        $task = AdminTask::query()->findOrFail($taskId);
+        if ($task->task_type !== AdminTask::TYPE_REPORTBOOK_REVIEW || $task->context_type !== ReportBook::class) {
+            return true;
+        }
+        $book = ReportBook::query()->find($task->context_id);
+        if (! $book) return false;
+        LocationPolicy::lockForBook($book);
+        $book = ReportBook::query()->lockForUpdate()->find($book->id);
+
+        return $book && LocationPolicy::canWriteBook($book);
     }
 }

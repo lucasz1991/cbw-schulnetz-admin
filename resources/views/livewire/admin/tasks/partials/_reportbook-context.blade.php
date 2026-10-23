@@ -5,7 +5,10 @@
     $signature   = $reportBook->participant_signature_file ?? null;
     $trainerSignature = $reportBook->trainer_signature_file ?? null;
 
-    $entries = $reportBook->entries()->get();
+    $entries = $reportBook->entries()
+        ->when(!$this->canModifyReportBook, fn ($query) => $query->where('status', 2))
+        ->get();
+    $reviewableEntryIds = $this->reviewableEntryIds;
 @endphp
 
 <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -32,15 +35,15 @@
                 </p>
             </div>
 
-            @if($reportBook->entries()->exists())
+            @if($entries->isNotEmpty())
                 <div class="text-right text-xs text-slate-500">
                     <p>
                         Einträge gesamt:
                         <span class="font-semibold text-slate-700">
-                            {{ $reportBook->entries()->count() }}
+                            {{ $entries->count() }}
                         </span>
                     </p>
-                    @if(isset($reportBook->status) || isset($reportBook->status_label))
+                    @if($this->canModifyReportBook && (isset($reportBook->status) || isset($reportBook->status_label)))
                         <p class="mt-1">
                             Status:
                             <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
@@ -141,7 +144,8 @@
 
                         $statusLabel = $entry->status_label
                             ?? ucfirst($entry->status ?? '');
-                        $isApproved = (bool) ($entryApprovals[(string) $entry->id] ?? true);
+                        $isApproved = ! in_array((int) $entry->id, $reviewableEntryIds, true)
+                            || (bool) ($entryApprovals[(string) $entry->id] ?? true);
                         
                     @endphp
   
@@ -149,10 +153,14 @@
                         <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500">
                             <span>{{ $entryDate ?? '—' }}</span>
                             
+                            @if(in_array((int) $entry->id, $reviewableEntryIds, true))
                                 <x-ui.forms.toggle-button
                                     :id="'entry-approved-' . $entry->id"
                                     :model="'entryApprovals.' . $entry->id"
                                 />
+                            @else
+                                <span>{{ $statusLabel }}</span>
+                            @endif
                             
                         </div>
                         @if(!empty($entry->title))
@@ -177,12 +185,12 @@
     @endphp
 
     @php
-        $hasRejectedSelection = $entries->contains(function ($entry) use ($entryApprovals) {
-            return ! (bool) ($entryApprovals[(string) $entry->id] ?? true);
+        $hasRejectedSelection = $entries->contains(function ($entry) use ($entryApprovals, $reviewableEntryIds) {
+            return in_array((int) $entry->id, $reviewableEntryIds, true) && ! (bool) ($entryApprovals[(string) $entry->id] ?? true);
         });
     @endphp
 
-    @if($hasRejectedSelection)
+    @if($this->canModifyReportBook && $hasRejectedSelection)
         <div class="mt-3 rounded-lg border border-red-200 bg-red-50/50 p-3">
             <label for="reportbook-reject-comment" class="block text-xs font-semibold uppercase tracking-wide text-red-700">
                 Begründung zur Ablehnung
@@ -198,6 +206,7 @@
         </div>
     @endif
 
+    @if($this->canModifyReportBook)
     <div class="flex justify-end">
         @if($hasRejectedSelection)
             <x-secondary-button
@@ -219,4 +228,5 @@
     </div>
 
     <livewire:tools.signatures.signature-form lazy />
+    @endif
 </div>

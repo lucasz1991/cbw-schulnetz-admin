@@ -42,6 +42,11 @@
             </div>
         @else
 
+            @if(!$this->canModifyReportBook)
+                <p role="status" class="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    {{ ($this->locationPolicy['mode'] ?? '') === 'conflict' ? 'Die Standortzuordnung ist nicht eindeutig. Dieser Nachweis kann nur eingesehen werden.' : 'Für diesen Standort besteht keine Berichtsheftpflicht. Dieser Nachweis ist schreibgeschützt.' }}
+                </p>
+            @endif
             {{-- VIEW: Aufgabenübersicht --}}
             @if($viewMode === 'task')
                 <div class="space-y-6">
@@ -165,7 +170,7 @@
 
                 {{-- Übernehmen --}}
                 @if(
-                    is_null($task->assigned_to) &&
+                    $this->canModifyReportBook && is_null($task->assigned_to) &&
                     (int) $task->status !== (int) \App\Models\AdminTask::STATUS_COMPLETED
                 )
                     <x-ui.buttons.button-basic
@@ -180,7 +185,7 @@
                         Übernehmen
                     </x-ui.buttons.button-basic>
                 @elseif(
-                    $task->task_type === \App\Models\AdminTask::TYPE_REPORTBOOK_REVIEW &&
+                    $this->canModifyReportBook && $task->task_type === \App\Models\AdminTask::TYPE_REPORTBOOK_REVIEW &&
                     (int) $task->status === (int) \App\Models\AdminTask::STATUS_IN_PROGRESS &&
                     !is_null($task->assigned_to) &&
                     (int) $task->assigned_to !== (int) $currentUserId
@@ -203,7 +208,7 @@
 
                 {{-- Zurückgeben (wieder freigeben) --}}
                 @if(
-                    !is_null($task->assigned_to) &&
+                    $this->canModifyReportBook && !is_null($task->assigned_to) &&
                     (int) $task->status === (int) \App\Models\AdminTask::STATUS_IN_PROGRESS &&
                     (int) $task->status !== (int) \App\Models\AdminTask::STATUS_COMPLETED &&
                     (
@@ -229,7 +234,7 @@
             <div class="flex gap-2">
                 {{-- Abschließen --}}
                 @if(
-                    $task->status !== \App\Models\AdminTask::STATUS_COMPLETED &&
+                    $this->canModifyReportBook && $task->status !== \App\Models\AdminTask::STATUS_COMPLETED &&
                     (int) $task->assigned_to === (int) $currentUserId &&
                     $viewMode === 'task'
                 )

@@ -4,6 +4,7 @@ namespace App\Actions\AdminTasks;
 
 use App\Models\AdminTask;
 use App\Models\ReportBook;
+use App\Services\ReportBooks\LocationPolicy;
 use Closure;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +17,15 @@ class CompleteReportBookReview
         Closure $review
     ): ?AdminTask {
         return DB::transaction(function () use ($taskId, $userId, $expectedReportBookId, $review): ?AdminTask {
+            $reportBook = ReportBook::query()->find($expectedReportBookId);
+            if (! $reportBook) {
+                return null;
+            }
+            LocationPolicy::lockForBook($reportBook);
+            $reportBook = ReportBook::query()->lockForUpdate()->find($expectedReportBookId);
+            if (! $reportBook || ! LocationPolicy::canWriteBook($reportBook)) {
+                return null;
+            }
             $task = AdminTask::query()
                 ->lockForUpdate()
                 ->find($taskId);
@@ -31,12 +41,9 @@ class CompleteReportBookReview
                 return null;
             }
 
-            $reportBook = ReportBook::query()->find($expectedReportBookId);
-
-            if (! $reportBook) {
-                return null;
+            if (LocationPolicy::schemaReady()) {
+                $reportBook->setRelation('entries', $reportBook->entries()->orderBy('id')->lockForUpdate()->get());
             }
-
             $review($reportBook);
             $task->complete();
 

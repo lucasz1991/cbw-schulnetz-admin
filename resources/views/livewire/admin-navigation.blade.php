@@ -91,7 +91,7 @@
                     <a href="{{ route('admin.tasks') }}" wire:navigate class="{{ request()->routeIs('admin.tasks') ? 'text-blue-600' : 'text-[#333]' }} text-sm flex items-center hover:text-blue-600 transition-all relative w-max pr-4">
                         <span>Aufgaben</span>
                         @php
-                            $unassignedTasksCount = \App\Models\AdminTask::whereNull('assigned_to')->count();
+                            $unassignedTasksCount = \App\Services\ReportBooks\AdminTaskVisibility::apply(\App\Models\AdminTask::whereNull('assigned_to'))->count();
                         @endphp
                         @if($unassignedTasksCount > 0)
                             <span class="relative ml-2 flex justify-center align-middle   rounded-full bg-red-500 px-1.5 py-0  text-white">

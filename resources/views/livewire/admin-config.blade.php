@@ -3,7 +3,7 @@
     <!-- Tabs Navigation -->
     <div x-data="{ activeTab: $persist('none') }">
         <div class="border-b mb-6">
-            <nav class="-mb-px flex space-x-8">
+            <nav class="-mb-px flex flex-wrap gap-x-8">
                 <button 
                     class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                     :class="{ 'border-blue-500 text-blue-600': activeTab === 'none', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'none' }"
@@ -39,6 +39,9 @@
                 >
                     Mail's
                 </button>
+                <button type="button" class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
+                    :class="{ 'border-blue-500 text-blue-600': activeTab === 'reportbooks', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'reportbooks' }"
+                    @click="activeTab = 'reportbooks'">Berichtshefte</button>
                 @if(Auth::user()->role == "admin" )
                 <button 
                     class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
@@ -62,6 +65,9 @@
             </div>
         @endif
         <!-- Tab Content -->
+        <div x-show="activeTab === 'reportbooks'" x-cloak class="space-y-10">
+            @livewire('admin.config.report-book-location-settings', [], key('reportbook-location-settings'))
+        </div>
         <div>
             <!-- Kein Tab ausgewählt -->
             <div x-show="activeTab === 'none'" x-cloak class="space-y-10" x-collapse.duration.400ms>

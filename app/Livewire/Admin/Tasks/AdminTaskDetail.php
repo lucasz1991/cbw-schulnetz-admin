@@ -10,9 +10,11 @@ use Livewire\Attributes\On;
 use App\Models\AdminTask;
 use App\Models\Mail;
 use App\Models\Setting;
+use App\Services\ReportBooks\LocationPolicy;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 // Falls dein Context wirklich App\Models\ReportBook ist:
 use App\Models\ReportBook as ReportBookModel;
@@ -76,6 +78,9 @@ class AdminTaskDetail extends Component
     public function close(): void
     {
         $this->showDetailModal = false;
+        $this->taskId = null;
+        $this->task = null;
+        $this->entryApprovals = [];
     }
 
     public function switchToTask(): void
@@ -265,6 +270,7 @@ class AdminTaskDetail extends Component
         $reportBook = $task->context;
 
         if (! $reportBook) return;
+        if (! $this->canModifyReportBook) return;
 
         if ($this->hasRejectedEntries()) {
             $this->dispatch('swal:toast', type: 'warning', title: 'Freigabe nicht möglich', text: 'Es sind abgelehnte Einträge markiert. Nutze in diesem Fall bitte "Ablehnen".');
@@ -303,6 +309,7 @@ class AdminTaskDetail extends Component
         $reportBook = $task->context;
 
         if (! $reportBook) return;
+        if (! $this->canModifyReportBook) return;
 
         if (! $this->hasRejectedEntries()) {
             return;
@@ -327,6 +334,7 @@ class AdminTaskDetail extends Component
      */
     protected function openTrainerSignatureForm($reportBook): void
     {
+        if (! LocationPolicy::canWriteBook($reportBook)) return;
         // Kontext-Name für den Dialog
         $courseTitle = data_get($reportBook, 'course.title') ?? 'Kurs';
         $klasse      = data_get($reportBook, 'course.klassen_id');
@@ -402,11 +410,11 @@ class AdminTaskDetail extends Component
     }
 
     /**
-     * Setzt alle Einträge auf reviewedStatus (=2) und optional den Gesamtstatus.
+     * Reviews editable entries; existing approvals and preserved evidence are immutable.
      */
     protected function applyReportBookReview($reportBook): void
     {
-        $entryIds = $reportBook->entries()->pluck('id')->map(fn ($id) => (string) $id);
+        $entryIds = $this->reviewableEntries($reportBook)->pluck('id')->map(fn ($id) => (string) $id);
 
         $approvedEntryIds = [];
         $rejectedEntryIds = [];
@@ -481,8 +489,11 @@ class AdminTaskDetail extends Component
         if ($this->task->task_type !== 'reportbook_review' || ! $this->task->context) {
             return;
         }
+        if (! $this->canModifyReportBook) {
+            return;
+        }
 
-        $entryIds = $this->task->context->entries()->pluck('id');
+        $entryIds = $this->reviewableEntries($this->task->context)->pluck('id');
 
         foreach ($entryIds as $entryId) {
             $this->entryApprovals[(string) $entryId] = true;
@@ -491,15 +502,7 @@ class AdminTaskDetail extends Component
 
     protected function hasRejectedEntries(): bool
     {
-        foreach ($this->entryApprovals as $isApproved) {
-            $approved = filter_var($isApproved, FILTER_VALIDATE_BOOLEAN);
-
-            if (! $approved) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->getRejectedEntryIds() !== [];
     }
 
     protected function sendReportBookRejectionMessage($reportBook): void
@@ -604,16 +607,43 @@ class AdminTaskDetail extends Component
     protected function getRejectedEntryIds(): array
     {
         $ids = [];
+        $book = $this->task?->context;
+        if (! $book instanceof ReportBookModel) {
+            return [];
+        }
+        $editableIds = $this->reviewableEntries($book)->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         foreach ($this->entryApprovals as $entryId => $isApproved) {
             $approved = filter_var($isApproved, FILTER_VALIDATE_BOOLEAN);
 
-            if (! $approved) {
+            if (! $approved && in_array((int) $entryId, $editableIds, true)) {
                 $ids[] = (int) $entryId;
             }
         }
 
         return $ids;
+    }
+
+    protected function reviewableEntries(ReportBookModel $book)
+    {
+        // A preceding nonlocking read may have established an older InnoDB snapshot.
+        // Always use the current rows after acquiring the book/task locks.
+        $entries = $book->entries()->orderBy('id')
+            ->when(DB::transactionLevel() > 0, fn ($query) => $query->lockForUpdate())->get();
+        $preservedIds = LocationPolicy::schemaReady()
+            ? DB::table('report_book_policy_audit')->where('book_id', $book->id)->where('event', 'manual_signatures_preserved')
+                ->when(DB::transactionLevel() > 0, fn ($query) => $query->lockForUpdate())->pluck('entry_id')->all()
+            : [];
+
+        return $entries->filter(fn ($entry) => (int) $entry->status !== 2
+            && empty($entry->automated_approval_audit_id) && ! in_array($entry->id, $preservedIds));
+    }
+
+    public function getReviewableEntryIdsProperty(): array
+    {
+        $book = $this->task?->context;
+        return $book instanceof ReportBookModel && $this->canModifyReportBook
+            ? $this->reviewableEntries($book)->pluck('id')->map(fn ($id) => (int) $id)->all() : [];
     }
 
     /**
@@ -649,6 +679,15 @@ class AdminTaskDetail extends Component
             'context',
         ])->find($this->taskId);
 
+        unset($this->locationPolicy, $this->canModifyReportBook, $this->reviewableEntryIds);
+        if ($this->task?->task_type === AdminTask::TYPE_REPORTBOOK_REVIEW
+            && in_array((int) $this->task->status, [AdminTask::STATUS_OPEN, AdminTask::STATUS_IN_PROGRESS], true)) {
+            $book = $this->task->context;
+            abort_if($book instanceof ReportBookModel
+                ? LocationPolicy::forBook($book)['mode'] !== 'normal'
+                : LocationPolicy::schemaReady(), 403, 'Diese offene Prüfaufgabe ist für den Standort nicht verfügbar.');
+        }
+
         $this->loadedAssignedTo = $this->task?->assigned_to === null
             ? null
             : (int) $this->task->assigned_to;
@@ -658,6 +697,23 @@ class AdminTaskDetail extends Component
 
     public function render()
     {
+        if ($this->taskId !== null) {
+            $this->refreshTask();
+        }
         return view('livewire.admin.tasks.admin-task-detail');
+    }
+
+    public function getLocationPolicyProperty(): array
+    {
+        $book = $this->task?->context;
+
+        return $book instanceof ReportBookModel
+            ? LocationPolicy::forBook($book)
+            : ['mode' => 'normal', 'ambiguous' => false];
+    }
+
+    public function getCanModifyReportBookProperty(): bool
+    {
+        return ($this->locationPolicy['mode'] ?? 'normal') === 'normal';
     }
 }

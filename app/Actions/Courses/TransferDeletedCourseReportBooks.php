@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
+use App\Services\ReportBooks\LocationPolicy;
 
 class TransferDeletedCourseReportBooks
 {
@@ -28,6 +31,26 @@ class TransferDeletedCourseReportBooks
         }
 
         return DB::transaction(function () use ($sourceCourse, $targetCourse): array {
+            // The legacy merge can delete duplicate entries and reassign their books.
+            // Preserve immutable automated approval evidence instead of moving it implicitly.
+            $affectedBooks = ReportBook::whereIn('course_id', [$sourceCourse->id, $targetCourse->id])->orderBy('id')->get();
+            if (LocationPolicy::schemaReady()) {
+                $institutes = $affectedBooks->flatMap(fn ($book) => LocationPolicy::forBook($book)['institute_ids'])->unique()->sort()->values();
+                DB::table('report_book_institute_policies')->whereIn('institut_id', $institutes)->orderBy('id')->lockForUpdate()->get();
+            }
+            $bookIds = $affectedBooks->pluck('id');
+            ReportBook::whereIn('id', $bookIds)->orderBy('id')->lockForUpdate()->get();
+            if (Schema::hasColumn('report_book_entries', 'automated_approval_audit_id')
+                && ReportBookEntry::whereIn('report_book_id', $bookIds)->whereNotNull('automated_approval_audit_id')->orderBy('id')->lockForUpdate()->get()->isNotEmpty()) {
+                throw ValidationException::withMessages(['transfer' => 'Der Kurs enthält automatisch bestätigte Berichtshefte. Der Sammeltransfer ist gesperrt, damit Einträge und ihre protokollierte Herkunft unverändert erhalten bleiben.']);
+            }
+            if (LocationPolicy::schemaReady() && (
+                DB::table('report_book_policy_audit')->whereIn('book_id', $bookIds)->whereIn('event', ['manual_signatures_preserved', 'entry_approved'])->orderBy('id')->lockForUpdate()->get()->isNotEmpty()
+                || File::where('fileable_type', ReportBook::class)->whereIn('fileable_id', $bookIds)->orderBy('id')->lockForUpdate()->get()
+                    ->contains(fn ($file) => \App\Services\ReportBooks\SignatureEvidence::fileIsPreserved($file))
+            )) {
+                throw ValidationException::withMessages(['transfer' => 'Der Kurs enthält Berichtshefte mit geschützten Unterschriften. Ein Sammeltransfer würde deren Nachweiszuordnung verändern und ist deshalb gesperrt.']);
+            }
             $sourceBooks = ReportBook::query()
                 ->with([
                     'entries' => fn ($query) => $query->orderBy('entry_date')->orderByDesc('updated_at')->orderByDesc('id'),

@@ -48,6 +48,9 @@
                 <div class="font-semibold text-[12px] text-gray-500 truncate">
                     {{ $typeText }}
                 </div>
+                @if(($task->location_policy_mode ?? 'normal') !== 'normal')
+                    <span class="text-xs text-amber-700">{{ $task->location_policy_mode === 'conflict' ? 'Standort prüfen · schreibgeschützt' : 'Ohne Berichtspflicht · schreibgeschützt' }}</span>
+                @endif
                   <div class="font-semibold text-[13px] text-slate-800 truncate">
                     {{ $contextText }}
                 </div>

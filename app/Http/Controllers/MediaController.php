@@ -92,6 +92,9 @@ class MediaController extends Controller
             'path' => 'required|string',
         ]);
 
+        $normalizedPath = (new \League\Flysystem\WhitespacePathNormalizer())->normalizePath($request->input('path'));
+        abort_if(\App\Services\ReportBooks\SignatureEvidence::pathIsPreserved($normalizedPath), 403);
+
         $response = Http::withHeaders([
             'X-API-KEY' => $this->apiSettings['base_api_key'],
         ])->withoutVerifying()->delete($this->apiSettings['base_api_url'] . '/api/admin/delete', [

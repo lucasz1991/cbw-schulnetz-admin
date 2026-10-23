@@ -39,6 +39,12 @@ class File extends Model
     {
         parent::boot();
 
+        static::deleting(function (File $file) {
+            if (\App\Services\ReportBooks\SignatureEvidence::fileIsPreserved($file)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['file' => 'Diese Berichtsheft-Unterschrift darf nicht über die allgemeine Dateiverwaltung gelöscht werden.']);
+            }
+        });
+
         static::created(function (File $file) {
             if (!$file->syncLocalFileToBase()) {
                 Log::warning('File::created - Datei konnte nicht automatisch nach Base uebertragen werden', [

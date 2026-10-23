@@ -10,6 +10,8 @@ use App\Models\File;
 
 class ReportBook extends Model
 {
+    protected $casts = ['settings' => 'array'];
+
     protected $fillable = [
         'user_id',
         'massnahme_id',
@@ -55,27 +57,23 @@ class ReportBook extends Model
 
     public function participantSignatureFile(): ?File
     {
-        return $this->files()
-            ->where('type', 'sign_reportbook_participant')
-            ->latest('id')
-            ->first();
+        return \App\Services\ReportBooks\SignatureEvidence::currentFile($this, 'participant');
+    }
+
+    public function trainerSignatureFile(): ?File
+    {
+        return \App\Services\ReportBooks\SignatureEvidence::currentFile($this, 'trainer');
     }
 
     public function getParticipantSignatureFileAttribute(): ?File
     {
-        return $this->files()
-            ->where('type', 'sign_reportbook_participant')
-            ->latest('id')
-            ->first();
+        return $this->participantSignatureFile();
     }
 
 
     public function getTrainerSignatureFileAttribute(): ?File
     {
-        return $this->files()
-            ->where('type', 'sign_reportbook_trainer')
-            ->latest('id')
-            ->first();
+        return $this->trainerSignatureFile();
     }
 
         /* ---------- Nützliche Helper/Scopes ---------- */

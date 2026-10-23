@@ -5,6 +5,8 @@ namespace App\Livewire\Admin;
 use App\Models\AdminTask;
 use App\Models\ReportBook;
 use App\Services\ApiUvs\AssetsApiServices\InstitutionsLoadService;
+use App\Services\ReportBooks\LocationPolicy;
+use App\Services\ReportBooks\AdminTaskVisibility;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -71,11 +73,11 @@ class AdminTasksList extends Component
 
     public function render()
     {
+        Gate::authorize('jobs.view');
         $status = is_numeric($this->filterStatus) ? (int) $this->filterStatus : null;
         $priority = is_numeric($this->filterPriority) ? (int) $this->filterPriority : null;
         $institution = is_numeric($this->filterInstitution) ? (int) $this->filterInstitution : null;
         $search = trim((string) $this->search);
-
         $query = AdminTask::with(['creator.person', 'assignedAdmin', 'context'])
             ->where('task_type', 'reportbook_review')
             ->withStatus($status)
@@ -125,26 +127,22 @@ class AdminTasksList extends Component
             });
         }
 
-        if ($institution !== null) {
-            $query->whereHasMorph('context', [ReportBook::class], function ($contextQuery) use ($institution) {
-                $contextQuery->whereHas('user.person', function ($personQuery) use ($institution) {
-                    $personQuery->where('institut_id', $institution);
-                });
-            });
-        }
-
         if ($this->onlyMine) {
             $query->forAdmin(Auth::id());
         }
 
-        $tasks = $query->paginate(20);
-        $openCount = AdminTask::open()
-            ->where('task_type', 'reportbook_review')
-            ->count();
+        $tasks = AdminTaskVisibility::apply($query, $institution)->paginate(20);
+        foreach ($tasks as $task) {
+            $task->setAttribute('location_policy_mode', $task->context instanceof ReportBook
+                ? LocationPolicy::forBook($task->context)['mode'] : 'normal');
+        }
+        $openCount = AdminTaskVisibility::apply(AdminTask::open()
+            ->where('task_type', 'reportbook_review'), $institution)->count();
 
         return view('livewire.admin.admin-tasks-list', [
             'tasks' => $tasks,
             'openCount' => $openCount,
         ])->layout('layouts.master');
     }
+
 }
