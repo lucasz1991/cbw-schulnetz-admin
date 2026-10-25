@@ -57,7 +57,9 @@ export default defineConfig({
                 },
                 {
                     src: 'resources/js',
-                    dest: ''
+                    dest: '',
+                    // Preserve Rollup's compiled entries when copying legacy scripts.
+                    overwrite: false,
                 },
             ]
         }),
