@@ -15,6 +15,7 @@ use Closure;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 // Falls dein Context wirklich App\Models\ReportBook ist:
 use App\Models\ReportBook as ReportBookModel;
@@ -71,6 +72,7 @@ class AdminTaskDetail extends Component
         $this->payload = $meta;
         $this->initializeEntryApprovals();
         $this->rejectionComment = '';
+        $this->resetErrorBag('reportBookReview');
         $this->viewMode = 'task';
         $this->showDetailModal = true;
     }
@@ -81,6 +83,7 @@ class AdminTaskDetail extends Component
         $this->taskId = null;
         $this->task = null;
         $this->entryApprovals = [];
+        $this->resetErrorBag('reportBookReview');
     }
 
     public function switchToTask(): void
@@ -449,12 +452,23 @@ class AdminTaskDetail extends Component
 
     protected function completeReportBookReviewAtomically(int $reportBookId, Closure $review): bool
     {
-        $task = app(CompleteReportBookReview::class)->handle(
-            (int) $this->taskId,
-            (int) Auth::id(),
-            $reportBookId,
-            $review
-        );
+        $this->resetErrorBag('reportBookReview');
+
+        try {
+            $task = app(CompleteReportBookReview::class)->handle(
+                (int) $this->taskId,
+                (int) Auth::id(),
+                $reportBookId,
+                $review
+            );
+        } catch (Throwable $exception) {
+            // The transaction has rolled back. Keep the review editable for a retry
+            // instead of returning a 500 response that replaces the UI with an iframe.
+            report($exception);
+            $this->addError('reportBookReview', 'Die Prüfung konnte nicht gespeichert werden. Deine Auswahl und Begründung bleiben erhalten. Bitte versuche es erneut.');
+
+            return false;
+        }
 
         if (! $task) {
             $this->refreshTask();

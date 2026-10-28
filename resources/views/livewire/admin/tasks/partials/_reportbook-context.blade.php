@@ -149,7 +149,7 @@
                         
                     @endphp
   
-                    <div class="rounded-md border px-3 py-2 {{ $isApproved ? 'border-slate-200 bg-slate-50' : 'border-red-300 bg-red-50' }}">
+                    <div wire:key="reportbook-entry-{{ $entry->id }}" class="rounded-md border px-3 py-2 {{ $isApproved ? 'border-slate-200 bg-slate-50' : 'border-red-300 bg-red-50' }}">
                         <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500">
                             <span>{{ $entryDate ?? '—' }}</span>
                             
@@ -190,6 +190,7 @@
         });
     @endphp
 
+    <div wire:key="reportbook-rejection-comment-{{ $reportBook->id }}">
     @if($this->canModifyReportBook && $hasRejectedSelection)
         <div class="mt-3 rounded-lg border border-red-200 bg-red-50/50 p-3">
             <label for="reportbook-reject-comment" class="block text-xs font-semibold uppercase tracking-wide text-red-700">
@@ -198,19 +199,30 @@
             <textarea
                 id="reportbook-reject-comment"
                 rows="3"
-                wire:model.live="rejectionComment"
+                wire:model="rejectionComment"
                 required
                 placeholder="Bitte kurz begründen, warum Einträge abgelehnt wurden ..."
                 class="mt-2 block w-full rounded-md border border-red-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-200"
             ></textarea>
         </div>
     @endif
+    </div>
+
+    <div wire:key="reportbook-review-feedback-{{ $reportBook->id }}" aria-live="polite">
+        @error('reportBookReview')
+            <p role="alert" class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ $message }}</p>
+        @enderror
+    </div>
 
     @if($this->canModifyReportBook)
-    <div class="flex justify-end">
+    <div wire:key="reportbook-review-actions-{{ $reportBook->id }}" class="flex justify-end">
         @if($hasRejectedSelection)
             <x-secondary-button
+                type="button"
+                wire:key="reportbook-reject-{{ $reportBook->id }}"
                 wire:click="rejectReportBook"
+                wire:loading.attr="disabled"
+                wire:target="rejectReportBook, approveReportBook"
                 class="mt-2 inline-flex items-center gap-2 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
             >
                 <i class="fal fa-times-circle text-xs"></i>
@@ -218,7 +230,11 @@
             </x-secondary-button>
         @else
             <x-secondary-button
+                type="button"
+                wire:key="reportbook-approve-{{ $reportBook->id }}"
                 wire:click="approveReportBook"
+                wire:loading.attr="disabled"
+                wire:target="rejectReportBook, approveReportBook"
                 class="mt-2 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
             >
                 <i class="fal fa-check-double text-xs"></i>
@@ -227,6 +243,6 @@
         @endif
     </div>
 
-    <livewire:tools.signatures.signature-form lazy />
+    <livewire:tools.signatures.signature-form :key="'reportbook-review-signature-' . $reportBook->id" lazy />
     @endif
 </div>
