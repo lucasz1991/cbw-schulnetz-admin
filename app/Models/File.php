@@ -29,10 +29,20 @@ class File extends Model
         'expires_at',
         'created_at',
         'updated_at',
+        'lecturer_person_id',
+        'lecturer_contract_id',
+        'lecturer_assignment_id',
+        'lecturer_plan_revision',
+        'document_revision',
+        'supersedes_file_id',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
+        'lecturer_person_id' => 'integer',
+        'lecturer_plan_revision' => 'integer',
+        'document_revision' => 'integer',
+        'supersedes_file_id' => 'integer',
     ];
 
     protected static function boot()
@@ -40,6 +50,9 @@ class File extends Model
         parent::boot();
 
         static::deleting(function (File $file) {
+            if ($file->lecturerCourse() && ($file->type === 'invoice' || str_starts_with((string)$file->type, 'sign_'))) {
+                abort(409, 'Unterschriften und Rechnungsstände bleiben als Nachweis erhalten.');
+            }
             if (\App\Services\ReportBooks\SignatureEvidence::fileIsPreserved($file)) {
                 throw \Illuminate\Validation\ValidationException::withMessages(['file' => 'Diese Berichtsheft-Unterschrift darf nicht über die allgemeine Dateiverwaltung gelöscht werden.']);
             }
@@ -195,8 +208,11 @@ class File extends Model
 
     public function getEphemeralPublicUrl(int $ttl = 300, ?string $disk = null): ?string
     {
+        $course = $this->lecturerCourse();
+        $isEvidence = $course && ($this->type === 'invoice' || str_starts_with((string)$this->type, 'sign_'));
+        if ($course && $this->type === 'invoice') \Illuminate\Support\Facades\Gate::authorize('invoices.view');
         try {
-            $this->syncLocalFileToBase();
+            if (!$isEvidence) $this->syncLocalFileToBase();
 
             if ($this->path && Storage::disk(self::DISK)->exists($this->path)) {
                 return Storage::disk(self::DISK)->url($this->path);
@@ -208,7 +224,13 @@ class File extends Model
                 'disk' => $disk ?: ($this->disk ?: self::DISK),
             ];
 
-            if (!$params['url']) {
+            // Base owns the original and its private/public disk; a path must not guess it.
+            if ($isEvidence) {
+                unset($params['url']);
+                $params['file_id'] = $this->id;
+            }
+
+            if (!$this->path) {
                 return null;
             }
 
@@ -296,6 +318,7 @@ class File extends Model
 
     public function download(?string $disk = null, bool $denyExpired = true): StreamedResponse
     {
+        if ($this->lecturerCourse() && $this->type === 'invoice') \Illuminate\Support\Facades\Gate::authorize('invoices.view');
         if ($denyExpired && $this->isExpired()) {
             abort(403, 'Diese Datei ist abgelaufen und kann nicht mehr heruntergeladen werden.');
         }
@@ -309,6 +332,14 @@ class File extends Model
         return Storage::disk($disk)->download($this->path, $filename, [
             'Content-Type' => $mime,
         ]);
+    }
+
+    protected function lecturerCourse(): ?Course
+    {
+        $subject = $this->fileable;
+        $course = $subject instanceof Course ? $subject : ($subject instanceof CourseDay ? $subject->course : null);
+        if ($subject instanceof FilePool) $course = $subject->filepoolable;
+        return $course instanceof Course && \App\Services\Courses\CourseLecturerAccess::hasPlan($course) ? $course : null;
     }
 
     protected function sanitizeName(string $name): string

@@ -264,7 +264,7 @@
                     @endif
 
                     <span class="sign-label-bottom">
-                        {{ $meta['tutor_name'] ?? '-' }}
+                        {{ $row['tutor_name'] ?? (!empty($meta['has_lecturer_plan']) ? 'Zuordnung ungeklärt' : ($meta['tutor_name'] ?? '-')) }}
                     </span>
                 </div>
             </td>

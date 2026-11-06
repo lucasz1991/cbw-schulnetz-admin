@@ -5,6 +5,8 @@ namespace App\Livewire\Admin\Courses;
 use App\Actions\Courses\TransferDeletedCourseReportBooks;
 use Livewire\Component;
 use App\Models\Course;
+use App\Services\Courses\CourseLecturerAccess;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -95,37 +97,64 @@ class CourseShow extends Component
 
     public function exportAttendancePdf(): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
         return $this->course->exportAttendanceListPdf();
     }
 
     public function exportDokuPdf(): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
         return $this->course->exportDokuPdf();
     }
     
     public function exportMaterialConfirmationsPdf(): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
         return $this->course->exportMaterialConfirmationsPdf();
     }
 
     public function exportInvoicePdf(): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
+        Gate::authorize('invoices.view');
         return $this->course->exportInvoicePdf();
     }
 
     public function exportRedThreadPdf(): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
         return $this->course->exportRedThreadPdf();
     }
 
     public function exportExamResultsPdf(): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
         return $this->course->exportExamResultsPdf();
     }
 
     public function exportCourseRatingsPdf(): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
+        Gate::authorize('courses.ratings.view');
         return $this->course->exportCourseRatingsPdf();
+    }
+
+    public function exportInvoiceFile(int $fileId): ?StreamedResponse
+    {
+        Gate::authorize('courses.export');
+        Gate::authorize('invoices.view');
+        return $this->course->fresh()->exportInvoiceFile($fileId);
+    }
+
+    public function getLecturerDisplayProperty(): array
+    {
+        return CourseLecturerAccess::display($this->course->fresh());
+    }
+
+    public function getInvoiceFilesProperty()
+    {
+        if (!Gate::allows('invoices.view')) return collect();
+        return $this->course->files()->where('type', 'invoice')->orderByDesc('id')->get();
     }
 
     public function setDeletedTransferSourceCourse(int $sourceCourseId): void

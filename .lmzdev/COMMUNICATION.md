@@ -48,3 +48,11 @@ Append-only communication log. Source and runtime evidence override stale entrie
 
 - Review fixes: Der Admin-Transfer verwendet jetzt denselben ReportBook-Parent-Lock wie Base. `external_makeup` besitzt eine vollstaendige Admin-Detailansicht mit aktuellen und historischen Feld-Fallbacks.
 - Final focused result: Admin 11 tests/48 assertions; combined with Base 41/168. The independent re-review closed all three integration findings without new findings.
+
+## 2026-11-06 | Codex admin_lecturer_integration -> Root | handoff
+
+- Implemented locally: Admin zeitlicher Tutor-Resolver und Listen/Dashboard; Mehrpersonen-Historie mit Admin-Gruenden; Tageszustaendigkeit; alle Rechnungsinhaber/-versionen mit eindeutigen Downloads und ZIP-Eintraegen; Teilbelegstatus; dokumentierter PDF-Autor; frische Export-/Dateirechte; Originalschutz im Admin-Dateimodell.
+- Shared files: CourseLecturerAccess, Migrationen 120000/120001 und lecturer-history vom Base final kopiert; kein Admin-Syncjob oder Takt geaendert.
+- Verified: Admin fokussierte Regression 34 Tests/183 Assertions, neue Integration 15/52; unabhaengige Base-Evidenz/Livewire/Upload/Readonly-Proben 10/62. Alle ausschliesslich isolierte SQLite-/Storage-/HTTP-Fakes. Vier geaenderte Blades als PHP kompiliert und gelintet.
+- UI: fuenf native Blade-/Livewire-HTML-Artefakte mit synthetischen Daten und gebautem CSS unter E:/projekte/CBW/.lmzdev/artifacts/temp/dozenten-integration-20261106/ui/. Root prueft Browser/Screenshots; Artefakte sind keine LIVE-Abnahme.
+- Remaining boundary: tutor_name-Sortierung bleibt SQL-Komfortspalte bis regulaerem Sync; aktuelle Anzeige und Namenssuche sind planbasiert. Keine echte Datenbank, API, Queue, Mail, Commit, Push oder Bereitstellung ausgefuehrt.

@@ -6,6 +6,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Course;
 use App\Models\CourseDay;
+use App\Models\Person;
+use App\Services\Courses\CourseLecturerAccess;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -120,7 +122,8 @@ public function updated($prop): void
     // Suche
     if ($this->search !== '') {
         $s = '%' . str_replace(' ', '%', $this->search) . '%';
-        $q->where(function ($w) use ($s) {
+        $lecturerIds = Person::query()->whereRaw("CONCAT(COALESCE(vorname,''),' ',COALESCE(nachname,'')) LIKE ?", [$s])->pluck('id');
+        $q->where(function ($w) use ($s, $lecturerIds) {
             $w->where('courses.title', 'like', $s)
               ->orWhere('courses.description', 'like', $s)
               ->orWhere('courses.source_snapshot->course->kurzbez', 'like', $s)
@@ -128,6 +131,9 @@ public function updated($prop): void
               ->orWhere('courses.termin_id', 'like', $s)
               ->orWhere('courses.room', 'like', $s)
               ->orWhereRaw("CONCAT(COALESCE(tutor.vorname,''),' ',COALESCE(tutor.nachname,'')) LIKE ?", [$s]);
+            if ($lecturerIds->isNotEmpty()) {
+                $w->orWhere(fn ($lecturers) => CourseLecturerAccess::constrainVisibleCourses($lecturers, $lecturerIds));
+            }
         });
     }
 
@@ -443,6 +449,7 @@ public function updated($prop): void
 
 public function exportAttendancePdf($courseId): void
 {
+    Gate::authorize('courses.export');
     $course = Course::withoutHolidays()->findOrFail($courseId);
     if (! $course->canExportAttendancePdf()) {
         $this->dispatch('swal:toast', type: 'error', text: 'Keine Unterrichtstage vorhanden.');
@@ -466,6 +473,7 @@ public function exportAttendancePdf($courseId): void
 
 public function exportDokuPdf($courseId): void
 {
+    Gate::authorize('courses.export');
     $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createDokuPdfForPreview();
@@ -486,6 +494,7 @@ public function exportDokuPdf($courseId): void
 
 public function exportMaterialConfirmationsPdf($courseId): void
 {
+    Gate::authorize('courses.export');
     $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createMaterialConfirmationsPdfForPreview();
@@ -504,9 +513,14 @@ public function exportMaterialConfirmationsPdf($courseId): void
     );
 }
 
-public function exportInvoicePdf($courseId): void
+public function exportInvoicePdf($courseId)
 {
+    Gate::authorize('courses.export');
+    Gate::authorize('invoices.view');
     $course = Course::withoutHolidays()->findOrFail($courseId);
+    if ($course->files()->where('type', 'invoice')->count() > 1) {
+        return $course->exportInvoicePdf();
+    }
 
     $relPath = $course->createInvoicePdfForPreview();
     if (! $relPath) {
@@ -526,6 +540,7 @@ public function exportInvoicePdf($courseId): void
 
 public function exportRedThreadPdf($courseId): void
 {
+    Gate::authorize('courses.export');
     $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createRedThreadPdfForPreview();
@@ -546,6 +561,7 @@ public function exportRedThreadPdf($courseId): void
 
 public function exportExamResultsPdf($courseId): void
 {
+    Gate::authorize('courses.export');
     $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createExamResultsPdfForPreview();
@@ -566,6 +582,8 @@ public function exportExamResultsPdf($courseId): void
 
 public function exportCourseRatingsPdf($courseId): void
 {
+    Gate::authorize('courses.export');
+    Gate::authorize('courses.ratings.view');
     $course = Course::withoutHolidays()->findOrFail($courseId);
 
     $relPath = $course->createCourseRatingsPdfForPreview();
@@ -587,6 +605,7 @@ public function exportCourseRatingsPdf($courseId): void
 
     public function exportCourse($courseId): ?StreamedResponse
     {
+        Gate::authorize('courses.export');
         $this->course = Course::withoutHolidays()->findOrFail($courseId);
         return $this->course->exportAllDocumentsZip();
     }

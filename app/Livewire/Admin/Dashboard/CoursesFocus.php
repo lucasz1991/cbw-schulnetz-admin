@@ -55,6 +55,8 @@ class CoursesFocus extends Component
                 'planned_start_date',
                 'planned_end_date',
                 'primary_tutor_person_id',
+                'lecturer_plan',
+                'type',
             ])
             ->map(function (Course $course) {
                 $tutorName = trim((string) ($course->tutor->vorname ?? '') . ' ' . (string) ($course->tutor->nachname ?? ''));

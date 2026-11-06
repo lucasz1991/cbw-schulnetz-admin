@@ -8,6 +8,7 @@ use App\Models\CourseMaterialAcknowledgement;
 use App\Models\CourseResult;
 use App\Models\Person;
 use App\Models\User;
+use App\Services\Courses\CourseLecturerAccess;
 use App\Support\CurrentParticipantCourseScope;
 use App\Support\ParticipantContractAccess;
 use Illuminate\Database\Query\JoinClause;
@@ -69,11 +70,11 @@ class UserCourses extends Component
         $personIds = $this->user->persons->pluck('id')->toArray();
 
         // ------------------------------------------------------------------
-        // 📌 FALL 1: User ist Dozent → Kurse über Course.primary_tutor_person_id
+        // 📌 FALL 1: User ist Dozent → aktuelle, geplante und ehemalige Einsätze
         // ------------------------------------------------------------------
         if ($this->user->role === 'tutor') {
 
-            $query = Course::whereIn('primary_tutor_person_id', $personIds)
+            $query = CourseLecturerAccess::constrainVisibleCourses(Course::query(), $personIds)
                 ->with('tutor')
                 ->orderBy('planned_start_date', 'desc');
 

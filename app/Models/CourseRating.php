@@ -16,6 +16,9 @@ class CourseRating extends Model
         'user_id',
         'course_id',
         'participant_id',
+        'lecturer_assignment_id',
+        'lecturer_person_id',
+        'lecturer_contract_id',
         'is_anonymous',
         'skip_course_rating',
         'kb_1','kb_2','kb_3',
@@ -31,6 +34,7 @@ class CourseRating extends Model
     protected $casts = [
         'is_anonymous' => 'boolean',
         'skip_course_rating' => 'boolean',
+        'lecturer_person_id' => 'integer',
     ]; 
 
     protected static function booted(): void

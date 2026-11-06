@@ -114,6 +114,9 @@
                                            - Raum {{ $day['room'] }}
                                         @endif
                                     </div>
+                                    @if($showLecturerResponsibility)
+                                        <div class="mt-1 text-xs text-neutral-500">Zuständig: {{ $day['lecturer_name'] ?: 'Zuordnung ungeklärt' }}</div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

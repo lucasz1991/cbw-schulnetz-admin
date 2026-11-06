@@ -2,6 +2,13 @@
 
 Record durable decisions with date, context, decision, and consequences.
 
+## 2026-11-06 | Gemeinsamer Einsatzplan bei unveraenderter Synchronisierung
+
+- Base und Admin verwenden bytegleiche Policy und additive, wiederholt ausfuehrbare Migrationen der gemeinsamen Datenbank. Admin startet keinen weiteren Kursabgleich.
+- Bestehende `tutor()`-Beziehung bleibt kompatibel; lesender Accessor zeigt bei Einsatzplan den datumsaktiven Dozenten. Einzelpersonenkurse behalten ihre knappe Anzeige.
+- Rechnungsoriginale und Ersatzfassungen bleiben erhalten; Admin-ZIP enthaelt alle Versionen mit eindeutigen Kurs-/Person-/Vertrags-/Einsatz-/Versionsnamen. Ein PDF-Einzelpreview waehlt bei mehreren Belegen keinen beliebigen aus.
+- Admin loest zeitliche Signatur-/Rechnungsoriginale ueber die bestehende API anhand `file_id` auf, damit Base die tatsaechliche Disk verwendet. Die Vertrauenspruefung des Base-API-Keys bleibt vor dem Systemkontext; Admin prueft eigene Rechnungsrechte vor I/O erneut.
+
 ## 2026-08-05 | Dokumenttest prueft Signatur und Dateiinhalt
 
 - Context: `POST /api/documents/sign` allein beweist nicht, dass IIS/PHP die PDF aus dem UVS-Verzeichnis lesen und ausliefern kann.

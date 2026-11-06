@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use App\Models\CourseDay;
+use App\Services\Courses\CourseLecturerAccess;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\On;
 
@@ -47,6 +48,7 @@ class CourseDaysPanel extends Component
     public ?File $dokuSignatureFile = null;
     public bool $dokuSigned = false;
     public bool $allDaysCompleted = false;
+    public bool $showLecturerResponsibility = false;
 
     public function mount(Course $course): void
     {
@@ -59,10 +61,13 @@ class CourseDaysPanel extends Component
     protected function loadDays(): void
     {
         $this->course->load(['days', 'participants']);
+        $lecturerDisplay = CourseLecturerAccess::display($this->course);
+        $this->showLecturerResponsibility = $lecturerDisplay['multiple'];
+        $lecturers = collect($lecturerDisplay['assignments'])->keyBy('assignment_id');
 
         $this->days = $this->course->days
             ->sortBy(fn ($d) => [$d->date, $d->start_time])
-            ->map(function ($day) {
+            ->map(function ($day) use ($lecturers) {
                 // Datum als Carbon
                 $date = $day->date instanceof Carbon
                     ? $day->date
@@ -93,9 +98,13 @@ class CourseDaysPanel extends Component
                 // Anwesenheits-Statistik aus attendance_data JSON
                 $attendance = $this->buildAttendanceSummary($day->attendance_data ?? []);
                 $hasAttendance = ($attendance['total'] ?? 0) > 0;
+                $assignment = $this->showLecturerResponsibility
+                    ? CourseLecturerAccess::currentAssignment($this->course, $date)
+                    : null;
                 return [
                     'id'         => $day->id,
                     'date'       => $date,
+                    'lecturer_name' => $assignment ? ($lecturers->get($assignment['assignment_id'])['name'] ?? null) : null,
                     'start_time' => $start,
                     'end_time'   => $end,
                     'room'       => $day->room ?? null,

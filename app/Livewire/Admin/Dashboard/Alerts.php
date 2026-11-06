@@ -64,7 +64,7 @@ class Alerts extends Component
 
         $days = CourseDay::query()
             ->with([
-                'course:id,title,klassen_id,termin_id,planned_start_date,planned_end_date,primary_tutor_person_id',
+                'course:id,title,klassen_id,termin_id,planned_start_date,planned_end_date,primary_tutor_person_id,lecturer_plan,type',
             ])
             ->whereBetween('date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->whereHas('course', fn (Builder $q) => $this->applyRunningActiveCourseConstraint($q))
@@ -117,7 +117,7 @@ class Alerts extends Component
 
         $days = CourseDay::query()
             ->with([
-                'course:id,title,klassen_id,termin_id,planned_start_date,planned_end_date,primary_tutor_person_id',
+                'course:id,title,klassen_id,termin_id,planned_start_date,planned_end_date,primary_tutor_person_id,lecturer_plan,type',
             ])
             ->whereBetween('date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->where('note_status', CourseDay::NOTE_STATUS_MISSING)
@@ -169,19 +169,19 @@ class Alerts extends Component
             ->where(function (Builder $q) {
                 $this->applyRunningActiveCourseConstraint($q);
             })
-            ->get(['id', 'title', 'klassen_id', 'termin_id', 'planned_start_date', 'primary_tutor_person_id']);
+            ->get(['id', 'title', 'klassen_id', 'termin_id', 'planned_start_date', 'primary_tutor_person_id', 'lecturer_plan', 'type']);
 
         if ($runningCourses->isEmpty()) {
             return [];
         }
 
         $withoutTutor = $runningCourses
-            ->whereNull('primary_tutor_person_id')
+            ->filter(fn (Course $course) => !$course->tutor)
             ->values();
 
         $withoutUser = $runningCourses
             ->filter(function (Course $course) {
-                if (! $course->primary_tutor_person_id) {
+                if (! $course->tutor) {
                     return false;
                 }
 

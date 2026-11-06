@@ -284,7 +284,7 @@
                         <i class="fal fa-user-tie text-sm"></i>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <div class="text-[11px] uppercase tracking-wide text-slate-500">Tutor</div>
+                        <div class="text-[11px] uppercase tracking-wide text-slate-500">{{ $this->lecturerDisplay['multiple'] ? 'Hauptdozent' : 'Tutor' }}</div>
                         <div class="mt-1 truncate text-sm font-semibold text-slate-800">
                             @if($course->tutor)
                                 <x-user.public-info :person="$course->tutor" />
@@ -292,6 +292,10 @@
                                 <span class="text-slate-400">Noch nicht zugewiesen</span>
                             @endif
                         </div>
+                        @if($this->lecturerDisplay['multiple'] && $this->lecturerDisplay['current'])
+                            <p class="text-xs text-slate-500">Aktueller Einsatz: {{ \Carbon\Carbon::parse($this->lecturerDisplay['current']['starts_on'])->format('d.m.Y') }} – {{ \Carbon\Carbon::parse($this->lecturerDisplay['current']['ends_on'])->format('d.m.Y') }}</p>
+                        @endif
+                        <x-courses.lecturer-history :course="$course" :show-reasons="true" :show-current="false" />
                     </div>
                 </div>
             </div>
@@ -360,6 +364,38 @@
         </section>
     </div>
 
+
+    @can('invoices.view')
+        @if($this->lecturerDisplay['multiple'] || $this->invoiceFiles->count() > 1)
+            <section class="rounded-2xl border border-slate-200 bg-white p-4">
+                <h2 class="mb-3 text-sm font-semibold text-slate-700">Dozenten-Rechnungen</h2>
+                @if($this->lecturerDisplay['multiple'])
+                    @php($invoiceStatus = app(\App\Services\Courses\CourseInvoiceExport::class)->status($course))
+                    <p class="mb-3 text-xs text-slate-500">{{ $invoiceStatus['covered'] }} von {{ $invoiceStatus['expected'] }} Einsätzen mit zugeordneter Rechnung.@if($invoiceStatus['unassigned']) {{ $invoiceStatus['unassigned'] }} Bestandsbeleg(e) mit offener Zuordnung.@endif</p>
+                @endif
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="border-b text-xs text-slate-500"><tr>@if($this->lecturerDisplay['multiple'])<th class="pb-2">Dozent</th><th class="pb-2">Vertrag / Zeitraum</th>@endif<th class="pb-2">Version</th><th class="pb-2 text-right">Beleg</th></tr></thead>
+                        <tbody class="divide-y divide-slate-100">
+                        @forelse($this->invoiceFiles as $invoice)
+                            @php($invoiceContext = app(\App\Services\Courses\CourseInvoiceExport::class)->context($course, $invoice))
+                            <tr wire:key="course-invoice-{{ $invoice->id }}">
+                                @if($this->lecturerDisplay['multiple'])
+                                    <td class="py-3 pr-3">{{ $invoiceContext['person'] }}</td>
+                                    <td class="py-3 pr-3">{{ $invoiceContext['contract'] ?: 'Bestandsbeleg' }}@if($invoiceContext['period'])<span class="block text-xs text-slate-500">{{ $invoiceContext['period'] }}</span>@endif</td>
+                                @endif
+                                <td class="py-3 pr-3">{{ $invoice->document_revision ?: 1 }}@if($invoice->supersedes_file_id)<span class="block text-xs text-slate-500">Ersatzversion</span>@endif</td>
+                                <td class="py-3 text-right">@can('courses.export')<button type="button" wire:click="exportInvoiceFile({{ $invoice->id }})" class="rounded border border-slate-200 px-3 py-1 text-xs hover:bg-slate-50">Herunterladen</button>@endcan</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="py-3 text-sm text-slate-500">Noch keine Rechnung hinterlegt.</td></tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+    @endcan
 
     @if($course->description)
         <div class="p-4 rounded-2xl border border-neutral-200 bg-white">

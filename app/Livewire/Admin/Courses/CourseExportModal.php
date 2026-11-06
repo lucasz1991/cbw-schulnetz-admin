@@ -83,6 +83,9 @@ class CourseExportModal extends Component
 
     public function export()
     {
+        Gate::authorize('courses.export');
+        if ($this->includeTutorData) Gate::authorize('invoices.view');
+        if ($this->includeCourseRatings) Gate::authorize('courses.ratings.view');
         if (empty($this->courseIds)) {
             $this->addError('courseIds', 'Es wurden keine Bausteine ausgewählt.');
             return;
@@ -133,6 +136,9 @@ class CourseExportModal extends Component
      */
     public function generateExportMultipleAllZipFile($courses, array $settings = []): ?string
     {
+        Gate::authorize('courses.export');
+        if (($settings['includeTutorData'] ?? true)) Gate::authorize('invoices.view');
+        if (($settings['includeCourseRatings'] ?? true)) Gate::authorize('courses.ratings.view');
         // Default-Gesamtname
         $exportBaseName = $settings['exportName']
             ?? ($courses->count() . '_Bausteine_Export_' . now()->format('Y-m-d'));

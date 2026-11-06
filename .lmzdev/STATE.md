@@ -1,5 +1,15 @@
 # Current state
 
+## 2026-11-06 | Datierte Dozenteneinsaetze lokal integriert
+
+- Admin konsumiert den zeitlichen Einsatzplan der gemeinsamen Datenbank; bestehender leerer Admin-Syncjob und Synchronisierungstakt bleiben unveraendert.
+- Hauptdozent wird zum Datum aufgeloest, einschliesslich Dashboard und Profil-Kurslisten. Zusaetzliche Rollen/Zeitraeume/Historie und interne Gruende erscheinen nur bei mehreren Personen.
+- Rechnungen aller Eigentuemer und Versionen sind einzeln und zusammen exportierbar. Zugeordnete Einsatzbelege bestimmen den Teil-/Vollstaendigkeitsstatus; historische unklare Zuordnungen werden nicht erfunden.
+- Dokumentations-PDF benennt je Zeile den nachgewiesenen Unterzeichner/Autor. Rechnungsrechte werden bei Export und allgemeiner Dateivorschau erneut geprueft. Zeitliche Rechnungs-/Signaturoriginale sind vor allgemeinen Loeschwegen geschuetzt.
+- Verifiziert: fokussierte Admin-Regression 34 Tests / 183 Assertions; davon neue Integration 15 / 52. Neue unabhaengige Base-Evidenztests 10 / 62. PHP-Lint und kompilierte Syntax der vier geaenderten Blades bestanden. Keine echte DB, API, Mail, Queue, Commit oder Bereitstellung.
+- UI-Artefakte: `E:/projekte/CBW/.lmzdev/artifacts/temp/dozenten-integration-20261106/ui/` mit nativen Original-Blades und synthetischen Daten; Browser-QA/Screenshots durch Root.
+- Komfortgrenze: vorhandene SQL-Sortierung `tutor_name` verwendet weiterhin die bei regulaerem Sync gepflegte Primaerspalte; Anzeige und Suche verwenden den zeitlichen Plan.
+
 ## Confirmed
 
 - LMZ Dev workspace initialized.

@@ -22,6 +22,9 @@ use App\Models\CourseRating;
 use App\Jobs\ApiUpdates\CreateOrUpdateCourse;
 use App\Services\ApiUvs\CourseApiServices\CourseUvsDirectLoadService;
 use App\Services\ApiUvs\CourseApiServices\CourseResultsLoadService;
+use App\Services\Courses\CourseInvoiceExport;
+use App\Services\Courses\CourseLecturerAccess;
+use Illuminate\Support\Facades\Gate;
 Use Illuminate\Support\Facades\Log;
 
 
@@ -68,6 +71,11 @@ class Course extends Model
  
         // Komfort: primärer Tutor (Person, nicht User)
         'primary_tutor_person_id',
+        'lecturer_plan',
+        'lecturer_plan_revision',
+        'lecturer_plan_synced_at',
+        'lecturer_closing_assignment_id',
+        'lecturer_closed_at',
     ];
 
     protected $casts = [
@@ -78,6 +86,10 @@ class Course extends Model
         'settings'           => 'array',
         'source_snapshot'    => 'array',
         'educational_materials' => 'array',
+        'lecturer_plan' => 'array',
+        'lecturer_plan_revision' => 'integer',
+        'lecturer_plan_synced_at' => 'datetime',
+        'lecturer_closed_at' => 'datetime',
     ];
 
     /**
@@ -252,6 +264,15 @@ class Course extends Model
     public function tutor()
     {
         return $this->belongsTo(Person::class, 'primary_tutor_person_id');
+    }
+
+    public function getTutorAttribute($value = null)
+    {
+        if ($this->type !== 'coaching' && CourseLecturerAccess::hasPlan($this)) {
+            $personId = CourseLecturerAccess::currentPersonId($this);
+            return $personId ? Person::query()->find($personId) : null;
+        }
+        return $this->getRelationValue('tutor');
     }
 
     // Unterrichtstage (CourseDay)
@@ -558,6 +579,12 @@ class Course extends Model
 
     public function invoiceState()
     {
+        $assignments = CourseLecturerAccess::assignments($this);
+        if (count(array_unique(array_column($assignments, 'person_id'))) > 1) {
+            $status = app(CourseInvoiceExport::class)->status($this);
+            if (!$status['files']) return 0;
+            return $status['covered'] === $status['expected'] && !$status['unassigned'] ? 1 : 2;
+        }
         $exists = $this->files()
             ->where('type',  'invoice')
             ->exists();
@@ -1078,6 +1105,7 @@ public function generateDokuPdfFile(): ?string
         'module'      => $this->settings['kurzbez_ba'] ?? $this->title,
         'location'    => $this->room ?? '—',
         'year'        => $from->format('Y'),
+        'has_lecturer_plan' => CourseLecturerAccess::hasPlan($this),
         'tutor_name'  => optional($this->tutor)->full_name
             ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
     ];
@@ -1108,6 +1136,9 @@ public function generateDokuPdfFile(): ?string
         $documentationAddendumHtml = $day->publishedDocumentationAddendumHtml() ?? '';
         $ueValue      = null;
         $signatureSrc = null; // Base64 für <img src="...">
+        $authorName = $day->notes_author_user_id
+            ? User::query()->whereKey($day->notes_author_user_id)->value('name')
+            : null;
 
         // Nur bei note_status = 2 Inhalte + Signatur ausgeben
         if ($noteStatus === 2) {
@@ -1115,6 +1146,9 @@ public function generateDokuPdfFile(): ?string
             $ueValue   = $ue;
 
             $signatureFile = $day->latestTutorSignature();
+            if ($signatureFile?->user_id) {
+                $authorName = User::query()->whereKey($signatureFile->user_id)->value('name');
+            }
             $path          = $signatureFile?->getEphemeralPublicUrl();
 
             if ($signatureFile && $path) {
@@ -1135,6 +1169,7 @@ public function generateDokuPdfFile(): ?string
             'documentation_addendum_html' => $documentationAddendumHtml,
             'ue'                  => $ueValue,
             'tutor_signature_src' => $signatureSrc,
+            'tutor_name'          => $authorName,
             'note_status'         => $noteStatus,
         ];
     });
@@ -1304,56 +1339,45 @@ public function exportMaterialConfirmationsPdf(): ?StreamedResponse
 }
 
 
-public function generateInvoicePdfFile(): ?string
+/** A single-file preview must never silently select one invoice from several owners. */
+public function generateInvoicePdfFile(?int $fileId = null): ?string
 {
-    $file = $this->files()
-        ->where('type', 'invoice')
-        ->latest()
-        ->first();
-
-    if (! $file) {
-        return null;
+    $export = app(CourseInvoiceExport::class);
+    $files = $export->files($this);
+    if ($fileId !== null) {
+        $file = $files->firstWhere('id', $fileId);
+        abort_unless($file, 404);
+    } else {
+        if ($files->count() !== 1) return null;
+        $file = $files->first();
     }
-
-    $downloadUrl = $file->getEphemeralPublicUrl();
-    if (! $downloadUrl) {
-        return null;
-    }
-
-    $tmpPath = tempnam(sys_get_temp_dir(), 'inv_') . '.pdf';
-
-    $in  = @fopen($downloadUrl, 'rb');
-    if (! $in) {
-        return null;
-    }
-
-    $out = fopen($tmpPath, 'wb');
-    while (! feof($in)) {
-        fwrite($out, fread($in, 8192));
-    }
-    fclose($in);
-    fclose($out);
-
-    return $tmpPath;
+    return $file ? $export->copyFile($this, $file) : null;
 }
 
 public function exportInvoicePdf(): ?StreamedResponse
 {
-    $path = $this->generateInvoicePdfFile();
-
-    if (! $path || ! file_exists($path)) {
-        abort(404, 'Keine Dozentenrechnung vorhanden.');
-    }
-
-    $downloadName = sprintf(
-        'Dozenten-Rechnung_%s.pdf',
-        $this->klassen_id ?: $this->id
-    );
-
+    $export = app(CourseInvoiceExport::class);
+    $files = $export->files($this);
+    if ($files->isEmpty()) abort(404, 'Keine Dozentenrechnung vorhanden.');
+    if ($files->count() === 1) return $this->exportInvoiceFile((int)$files->first()->id);
+    $path = $export->zip($this);
+    if (!$path) abort(404, 'Keine Dozentenrechnung vorhanden.');
+    $name = 'Dozentenrechnungen_'.Str::slug($this->klassen_id ?: (string)$this->id, '_').'.zip';
     return response()->streamDownload(function () use ($path) {
-        readfile($path);
-        @unlink($path);
-    }, $downloadName);
+        try { readfile($path); } finally { @unlink($path); }
+    }, $name);
+}
+
+public function exportInvoiceFile(int $fileId): ?StreamedResponse
+{
+    $export = app(CourseInvoiceExport::class);
+    $file = $export->files($this)->firstWhere('id', $fileId);
+    abort_unless($file, 404);
+    $path = $export->copyFile($this, $file);
+    if (!$path) abort(404, 'Die Rechnung ist derzeit nicht lesbar.');
+    return response()->streamDownload(function () use ($path) {
+        try { readfile($path); } finally { @unlink($path); }
+    }, $export->filename($this, $file));
 }
 
 
@@ -1634,12 +1658,26 @@ public function exportExamResultsPdf(): ?StreamedResponse
             ],
         ];
 
+        // Ratings retain their accepted closing lecturer, even if a different
+        // person owns the final calendar period of the course.
+        $tutor=$this->tutor;
+        $hasPlan=\App\Services\Courses\CourseLecturerAccess::hasPlan($this);
+        if($hasPlan) {
+            $target=\App\Services\Courses\CourseLecturerAccess::healthy($this)
+                ? \App\Services\Courses\CourseLecturerAccess::closingAssignment($this) : null;
+            $matches=$target && $ratings->every(fn($rating)=>$rating->lecturer_assignment_id===$target['assignment_id']
+                && (int)$rating->lecturer_person_id===(int)$target['person_id']
+                && (string)$rating->lecturer_contract_id===(string)($target['contract_id']??null)
+                && (string)$rating->lecturer_staff_id===(string)($target['mitarbeiter_id']??null));
+            $tutor=$matches ? \App\Models\Person::find($target['person_id']) : null;
+        }
+        $tutorName=$tutor?->full_name ?? trim(($tutor?->vorname??'').' '.($tutor?->nachname??''));
+
         // Meta-Infos für Kopfbereich
         $meta = [
             'class_label'   => $this->courseClassName,
             'module_label' => $this->courseShortName,
-            'tutor_name'    => optional($this->tutor)->full_name
-                ?? trim(($this->tutor->vorname ?? '').' '.($this->tutor->nachname ?? '')),
+            'tutor_name'    => $tutorName ?: ($hasPlan ? 'Zuordnung ungeklärt' : ''),
             'termin_label'  => $terminLabel,
             'ratings_count' => $ratings->count(),
         ];
@@ -1692,6 +1730,9 @@ public function exportExamResultsPdf(): ?StreamedResponse
 
 public function generateExportAllZipFile(array $settings = []): ?string
 {
+    Gate::authorize('courses.export');
+    if (($settings['includeTutorData'] ?? true)) Gate::authorize('invoices.view');
+    if (($settings['includeCourseRatings'] ?? true)) Gate::authorize('courses.ratings.view');
     $includeDocumentation = $settings['includeDocumentation'] ?? true;
     $includeRedThread     = $settings['includeRedThread']     ?? true;
     $includeParticipants  = $settings['includeParticipants']  ?? true;
@@ -1720,9 +1761,11 @@ public function generateExportAllZipFile(array $settings = []): ?string
     $addedAny  = false;
 
     if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        @unlink($zipPath);
         throw new \RuntimeException('ZIP-Archiv konnte nicht erstellt werden.');
     }
 
+    try {
     // Anwesenheitsliste
     if ($includeAttendance && $this->canExportAttendancePdf()) {
         $path = $this->generateAttendanceListPdfFile();
@@ -1755,11 +1798,10 @@ public function generateExportAllZipFile(array $settings = []): ?string
 
     // Dozentenrechnung
     if ($includeTutorData && $this->canExportInvoicePdf()) {
-        $path = $this->generateInvoicePdfFile();
-        if ($path && file_exists($path)) {
-            $zip->addFile($path, 'Dozentenrechnung.pdf');
+        foreach (app(CourseInvoiceExport::class)->copies($this) as $entryName => $path) {
+            $zip->addFile($path, 'Dozentenrechnungen/'.$entryName);
             $tempFiles[] = $path;
-            $addedAny    = true;
+            $addedAny = true;
         }
     }
 
@@ -1793,11 +1835,19 @@ public function generateExportAllZipFile(array $settings = []): ?string
         }
     }
 
-    $zip->close();
+    if (!$zip->close()) {
+        throw new \RuntimeException('ZIP-Archiv konnte nicht abgeschlossen werden.');
+    }
+    } catch (\Throwable $error) {
+        try { @$zip->close(); } catch (\Throwable) {}
+        @unlink($zipPath);
+        throw $error;
+    } finally {
 
     // Temp-PDFs nach dem Packen direkt löschen – sie stecken jetzt im ZIP
     foreach ($tempFiles as $file) {
         @unlink($file);
+    }
     }
 
     if (! $addedAny) {

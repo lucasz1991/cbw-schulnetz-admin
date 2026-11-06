@@ -15,6 +15,8 @@ class CourseResult extends Model
         'result',
         'status',
         'updated_by',
+        'lecturer_assignment_id',
+        'lecturer_plan_revision',
     ];
 
     /**
