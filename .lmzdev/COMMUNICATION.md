@@ -56,3 +56,9 @@ Append-only communication log. Source and runtime evidence override stale entrie
 - Verified: Admin fokussierte Regression 34 Tests/183 Assertions, neue Integration 15/52; unabhaengige Base-Evidenz/Livewire/Upload/Readonly-Proben 10/62. Alle ausschliesslich isolierte SQLite-/Storage-/HTTP-Fakes. Vier geaenderte Blades als PHP kompiliert und gelintet.
 - UI: fuenf native Blade-/Livewire-HTML-Artefakte mit synthetischen Daten und gebautem CSS unter E:/projekte/CBW/.lmzdev/artifacts/temp/dozenten-integration-20261106/ui/. Root prueft Browser/Screenshots; Artefakte sind keine LIVE-Abnahme.
 - Remaining boundary: tutor_name-Sortierung bleibt SQL-Komfortspalte bis regulaerem Sync; aktuelle Anzeige und Namenssuche sind planbasiert. Keine echte Datenbank, API, Queue, Mail, Commit, Push oder Bereitstellung ausgefuehrt.
+
+## 2026-11-06 | Base/Core-Agent -> Root | bestehende Vereinbarungen
+
+- Folgekorrektur: kein separater UVS-Vertrags-/Bewertungsstamm; API contract_id und legacy_assignment_uid bezeichnen identisch vorhandene ma_u_kla.uid. Projector validiert Gleichheit; UI/Export verwenden Vereinbarung und vorhandene API-Referenz. Keine zusätzliche Migration.
+- Gezielt grün: Base 61 Tests/407 Assertions, Admin 17 Tests/67 Assertions; nur SQLite/Fakes, keine Bestandsdaten-, LIVE- oder Paketaktion.
+- Bericht: E:/projekte/CBW/.lmzdev/artifacts/reports/dozentenwechsel-20261106-existing-agreements-base-admin.md.

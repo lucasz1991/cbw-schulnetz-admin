@@ -77,15 +77,15 @@ class CourseLecturerRatingsPdfTest extends TestCase
     public function test_ratings_pdf_keeps_closing_person_and_marks_conflicts_or_unbound_ratings(): void
     {
         $plan = ['status' => 'ready', 'closing_assignment_id' => 'A', 'completion_at' => '2026-11-05T16:00:00+01:00', 'assignments' => [
-            ['assignment_id' => 'A', 'person_id' => 101, 'contract_id' => 'LV-A', 'mitarbeiter_id' => 'MA-A', 'starts_on' => '2026-11-01', 'ends_on' => '2026-11-05'],
-            ['assignment_id' => 'B', 'person_id' => 102, 'contract_id' => 'LV-B', 'mitarbeiter_id' => 'MA-B', 'starts_on' => '2026-11-06', 'ends_on' => '2026-11-06'],
+            ['assignment_id' => 'A', 'person_id' => 101, 'contract_id' => '101', 'mitarbeiter_id' => 'MA-A', 'starts_on' => '2026-11-01', 'ends_on' => '2026-11-05'],
+            ['assignment_id' => 'B', 'person_id' => 102, 'contract_id' => '202', 'mitarbeiter_id' => 'MA-B', 'starts_on' => '2026-11-06', 'ends_on' => '2026-11-06'],
         ]];
         $course = Course::withoutEvents(fn () => Course::create(['title' => 'DLO1', 'klassen_id' => 'synthetic-pdf', 'termin_id' => 'T-1',
             'planned_start_date' => '2026-11-01', 'planned_end_date' => '2026-11-06', 'primary_tutor_person_id' => 101,
             'lecturer_plan' => $plan, 'lecturer_closing_assignment_id' => 'A']));
         $this->assertSame(102, $course->tutor->id);
         DB::table('course_ratings')->insert(['course_id' => $course->id, 'do_1' => 2, 'lecturer_assignment_id' => 'A', 'lecturer_person_id' => 101,
-            'lecturer_contract_id' => 'LV-A', 'lecturer_staff_id' => 'MA-A']);
+            'lecturer_contract_id' => '101', 'lecturer_staff_id' => 'MA-A']);
         $expected = 'Abschluss Dozent';
         $pdf = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
         $pdf->shouldReceive('setPaper')->andReturnSelf();

@@ -91,7 +91,7 @@ class LecturerInvoiceExportTest extends TestCase
         return Course::query()->create(['klassen_id' => $id, 'title' => 'DLO1', 'type' => 'regular']);
     }
 
-    private function invoice(Course $course, int $owner, ?int $person, string $contract = 'LV-1', int $revision = 1): File
+    private function invoice(Course $course, int $owner, ?int $person, string $contract = '101', int $revision = 1): File
     {
         if ($person) {
             DB::table('persons')->insertOrIgnore(['id' => $person, 'vorname' => 'Dozent', 'nachname' => (string) $person]);
@@ -110,8 +110,8 @@ class LecturerInvoiceExportTest extends TestCase
     {
         $course = $this->course();
         $a = $this->invoice($course, 11, 101);
-        $b = $this->invoice($course, 12, 102, 'LV-2');
-        $a2 = $this->invoice($course, 11, 101, 'LV-1', 2);
+        $b = $this->invoice($course, 12, 102, '202');
+        $a2 = $this->invoice($course, 11, 101, '101', 2);
         $zipPath = app(CourseInvoiceExport::class)->zip($course);
         $zip = new ZipArchive;
         $this->assertTrue($zip->open($zipPath));
@@ -122,7 +122,7 @@ class LecturerInvoiceExportTest extends TestCase
             $this->assertStringContainsString('%PDF-1.4 synthetic', $zip->getFromIndex($i));
         }
         $this->assertCount(3, array_unique($names));
-        $this->assertStringContainsString('lv_1', strtolower(implode(' ', $names)));
+        $this->assertStringContainsString('vereinbarung_101', strtolower(implode(' ', $names)));
         $zip->close();
         @unlink($zipPath);
         foreach ([$a, $b, $a2] as $file) {
@@ -138,11 +138,27 @@ class LecturerInvoiceExportTest extends TestCase
         $path = $course->generateInvoicePdfFile();
         $this->assertFileExists($path);
         @unlink($path);
-        $this->invoice($course, 12, 102, 'LV-2');
+        $this->invoice($course, 12, 102, '202');
         $this->assertNull($course->generateInvoicePdfFile());
         $path = $course->generateInvoicePdfFile($a->id);
         $this->assertFileExists($path);
         @unlink($path);
+    }
+
+    public function test_invoice_context_uses_the_existing_course_agreement_reference_without_extra_tables(): void
+    {
+        $course = $this->course();
+        $course->forceFill(['lecturer_plan' => ['status' => 'ready', 'contracts' => [
+            ['contract_id' => '101', 'legacy_assignment_uid' => '101', 'reference' => 'Kurszuordnung #101'],
+        ], 'assignments' => [
+            ['assignment_id' => 'assignment-11', 'person_id' => 101, 'contract_id' => '101', 'legacy_assignment_uid' => '101', 'starts_on' => '2026-10-19', 'ends_on' => '2026-11-06'],
+        ]]])->save();
+        $invoice = $this->invoice($course, 11, 101);
+        $export = app(CourseInvoiceExport::class);
+        $this->assertSame('Kurszuordnung #101', $export->context($course, $invoice)['contract']);
+        $this->assertStringContainsString('vereinbarung_101', $export->filename($course, $invoice));
+        $this->assertFalse(Schema::hasTable('dozenten_vertrag'));
+        $this->assertFalse(Schema::hasTable('dozenten_bewertung'));
     }
 
     public function test_foreign_course_invoice_cannot_be_downloaded_by_id(): void
@@ -198,7 +214,7 @@ class LecturerInvoiceExportTest extends TestCase
     {
         $course = $this->course();
         $this->invoice($course, 11, 101);
-        $this->invoice($course, 12, 102, 'LV-2');
+        $this->invoice($course, 12, 102, '202');
         $path = $course->generateExportAllZipFile([
             'includeDocumentation' => false, 'includeRedThread' => false, 'includeParticipants' => false,
             'includeAttendance' => false, 'includeExamResults' => false, 'includeCourseRatings' => false, 'includeTutorData' => true,
@@ -220,9 +236,9 @@ class LecturerInvoiceExportTest extends TestCase
         ]]])->save();
         $this->assertSame(0, $course->invoiceState());
         $this->invoice($course, 11, 101);
-        $this->invoice($course, 11, 101, 'LV-1', 2);
+        $this->invoice($course, 11, 101, '101', 2);
         $this->assertSame(2, $course->invoiceState());
-        $this->invoice($course, 12, 102, 'LV-2');
+        $this->invoice($course, 12, 102, '202');
         $this->assertSame(1, $course->invoiceState());
     }
 

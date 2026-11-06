@@ -52,7 +52,7 @@ class CourseInvoiceExport
             $this->personLabel($file) !== 'Zuordnung offen' ? $this->personLabel($file) : 'Bestandsbeleg',
         ];
         if ($file->lecturer_contract_id) {
-            $parts[] = 'Vertrag-'.$file->lecturer_contract_id;
+            $parts[] = 'Vereinbarung-'.$file->lecturer_contract_id;
         }
         if ($file->lecturer_assignment_id) {
             $parts[] = 'Einsatz-'.$file->lecturer_assignment_id;
@@ -72,7 +72,7 @@ class CourseInvoiceExport
 
         return [
             'person' => $this->personLabel($file),
-            'contract' => $contract['kennung'] ?? ($file->lecturer_contract_id ? 'Vertrag '.$file->lecturer_contract_id : null),
+            'contract' => $contract['reference'] ?? $contract['kennung'] ?? ($file->lecturer_contract_id ? 'Vereinbarung '.$file->lecturer_contract_id : null),
             'period' => $period,
         ];
     }

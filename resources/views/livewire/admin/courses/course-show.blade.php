@@ -375,7 +375,7 @@
                 @endif
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="border-b text-xs text-slate-500"><tr>@if($this->lecturerDisplay['multiple'])<th class="pb-2">Dozent</th><th class="pb-2">Vertrag / Zeitraum</th>@endif<th class="pb-2">Version</th><th class="pb-2 text-right">Beleg</th></tr></thead>
+                        <thead class="border-b text-xs text-slate-500"><tr>@if($this->lecturerDisplay['multiple'])<th class="pb-2">Dozent</th><th class="pb-2">Vereinbarung / Zeitraum</th>@endif<th class="pb-2">Version</th><th class="pb-2 text-right">Beleg</th></tr></thead>
                         <tbody class="divide-y divide-slate-100">
                         @forelse($this->invoiceFiles as $invoice)
                             @php($invoiceContext = app(\App\Services\Courses\CourseInvoiceExport::class)->context($course, $invoice))
