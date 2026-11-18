@@ -84,7 +84,8 @@ class CourseInvoiceExport
         abort_unless($course->files()->whereKey($file->id)->where('type', 'invoice')->exists(), 404);
 
         $input = null;
-        $disk = Storage::disk($file->disk ?: 'public');
+        // Admin-local files use public; the stored disk belongs to Base and is resolved below.
+        $disk = Storage::disk('public');
         if ($file->path && $disk->exists($file->path)) {
             $input = $disk->readStream($file->path);
         } else {

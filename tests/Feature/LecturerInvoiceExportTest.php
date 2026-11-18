@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -306,7 +307,7 @@ class LecturerInvoiceExportTest extends TestCase
         $this->assertStringContainsString('Zuordnung ungeklärt', $html);
     }
 
-    public function test_private_base_invoice_resolution_uses_its_file_id_and_keeps_the_original(): void
+    public function test_private_base_invoice_can_be_downloaded_by_id_and_keeps_the_original(): void
     {
         Schema::create('settings', function (Blueprint $t) {
             $t->id();
@@ -318,15 +319,23 @@ class LecturerInvoiceExportTest extends TestCase
             ['key' => 'base_api_key', 'value' => json_encode('synthetic-key')],
         ]);
         Http::preventStrayRequests();
-        Http::fake(['base.example.test/*' => Http::response(['success' => true, 'url' => 'https://base.example.test/temp/proven.pdf'])]);
+        $contents = '%PDF-1.4 synthetic private base invoice';
+        Http::fake(['base.example.test/*' => Http::response([
+            'success' => true, 'url' => 'data:application/pdf;base64,'.base64_encode($contents),
+        ])]);
         $course = $this->course();
         $course->forceFill(['lecturer_plan' => ['status' => 'ready', 'assignments' => [
             ['assignment_id' => 'assignment-11', 'person_id' => 101, 'starts_on' => '2026-10-19', 'ends_on' => '2026-11-06'],
         ]]])->save();
         $file = $this->invoice($course, 11, 101);
+        $file->update(['disk' => 'private']);
         Storage::disk('public')->delete($file->path);
-        $this->assertSame('https://base.example.test/temp/proven.pdf', $file->getEphemeralPublicUrl());
-        Http::assertSent(fn ($request) => $request['file_id'] === $file->id && ! isset($request['url']) && $request->hasHeader('X-API-KEY', 'synthetic-key'));
+        $this->assertNull(config('filesystems.disks.private'));
+        $response = TestResponse::fromBaseResponse($course->exportInvoiceFile((int) $file->id));
+        $response->assertOk()->assertDownload();
+        $this->assertSame($contents, $response->streamedContent());
+        Http::assertSent(fn ($request) => $request['file_id'] === $file->id && $request['disk'] === 'private'
+            && ! isset($request['url']) && $request->hasHeader('X-API-KEY', 'synthetic-key'));
         try {
             $file->delete();
             $this->fail('Invoice evidence unexpectedly deleted.');
@@ -334,6 +343,8 @@ class LecturerInvoiceExportTest extends TestCase
             $this->assertSame(409, $error->getStatusCode());
         }
         $this->assertNotNull($file->fresh());
+        $this->assertSame('private', $file->fresh()->disk);
+        $this->assertSame($file->path, $file->fresh()->path);
         Http::assertSentCount(1);
     }
 
