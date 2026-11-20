@@ -19,6 +19,13 @@ class PersonApiUpdate implements ShouldQueue, ShouldBeUnique
     /** @var array<int,int> */
     public array $backoff = [10, 60, 180];
 
+    /**
+     * Base processes this job and releases unique locks only in its own cache.
+     * Without an expiry, the lock taken here blocked every later update of the
+     * person forever (the dispatch was silently skipped).
+     */
+    public int $uniqueFor = 900;
+
     public bool $withoutCooldown = false;
 
     public ?string $manualRequestId = null;
@@ -36,7 +43,8 @@ class PersonApiUpdate implements ShouldQueue, ShouldBeUnique
             ? ':manual:' . ($this->manualRequestId ?? 'legacy')
             : '';
 
-        return 'person-api-update:' . (string) $this->personPk . $manualSuffix;
+        // Own key space: locks taken before the expiry existed never end.
+        return 'admin-person-api-update:' . (string) $this->personPk . $manualSuffix;
     }
 
     public function handle(): void

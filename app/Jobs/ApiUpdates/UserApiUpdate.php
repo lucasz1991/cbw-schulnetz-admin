@@ -18,6 +18,13 @@ class UserApiUpdate implements ShouldQueue, ShouldBeUnique
     /** @var array<int,int> */
     public array $backoff = [10, 60];
 
+    /**
+     * Base processes this job and releases unique locks only in its own cache.
+     * Without an expiry, the lock taken here made the profile button
+     * "Aktualisieren" a silent no-op after its first use for a person.
+     */
+    public int $uniqueFor = 900;
+
     public function __construct(
         public int $userPk,
         public ?int $personPk = null,
@@ -26,7 +33,8 @@ class UserApiUpdate implements ShouldQueue, ShouldBeUnique
 
     public function uniqueId(): string
     {
-        return 'user-api-update:' . $this->userPk . ':' . ($this->personPk !== null ? $this->personPk : 'all');
+        // Own key space: locks taken before the expiry existed never end.
+        return 'admin-user-api-update:' . $this->userPk . ':' . ($this->personPk !== null ? $this->personPk : 'all');
     }
 
     public function handle(): void
